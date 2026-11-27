@@ -709,6 +709,321 @@ theorem decompose {n : ℕ} (hn : Erdos1052.IsUnitaryPerfect n) :
   exact ⟨hodd, hpower, S, support_bound hu0 hsprops hbal, hcop, hbal, hsplit,
     fun ha => many_simple_primes hn ha⟩
 
+-- Unconditional lemmas for H1 and H2.
+namespace CoreBounds
+
+theorem squarefree_product_valuation (S : Finset ℕ) (hS : ∀ q ∈ S, q.Prime) (p : ℕ) :
+    (∏ q ∈ S, q).factorization p = if p ∈ S then 1 else 0 := by
+  rw [Nat.factorization_prod (fun q hq => (hS q hq).ne_zero), Finsupp.finsetSum_apply]
+  rw [Finset.sum_congr rfl (fun q hq => by rw [(hS q hq).factorization, Finsupp.single_apply])]
+  exact Finset.sum_ite_eq' S p _
+
+theorem square_obstruction {p v : ℕ} {S : Finset ℕ} (hp : p.Prime)
+    (hv : v ≠ 0) (hpv : ¬ p ∣ v) (hS : ∀ q ∈ S, q.Prime) :
+    ¬ p ^ 2 ∣ v * ∏ q ∈ S, q := by
+  have hprod := Finset.prod_ne_zero_iff.mpr (fun q hq => (hS q hq).ne_zero)
+  intro hd
+  have h := (Nat.factorization_le_iff_dvd (pow_ne_zero 2 hp.ne_zero) (mul_ne_zero hv hprod)).2 hd p
+  rw [hp.factorization_pow, Finsupp.single_eq_same, Nat.factorization_mul hv hprod,
+    Finsupp.add_apply, Nat.factorization_eq_zero_of_not_dvd hpv, zero_add,
+    squarefree_product_valuation S hS] at h
+  split at h <;> omega
+
+theorem forced_member {p u v : ℕ} {S : Finset ℕ} (hp : p.Prime) (hpv : ¬ p ∣ v)
+    (hS : ∀ q ∈ S, q.Prime) (hbal : u * (∏ q ∈ S, (1 + q)) = v * ∏ q ∈ S, q)
+    (hd : p ∣ u * ∏ q ∈ S, (1 + q)) : p ∈ S := by
+  rw [hbal] at hd
+  obtain ⟨q, hq, hdiv⟩ := (hp.prime.dvd_finsetProd_iff (fun q : ℕ => q)).mp
+    ((hp.dvd_mul.mp hd).resolve_left hpv)
+  simpa only [((hS q hq).dvd_iff_eq hp.ne_one).mp hdiv] using hq
+
+theorem sigma_factor {b p : ℕ} (hp : p ∈ b.primeFactors) :
+    1 + p ^ b.factorization p ∣ (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) :=
+  Finset.dvd_prod_of_mem (fun q => 1 + q ^ b.factorization q) hp
+
+theorem obstruction_from_core_factor {a c p r : ℕ}
+    (hc : c ≠ 0) (hr : r.Prime) (hr2 : ¬ r ∣ 2) (hrc : ¬ r ∣ c)
+    (hp : p ∈ c.primeFactors) (hp2 : p ≠ 2) (hd : r ^ 2 ∣ 1 + p ^ c.factorization p) :
+    let b := 2 ^ a * c
+    ¬ ∃ S : Finset ℕ, (∀ q ∈ S, q.Prime) ∧
+      (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) * (∏ q ∈ S, (1 + q)) =
+        (2 * b) * ∏ q ∈ S, q := by
+  let b := 2 ^ a * c
+  have htwo : (2 : ℕ) ^ a ≠ 0 := by positivity
+  have hb : b ≠ 0 := mul_ne_zero htwo hc
+  have hrv : ¬ r ∣ 2 * b := by
+    simpa [b, hr.dvd_mul, hrc, hr2] using
+      (show ¬ r ∣ 2 ^ a from fun h => hr2 (hr.dvd_of_dvd_pow h))
+  have hpb := Nat.mem_primeFactors.mpr
+    ⟨Nat.prime_of_mem_primeFactors hp, dvd_mul_of_dvd_right (Nat.dvd_of_mem_primeFactors hp) _, hb⟩
+  have he : b.factorization p = c.factorization p := by
+    simp [b, Nat.factorization_mul htwo hc, Nat.prime_two.factorization_pow, Ne.symm hp2]
+  dsimp only
+  rintro ⟨S, hS, hbal⟩
+  apply square_obstruction hr (mul_ne_zero (by decide : (2 : ℕ) ≠ 0) hb) hrv hS
+  rw [← hbal]
+  apply dvd_mul_of_dvd_left _ _
+  apply dvd_trans hd
+  simpa only [← he] using sigma_factor hpb
+
+theorem nine_dvd_five_power (k : ℕ) : 9 ∣ 1 + 5 ^ (6 * k + 3) := by
+  have ho : Odd (2 * k + 1) := ⟨k, rfl⟩
+  have h := ho.nat_add_dvd_pow_add_pow (5 ^ 3) 1
+  rw [one_pow, ← pow_mul, show 3 * (2 * k + 1) = 6 * k + 3 by omega] at h
+  rw [Nat.add_comm]
+  exact dvd_trans (by decide : 9 ∣ 5 ^ 3 + 1) h
+
+theorem excludes_five_component {a c k : ℕ} (hc : c ≠ 0) (h3 : ¬ 3 ∣ c)
+    (h5 : 5 ∈ c.primeFactors) (he : c.factorization 5 = 6 * k + 3) : let b := 2 ^ a * c
+    ¬ ∃ S : Finset ℕ, (∀ q ∈ S, q.Prime) ∧
+      (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) * (∏ q ∈ S, (1 + q)) =
+        (2 * b) * ∏ q ∈ S, q := by
+  apply obstruction_from_core_factor hc Nat.prime_three (by decide) h3 h5 (by decide)
+  rw [he]
+  exact nine_dvd_five_power k
+
+theorem excludes_five_power (a k : ℕ) : let b := 2 ^ a * (5 ^ (6 * k + 3))
+    ¬ ∃ S : Finset ℕ, (∀ q ∈ S, q.Prime) ∧
+      (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) * (∏ q ∈ S, (1 + q)) =
+        (2 * b) * ∏ q ∈ S, q := by
+  have hp : Nat.Prime 5 := by decide
+  have h3 : ¬ 3 ∣ 5 ^ (6 * k + 3) := fun h =>
+    (by decide : ¬ 3 ∣ 5) (Nat.prime_three.dvd_of_dvd_pow h)
+  have hm : 5 ∈ (5 ^ (6 * k + 3)).primeFactors := Nat.mem_primeFactors.mpr
+    ⟨hp, dvd_pow_self _ (by omega), pow_ne_zero _ hp.ne_zero⟩
+  apply excludes_five_component (pow_ne_zero _ hp.ne_zero) h3 hm (k := k)
+  simp [hp.factorization_pow]
+
+theorem excluded_cores_of_perfect {n : ℕ} (hn : Erdos1052.IsUnitaryPerfect n) (k : ℕ) :
+    (∏ p ∈ n.primeFactors.filter (fun p => p ≠ 2 ∧ n.factorization p ≠ 1), p ^ n.factorization p) ≠
+      5 ^ (6 * k + 3) := by
+  intro he
+  obtain ⟨_, _, S, _, hS, hbal, _, _⟩ := decompose hn
+  have bad := excludes_five_power (n.factorization 2) k
+  rw [← he] at bad
+  exact bad ⟨S, fun q hq => (hS q hq).1, hbal⟩
+
+set_option maxRecDepth 4096 in
+theorem forced_primes_at_625 {a : ℕ} {S : Finset ℕ} (hS : ∀ q ∈ S, q.Prime)
+    (hbal : (∏ q ∈ (2 ^ a * 625).primeFactors, (1 + q ^ (2 ^ a * 625).factorization q)) * (∏ q ∈ S, (1 + q)) = (2 * (2 ^ a * 625)) * ∏ q ∈ S, q) :
+    313 ∈ S ∧ 157 ∈ S ∧ 79 ∈ S := by
+  let b := 2 ^ a * 625
+  have htwo : (2 : ℕ) ^ a ≠ 0 := by positivity
+  have hb : b ≠ 0 := mul_ne_zero htwo (by decide)
+  have h5 : 5 ∈ b.primeFactors := Nat.mem_primeFactors.mpr
+    ⟨by decide, dvd_mul_of_dvd_right (by decide : 5 ∣ 625) _, hb⟩
+  have he : b.factorization 5 = 4 := by
+    rw [show b = 2 ^ a * 5 ^ 4 by rfl,
+      Nat.factorization_mul htwo (by decide), Nat.prime_two.factorization_pow,
+      (by decide : Nat.Prime 5).factorization_pow]
+    simp
+  have hv (p : ℕ) (hp : p.Prime) (h2p : ¬ p ∣ 2) (h5p : ¬ p ∣ 625) : ¬ p ∣ 2 * b := by
+    simpa [b, hp.dvd_mul, h2p, h5p] using
+      (show ¬ p ∣ 2 ^ a from fun h => h2p (hp.dvd_of_dvd_pow h))
+  have h313 : 313 ∈ S := forced_member (by decide : Nat.Prime 313)
+    (hv 313 (by decide) (by decide) (by decide)) hS hbal
+    (dvd_mul_of_dvd_left (dvd_trans (by decide : 313 ∣ 1 + 5 ^ 4) (he ▸ sigma_factor h5)) _)
+  have step {q p : ℕ} (hq : q ∈ S) (hp : p.Prime) (h2p : ¬ p ∣ 2) (h5p : ¬ p ∣ 625)
+      (hd : p ∣ 1 + q) : p ∈ S :=
+    forced_member hp (hv _ hp h2p h5p) hS hbal
+      (dvd_mul_of_dvd_right (hd.trans (Finset.dvd_prod_of_mem (fun r : ℕ => 1 + r) hq)) _)
+  have h157 := step h313 (by decide : Nat.Prime 157) (by decide) (by decide) (by decide)
+  exact ⟨h313, h157, step h157 (by decide) (by decide) (by decide) (by decide)⟩
+
+theorem excludes_625_four_mod_eight (k : ℕ) : let b := 2 ^ (8 * k + 4) * 625
+    ¬ ∃ S : Finset ℕ, (∀ q ∈ S, q.Prime) ∧
+      (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) * (∏ q ∈ S, (1 + q)) =
+        (2 * b) * ∏ q ∈ S, q := by
+  let a := 8 * k + 4
+  let b := 2 ^ a * 625
+  have htwo : (2 : ℕ) ^ a ≠ 0 := by positivity
+  have hb : b ≠ 0 := mul_ne_zero htwo (by decide)
+  have h2 : 2 ∈ b.primeFactors := Nat.mem_primeFactors.mpr
+    ⟨Nat.prime_two, dvd_mul_of_dvd_left (dvd_pow_self _ (show a ≠ 0 by dsimp [a]; omega)) _, hb⟩
+  have he : b.factorization 2 = a := by
+    simp [b, Nat.factorization_mul htwo (by decide : (625 : ℕ) ≠ 0),
+      Nat.prime_two.factorization_pow, Nat.factorization_eq_zero_of_not_dvd (by decide : ¬ 2 ∣ 625)]
+  have ho : Odd (2 * k + 1) := ⟨k, rfl⟩
+  have hd := ho.nat_add_dvd_pow_add_pow (2 ^ 4) 1
+  rw [one_pow, ← pow_mul, show 4 * (2 * k + 1) = a by dsimp [a]; omega, Nat.add_comm (2 ^ a) 1] at hd
+  have hsigma : 17 ∣ (∏ q ∈ b.primeFactors, (1 + q ^ b.factorization q)) := dvd_trans hd (he ▸ sigma_factor h2)
+  have hv (p : ℕ) (hp : p.Prime) (h2p : ¬ p ∣ 2) (h5p : ¬ p ∣ 625) : ¬ p ∣ 2 * b := by
+    simpa [b, hp.dvd_mul, h2p, h5p] using
+      (show ¬ p ∣ 2 ^ a from fun h => h2p (hp.dvd_of_dvd_pow h))
+  dsimp only
+  rintro ⟨S, hS, hbal⟩
+  have h17 : 17 ∈ S := forced_member (by decide : Nat.Prime 17)
+    (hv 17 (by decide) (by decide) (by decide)) hS hbal (dvd_mul_of_dvd_left hsigma _)
+  have h18 := Finset.dvd_prod_of_mem (fun q : ℕ => 1 + q) h17
+  apply square_obstruction Nat.prime_three (mul_ne_zero (by decide : (2 : ℕ) ≠ 0) hb)
+    (hv 3 Nat.prime_three (by decide) (by decide)) hS
+  rw [← hbal]
+  exact dvd_mul_of_dvd_right (dvd_trans (by decide : 3 ^ 2 ∣ 1 + 17) h18) _
+
+theorem oddPart_prod (S : Finset ℕ) (f : ℕ → ℕ) :
+    ordCompl[2] (∏ q ∈ S, f q) = ∏ q ∈ S, ordCompl[2] (f q) := by
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert q S hq ih =>
+    rw [Finset.prod_insert hq, Finset.prod_insert hq, ← ih]
+    exact Nat.ordCompl_mul _ _ 2
+
+theorem compatible_from_balance {u c a : ℕ} {S : Finset ℕ}
+    (hbal : u * (∏ q ∈ S, (1 + q)) = (2 * (2 ^ a * c)) * ∏ q ∈ S, q) :
+    ordCompl[2] u * (∏ q ∈ S, ordCompl[2] (1 + q)) ∣ c * ∏ q ∈ S, q := by
+  have hb : 2 * (2 ^ a * c) * (∏ q ∈ S, q) = 2 ^ (a + 1) * (c * ∏ q ∈ S, q) := by
+    rw [pow_succ]
+    ac_rfl
+  have h := congrArg (fun n : ℕ => ordCompl[2] n) (hbal.trans hb)
+  change ordCompl[2] (u * (∏ q ∈ S, (1 + q))) = ordCompl[2] (2 ^ (a + 1) * (c * ∏ q ∈ S, q)) at h
+  rw [Nat.ordCompl_mul, Nat.ordCompl_self_pow_mul _ _ Nat.prime_two] at h
+  rw [← oddPart_prod]
+  exact dvd_trans (dvd_of_eq h) (Nat.ordCompl_dvd _ _)
+
+theorem twice_oddPart_shift_le {q : ℕ} (hq : Odd q) : 2 * ordCompl[2] (1 + q) ≤ q + 1 := by
+  have h2 : 2 ∣ 1 + q := by
+    rw [Nat.add_comm, ← even_iff_two_dvd]
+    exact hq.add_one
+  obtain ⟨r, hr⟩ := h2
+  have hpart : ordCompl[2] (1 + q) = ordCompl[2] r := by
+    rw [hr, show 2 * r = 2 ^ 1 * r by simp]
+    exact Nat.ordCompl_self_pow_mul _ _ Nat.prime_two
+  have hle := Nat.le_of_dvd (by omega : 0 < r) (Nat.ordCompl_dvd r 2)
+  rw [hpart]
+  omega
+
+theorem compatible_tail_bound {x D : ℕ} (S : Finset ℕ) (d : ℕ → ℕ) (hx : 1 ≤ x)
+    (hD : D ≠ 0) (hS : ∀ q ∈ S, q.Prime ∧ x < q ∧ 0 < d q ∧ 2 * d q ≤ q + 1)
+    (hdvd : (∏ q ∈ S, d q) ∣ D * ∏ q ∈ S, q) :
+    (∏ q ∈ S, (1 + 1 / (q : ℚ))) ≤
+      (1 + 2 / (x : ℚ)) ^ D.primeFactorsList.length *
+        ∏ q ∈ S, (if d q = 1 then ((q : ℚ) + 1) / ((q : ℚ) - 1) else 1) := by
+  let weight (x p : ℕ) : ℚ :=
+    if p ≤ x then 1 + 2 / (x : ℚ) else (p : ℚ) / (p - 1 : ℚ)
+
+  let weightProd (x n : ℕ) : ℚ := (n.primeFactorsList.map (weight x)).prod
+
+  have weight_bounds {x : ℕ} (hx : 1 ≤ x) (p : ℕ) :
+      1 ≤ weight x p ∧ weight x p ≤ 1 + 2 / (x : ℚ) := by
+    have hx' : (0 : ℚ) < x := by exact_mod_cast (show 0 < x by omega)
+    by_cases hp : p ≤ x
+    · simp only [weight, if_pos hp]
+      constructor <;> linarith [show 0 ≤ 2 / (x : ℚ) by positivity]
+    · simp only [weight, if_neg hp]
+      have hpx : (x : ℚ) + 1 ≤ p := by exact_mod_cast (show x + 1 ≤ p by omega)
+      have hden : (0 : ℚ) < p - 1 := by linarith
+      constructor
+      · apply (le_div_iff₀ hden).2
+        linarith
+      · rw [div_le_iff₀ hden]
+        field_simp
+        nlinarith
+
+  have weightProd_bounds {x : ℕ} (hx : 1 ≤ x) (n : ℕ) :
+      1 ≤ weightProd x n ∧ weightProd x n ≤ (1 + 2 / (x : ℚ)) ^ n.primeFactorsList.length := by
+    unfold weightProd
+    induction n.primeFactorsList with
+    | nil => simp
+    | cons p l ih =>
+      simp only [List.map_cons, List.prod_cons, List.length_cons, pow_succ]
+      obtain ⟨h1, h2⟩ := weight_bounds hx p
+      constructor
+      · simpa using mul_le_mul h1 ih.1 (by norm_num : (0 : ℚ) ≤ 1) (by linarith)
+      · rw [mul_comm (weight x p)]
+        exact mul_le_mul ih.2 h2 (by linarith) (by positivity)
+
+  have weightProd_prime (x : ℕ) {p : ℕ} (hp : p.Prime) : weightProd x p = weight x p := by
+    simp [weightProd, Nat.primeFactorsList_prime hp]
+
+  have weightProd_mul (x : ℕ) {a b : ℕ} (ha : a ≠ 0) (hb : b ≠ 0) :
+      weightProd x (a*b) = weightProd x a * weightProd x b := by
+    simpa [weightProd] using ((Nat.perm_primeFactorsList_mul ha hb).map (weight x)).prod_eq
+
+  have weightProd_dvd {x a b : ℕ} (hx : 1 ≤ x) (hb : b ≠ 0) (hd : a ∣ b) :
+      weightProd x a ≤ weightProd x b := by
+    obtain ⟨k, rfl⟩ := hd
+    obtain ⟨ha, hk⟩ := mul_ne_zero_iff.mp hb
+    rw [weightProd_mul x ha hk]
+    have h1 := (weightProd_bounds hx a).1
+    have h2 := (weightProd_bounds hx k).1
+    simpa using mul_le_mul_of_nonneg_left h2 (by linarith : 0 ≤ weightProd x a)
+
+  have weightProd_finset (x : ℕ) (S : Finset ℕ) (f : ℕ → ℕ) (hf : ∀ q ∈ S, f q ≠ 0) :
+      weightProd x (∏ q ∈ S, f q) = ∏ q ∈ S, weightProd x (f q) := by
+    induction S using Finset.induction_on with
+    | empty => simp [weightProd]
+    | @insert p S hp ih =>
+      have hS (q : ℕ) (hq : q ∈ S) := hf q (Finset.mem_insert_of_mem hq)
+      rw [Finset.prod_insert hp, Finset.prod_insert hp,
+        weightProd_mul x (hf _ (Finset.mem_insert_self p S)) (Finset.prod_ne_zero_iff.mpr hS),
+        ih hS]
+
+  let pathBound (q : ℕ) : ℚ := ((q : ℚ) + 1) / ((q : ℚ) - 1)
+
+  have local_weight {x q d : ℕ} (hx : 1 ≤ x) (hq : q.Prime) (hxq : x < q)
+      (hd : 0 < d) (hsize : 2*d ≤ q+1) :
+      (1 + 1 / (q : ℚ)) * weightProd x q ≤
+        weightProd x d * (if d = 1 then pathBound q else 1) := by
+    rw [weightProd_prime x hq]
+    simp only [weight, if_neg (by omega : ¬ q ≤ x)]
+    have hx' : (0 : ℚ) < x := by exact_mod_cast (show 0 < x by omega)
+    have hq' : (1 : ℚ) < q := by exact_mod_cast hq.one_lt
+    have hqx : (x : ℚ) + 1 ≤ q := by exact_mod_cast (show x+1 ≤ q by omega)
+    have hid : (1 + 1 / (q : ℚ)) * ((q : ℚ) / (q - 1 : ℚ)) = pathBound q := by
+      unfold pathBound
+      field_simp
+    rw [hid]
+    by_cases hroot : d = 1
+    · subst d
+      simp [weightProd]
+    · rw [if_neg hroot, mul_one]
+      let p := d.minFac
+      have hp : p.Prime := Nat.minFac_prime hroot
+      have hpd : p ∣ d := Nat.minFac_dvd d
+      have hpd' := Nat.le_of_dvd hd hpd
+      have htwop : 2 * (p : ℚ) ≤ q + 1 := by exact_mod_cast (show 2*p ≤ q+1 by omega)
+      have hp' : (1 : ℚ) < p := by exact_mod_cast hp.one_lt
+      have hw := weightProd_dvd hx hd.ne' hpd
+      rw [weightProd_prime x hp] at hw
+      apply le_trans _ hw
+      unfold pathBound weight
+      split_ifs with hpx
+      · apply (div_le_iff₀ (by linarith)).2
+        field_simp
+        nlinarith
+      · rw [div_le_div_iff₀ (by linarith) (by linarith)]
+        nlinarith
+  let U := ∏ q ∈ S, weightProd x q
+  let M := ∏ q ∈ S, (if d q = 1 then pathBound q else 1)
+  have hpos : 0 < U := Finset.prod_pos fun q _ => lt_of_lt_of_le zero_lt_one (weightProd_bounds hx q).1
+  have hM : 0 ≤ M := by
+    apply Finset.prod_nonneg
+    intro q hq
+    have hmin : (1 : ℚ) < q := by exact_mod_cast (hS q hq).1.one_lt
+    split_ifs
+    · unfold pathBound
+      positivity
+    · norm_num
+  have hlocal := Finset.prod_le_prod (s := S)
+    (f := fun q : ℕ => (1 + 1 / (q : ℚ)) * weightProd x q)
+    (g := fun q : ℕ => weightProd x (d q) * (if d q = 1 then pathBound q else 1))
+    (fun q _ => mul_nonneg (by positivity) (le_trans zero_le_one (weightProd_bounds hx q).1))
+    (fun q hq => local_weight hx (hS q hq).1 (hS q hq).2.1 (hS q hq).2.2.1 (hS q hq).2.2.2)
+  rw [Finset.prod_mul_distrib, Finset.prod_mul_distrib] at hlocal
+  have hq0 (q : ℕ) (hq : q ∈ S) := (hS q hq).1.ne_zero
+  have hprod0 := Finset.prod_ne_zero_iff.mpr hq0
+  have hg := weightProd_dvd hx (mul_ne_zero hD hprod0) hdvd
+  rw [weightProd_mul x hD hprod0, weightProd_finset x S d (fun q hq => (hS q hq).2.2.1.ne'),
+    weightProd_finset x S (fun q => q) hq0] at hg
+  apply (le_of_mul_le_mul_right (a := U) _ hpos)
+  calc (∏ q ∈ S, (1 + 1 / (q : ℚ))) * U ≤ (∏ q ∈ S, weightProd x (d q)) * M := hlocal
+    _ ≤ (weightProd x D * U) * M := mul_le_mul_of_nonneg_right hg hM
+    _ = (weightProd x D * M) * U := by ring
+    _ ≤ ((1 + 2 / (x : ℚ)) ^ D.primeFactorsList.length * M) * U :=
+      mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right (weightProd_bounds hx D).2 hM) hpos.le
+
+end CoreBounds
+
 theorem main : H1 → H2 → type_of% @Erdos1052.erdos_1052 := by
   intro h1 h2
   obtain ⟨B, hB⟩ := h1
