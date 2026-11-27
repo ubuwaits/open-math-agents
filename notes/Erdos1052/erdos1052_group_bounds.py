@@ -1,4 +1,4 @@
-"""Exact exponent certificate for the sparse prime-power base 167772161.
+"""Exact exponent certificates for sparse prime-power and finite-valuation cases.
 
 The parameter limits the exponent e of the odd core p^e. The odd multiplier
 of v2(n) and the simple primes of n range over all sizes. The argument is in
@@ -10,7 +10,7 @@ from fractions import Fraction
 from functools import lru_cache
 from itertools import product
 
-from core_bounds_1052 import uniform_gap
+from core_bounds_1052 import single_base_roots, uniform_gap
 from erdos1052_sparse_parents import allowed
 
 
@@ -27,9 +27,9 @@ CLOSURES = {19: {3, 5, 19}, 79: {3, 5, 79}, 13: {7, 13},
 MARKERS = (31, 127, 8191, 131071, 524287)
 
 
-def normalized_intervals(low, high, uses):
+def normalized_intervals(low, high, uses, minimum_prime):
     """Enclose the normalized group, then account for removal of p-using paths."""
-    retained = 1 - min(Fraction(3, P-1), Fraction(uses, 2*P))
+    retained = 1 - min(Fraction(3, minimum_prime-1), Fraction(uses, 2*minimum_prime))
     result = []
     for scale in (Fraction(1, 2), 1, 2):
         lower, upper = low*scale, high*scale
@@ -38,34 +38,38 @@ def normalized_intervals(low, high, uses):
     return tuple(result)
 
 
-def group_intervals(cap):
+def group_intervals(cap, center=P, relative_width=0, minimum_prime=P, inverse_error=EPSILON):
     # The three dictionaries are indexed respectively by i, j, and i+j.
     quotient = {0: ((Fraction(1), 1+OPEN_PADDING),)}
     fermat, core_shift = {}, {}
     scale = 1 << PRECISION
     power = 1
     for index in range(1, cap+1):
-        power *= P
+        power *= center
         exponent = power.bit_length()-1
         if exponent <= PRECISION:
             low = high = Fraction(power, 1 << exponent)
         else:
             leading = power >> (exponent-PRECISION)
             low, high = Fraction(leading, scale), Fraction(leading+1, scale)
-        # H > PRECISION, and p^e > 2^PRECISION whenever 32 divides e.
-        quotient[index] = normalized_intervals(low, high*(1+EPSILON), index)
-        fermat[index] = normalized_intervals(low/(1+EPSILON), high, index-1)
-        core_shift[index] = normalized_intervals(2/high/(1+EPSILON), 2/low, cap)
+        # Bernoulli's inequality encloses (1+d)^index throughout the band.
+        factor = 1-index*relative_width
+        assert factor > 0
+        low *= factor
+        high /= factor
+        quotient[index] = normalized_intervals(low, high*(1+inverse_error), index, minimum_prime)
+        fermat[index] = normalized_intervals(low/(1+inverse_error), high, index-1, minimum_prime)
+        core_shift[index] = normalized_intervals(2/high/(1+inverse_error), 2/low, cap, minimum_prime)
     return quotient, fermat, core_shift
 
 
 @lru_cache(maxsize=100000)
-def possible(intervals, cutoff, required, forbidden):
+def possible(intervals, cutoff, required, forbidden, free_prime=None):
     def permitted(q):
         return allowed(q) and q not in forbidden
 
     return any(uniform_gap(1, 1, lo, cutoff, upper=hi, allowed=permitted,
-                           required=required) is None for lo, hi in intervals)
+                           required=required, free_prime=free_prime) is None for lo, hi in intervals)
 
 
 def minimal_masks(rows):
@@ -84,12 +88,14 @@ def minimal_masks(rows):
     return feasible
 
 
-def admissible_allocation(intervals, quotient_present, cutoff=CUTOFF, suppliers=SUPPLIERS):
+def admissible_allocation(intervals, quotient_present, cutoff=CUTOFF, suppliers=SUPPLIERS,
+                          free_prime=None, markers=MARKERS, empty_fermat_group=False):
     groups = range(3)
-    recipients = groups if quotient_present else range(1, 3)
+    recipients = [g for g in groups if (g != 0 or quotient_present)
+                  and (g != 1 or not empty_fermat_group)]
 
     def place_markers(required, forbidden, remaining):
-        if any(not possible(bounds, cutoff, tuple(sorted(need)), tuple(sorted(ban)))
+        if any(not possible(bounds, cutoff, tuple(sorted(need)), tuple(sorted(ban)), free_prime)
                for bounds, need, ban in zip(intervals, required, forbidden)):
             return False
         if not remaining:
@@ -114,27 +120,25 @@ def admissible_allocation(intervals, quotient_present, cutoff=CUTOFF, suppliers=
             need = [(first if g == owner5 else set()) | (second if g == owner7 else set())
                     for g in groups]
             banned = [(first | second)-group for group in need]
-            if place_markers(need, banned, MARKERS):
+            if place_markers(need, banned, markers):
                 return True
     return False
 
 
 def large_base_suppliers():
-    """Any single repeated base p >= 2^17 has suppliers 19 and 223."""
-    base = 1 << 17
-    target = 2-Fraction(1, 1 << 14)
-    error = (1+Fraction(1, base**2))/(1-Fraction(3, base-1))
-    assert target * error * (1+Fraction(1, 1 << 64)) < 2
+    """Every core with reciprocal sum at most 2^-14 has suppliers 19 and 223."""
+    size = 1 << 14
+    target = 2-Fraction(1, 2048)
+    error = 1/((1-Fraction(1, size**2))*(1-Fraction(3, size-1)))
+    assert target * error * (1+Fraction(1, 1 << 16)) < 2
     for s, t in SUPPLIERS[1:]:
         assert uniform_gap(1, 1, target, 65536, upper=2, allowed=allowed,
                            required=(3, 5, 7, s, t)) is not None
     return ((19, 223),)
 
 
-def scan(cap):
-    assert H > PRECISION and P**32 > 1 << PRECISION
-    assert P % 3 == 2 and pow(2, H, P) == P-1
-    a, f, c = group_intervals(cap)
+def scan(groups, initial_suppliers=SUPPLIERS):
+    a, f, c = groups
     ma, mf, mc = map(minimal_masks, (a, f, c))
     candidates = []
     survivors = []
@@ -150,11 +154,55 @@ def scan(cap):
                        for x, y, z in product(ma[i], mf[j], mc[n])):
                 continue
             intervals = (a[i], f[j], c[n])
-            if admissible_allocation(intervals, i > 0):
+            if admissible_allocation(intervals, i > 0, suppliers=initial_suppliers):
                 candidates.append((i, j))
                 if admissible_allocation(intervals, i > 0, FINAL_CUTOFF, suppliers):
                     survivors.append((i, j))
     return candidates, survivors
+
+
+def exclude_sixteen():
+    correction = 1/((1-Fraction(1, 4096**2))*(1-Fraction(3, 4095)))
+    target = 2/((1+Fraction(1, 1 << 16))*correction)
+    proofs = [uniform_gap(1, 1, target, 65536, upper=2, allowed=allowed,
+                          required=(3, 5, 7, s, t), two_budget=16) for s, t in SUPPLIERS]
+    assert proofs == [(16, 310), (17, 568), (12, 3368), (20, 223)]
+
+
+def exclude_fermat_core(cap):
+    p = 65537
+    y = p-1
+    assert 7*p**cap < 8*y**cap
+    roots = single_base_roots(p)
+    assert roots == (262147, 1073758207, 4295032831, 17180131327)
+    markers = MARKERS+roots
+    empty = ((Fraction(1), 1+OPEN_PADDING),)
+    power = 1
+    finalists = []
+
+    def phase(n):
+        exponent = n.bit_length()-1
+        if exponent <= PRECISION:
+            value = Fraction(n, 1 << exponent)
+            return value, value
+        lead = n >> (exponent-PRECISION)
+        return Fraction(lead, 1 << PRECISION), Fraction(lead+1, 1 << PRECISION)
+
+    for i in range(1, cap):
+        power *= p
+        low, high = phase(power)
+        low_next, high_next = phase(power*p)
+        core_bounds = (2/high_next/(1+Fraction(1, p*p)), 2/low_next+OPEN_PADDING)
+        if core_bounds[1] < Fraction(8192, 4237):
+            continue  # Both small-prime closures must be in this group.
+        a_bounds = (low*(1+Fraction(1, y))/(1+Fraction(1, y**3)),
+                    high*(1+Fraction(1, y))+OPEN_PADDING)
+        intervals = ((a_bounds,), empty, (core_bounds,))
+        if admissible_allocation(intervals, True, CUTOFF, ((19, 223),), p, markers, True):
+            finalists.append(i)
+            assert not admissible_allocation(intervals, True, 1 << 30, ((19, 223),),
+                                             p, markers, True)
+    return finalists
 
 
 if __name__ == "__main__":
@@ -162,9 +210,21 @@ if __name__ == "__main__":
     parser.add_argument("cap", type=int, nargs="?", default=8192, choices=range(1, 8193),
                         metavar="1..8192")
     cap = parser.parse_args().cap
-    candidates, survivors = scan(cap)
+    exclude_sixteen()
+    assert H > PRECISION and P**32 > 1 << PRECISION
+    assert P % 3 == 2 and pow(2, H, P) == P-1
+    candidates, survivors = scan(group_intervals(cap))
     expected = [602, 1206, 3482, 5169, 5249, 7445, 8049, 8129]
     assert candidates == [(0, j) for j in expected if j <= cap]
     assert not survivors
     print(f"Checked all core exponents through {cap}. All {len(candidates)} "
           "allocations reaching the final interval test were excluded.")
+    band = group_intervals(cap, center=5, relative_width=Fraction(1, 1 << 35),
+                           minimum_prime=1 << 30, inverse_error=Fraction(1, 1 << 56))
+    candidates, survivors = scan(band, initial_suppliers=large_base_suppliers())
+    assert not survivors
+    print(f"The same exclusion holds throughout the relative 2^-35 band around 5/4. "
+          f"The final interval test excluded {len(candidates)} allocations.")
+    finalists = exclude_fermat_core(cap)
+    print(f"The 65537 test excluded all allocations through core exponent {cap}. "
+          f"Indices requiring the final cutoff: {finalists}")

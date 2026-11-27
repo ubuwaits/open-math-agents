@@ -69,32 +69,76 @@ def tail_bound(x, count):
     return (1 + Fraction(2, x)) ** count * mersenne_tail(x)
 
 
-def possible_next_primes(x, y, tokens):
-    """List every prime q in (x,y] whose odd part of q+1 divides tokens."""
+@lru_cache(maxsize=None)
+def single_base_roots(p):
+    """Additional starts with q+1 = 2^j p^s, s>0, through 2^35."""
+    limit = (1 << 35)+1
+    roots = []
+    power = p
+    while power <= limit:
+        shift = 2*power
+        while shift <= limit:
+            q = shift-1
+            if factor(q) == ((q, 1),):
+                roots.append(q)
+            shift *= 2
+        power *= p
+    return tuple(sorted(roots))
+
+
+@lru_cache(maxsize=None)
+def single_base_tail(x, p):
+    """Bound the product of additional root path factors above x."""
+    limit = max((1 << 35)+1, x+1)
+    loss = sum((Fraction(2, q+1) for q in single_base_roots(p) if q > x), Fraction())
+    power = 1
+    while power <= limit//p:
+        power *= p
+        shift = 2*power
+        while shift <= limit:
+            shift *= 2
+        loss += Fraction(4, shift)  # geometric tail over the powers of two
+    loss += Fraction(2, power*(p-1))  # all remaining powers of p
+    return 1/(1-loss)
+
+
+def possible_next_primes(x, y, tokens, free_prime=None):
+    """List all candidate shifts, optionally removing one prime base from their odd parts."""
     divisors = [1]
     for p, e in tokens:
         powers = [p ** i for i in range(1, e + 1)]
         divisors.extend([d * power for d in divisors for power in powers if 2 * d * power <= y + 1])
     candidates = []
     for d in divisors:
-        v = 2 * d
-        while v - 1 <= y:
-            q = v - 1
-            if q > x and factor(q) == ((q, 1),):
-                candidates.append((q, d))
-            v *= 2
+        start = 2*d
+        while start-1 <= y:
+            v = start
+            while v-1 <= y:
+                q = v-1
+                if q > x and q != free_prime and factor(q) == ((q, 1),):
+                    candidates.append((q, d))
+                v *= 2
+            if free_prime is None:
+                break
+            start *= free_prime
     return sorted(candidates)
 
 
 def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=None,
-                required=()):
+                required=(), two_budget=None, free_prime=None):
     """Exclude the interval [target, upper) of compatible odd abundancies.
 
     max_prime limits the certificate search. The tail lemma covers all larger
     primes at every successful leaf. None indicates an inconclusive search.
     With upper=None the certificate proves a strict upper bound. If some
     primes are required, a continuation cannot skip its least missing one.
+    two_budget bounds the sum of v2(q+1) over the additional simple primes.
+    With core=seed_divisor=1, free_prime=p permits unlimited copies of
+    the repeated prime p>3 in the shifted factors of the simple primes.
     """
+    if free_prime is not None and ((core, seed_divisor) != (1, 1) or free_prime <= 3
+                                   or factor(free_prime) != ((free_prime, 1),)):
+        raise ValueError("A free prime requires an unseeded group and a prime base greater than 3.")
     state = forced(core, seed_divisor)
     if state is None:
         return 0, 0
@@ -106,18 +150,27 @@ def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=
     nodes = 0
     max_cut = 0
 
-    def visit(x, tokens, count, ratio, needed):
+    def visit(x, tokens, count, ratio, needed, budget):
         nonlocal nodes, max_cut
         nodes += 1
         if upper is not None and ratio >= upper:
             return True
+
+        def tail(y):
+            bound = tail_bound(y, count)
+            if free_prime is not None:
+                bound *= single_base_tail(y, free_prime)
+            if budget is not None:
+                bound = min(bound, (1+Fraction(1, y+1))**budget)
+            return bound
+
         y = min(max_prime, needed[0]) if needed else max_prime
-        if ratio * tail_bound(y, count) < target:
+        if ratio * tail(y) < target:
             # All continuations whose next prime exceeds this cutoff fall below target.
             low, high = x - 1, y
             while high - low > 1:
                 mid = (low + high) // 2
-                if ratio * tail_bound(mid, count) < target:
+                if ratio * tail(mid) < target:
                     high = mid
                 else:
                     low = mid
@@ -125,19 +178,26 @@ def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=
         elif not needed or needed[0] > y:
             return False
         max_cut = max(max_cut, y)
-        for p, odd in possible_next_primes(x, y, tokens):
+        for p, odd in possible_next_primes(x, y, tokens, free_prime):
             if p in forbidden or (allowed is not None and not allowed(p)):
                 continue
+            remaining_budget = budget
+            if budget is not None:
+                remaining_budget -= ((p+1) & -(p+1)).bit_length()-1
+                if remaining_budget < 0:
+                    continue
             use = dict(factor(odd))
             remaining = tuple((q, e - use.get(q, 0)) for q, e in tokens if e > use.get(q, 0))
             next_count = count + 1 - sum(use.values())
             left = needed[1:] if needed and p == needed[0] else needed
-            if not visit(p, remaining + ((p, 1),), next_count, ratio * Fraction(p + 1, p), left):
+            if not visit(p, remaining + ((p, 1),), next_count, ratio * Fraction(p + 1, p),
+                         left, remaining_budget):
                 return False
         return True
 
     count = sum(e for _, e in factor(initial_tokens))
-    return (nodes, max_cut) if visit(1, factor(initial_tokens), count, initial_ratio, pending) else None
+    return ((nodes, max_cut) if visit(1, factor(initial_tokens), count, initial_ratio,
+                                     pending, two_budget) else None)
 
 
 def known_multiple_certificate():

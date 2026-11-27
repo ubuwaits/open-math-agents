@@ -44,7 +44,7 @@ def prime_order(base, prime):
 
 def square_phase_possible(p):
     """Check both possible terminal exponents in the prime-square theorem."""
-    if p < 1 << 17:
+    if p < 1 << 14:
         return True
     for power in (p, p*p):
         y = Fraction(power, 1 << (power.bit_length()-1))
@@ -63,8 +63,13 @@ def bounds(powers):
     square = len(powers) == 1 and next(iter(powers.values())) == 2
     if square and not square_phase_possible(next(iter(powers))):
         return []
-    if len(powers) == 1 and powers.get(167772161, 8193) <= 8192:
-        return []
+    if len(powers) == 1:
+        p, e = next(iter(powers.items()))
+        if p in (65537, 167772161) and e <= 8192:
+            return []
+        x = Fraction(p, 1 << (p.bit_length()-1))
+        if p >= 1 << 30 and e <= 8192 and abs(x*Fraction(4, 5)-1) <= Fraction(1, 1 << 35):
+            return []
     if any((p % 3 == 2 and e % 2) or (p == 65537 and e % 16) for p, e in powers.items()):
         return []
     if any(pow(p, e, m) == m - 1 for p, e in powers.items() for m in (3, 5, 17, 257)):
@@ -98,9 +103,14 @@ def bounds(powers):
     sigma = 1
     for p, e in powers.items():
         sigma = sigma * (pow(p, e, core) + 1) % core
+    after_core = core // gcd(core, sigma)
+    available = [p for p in powers if after_core % p == 0]
+    square_remainder = len(available) == 1 and after_core in (available[0], available[0]**2)
     result = []
     for v in sorted(vs):
         h = 2**v
+        if not any(p % 3 == 2 and pow(2, h, p) == p-1 for p in available):
+            continue
         # c is odd, so removing powers of two from sigma leaves this gcd unchanged.
         g = gcd(core, sigma * (pow(2, h, core) + 1))
         left = core // g
@@ -110,6 +120,9 @@ def bounds(powers):
                 left //= p
                 k += 1
         assert left == 1
+        count = 0 if square_remainder else k
+        if count == 0 and v == 4:
+            continue  # The only candidate would have a=16.
         choices = []
         for p, _ in factor(h + 1):
             for q, _ in factor(h * p + 1):
@@ -119,7 +132,7 @@ def bounds(powers):
         _, p, q, m = min(choices)
         # Every prime-power index charges once by section 13. Retain the
         # witnesses for the earlier order bound in the documented output.
-        result.append((v, k, 0 if square else k, p, q, m))
+        result.append((v, k, count, p, q, m))
     return result
 
 

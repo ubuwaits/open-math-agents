@@ -111,6 +111,10 @@ Excess demand excludes the core. This finite procedure depends only on
 c. If its remaining core is 1, a prime, or the square of a prime, then
 every completion at this sparse core has b=1. In particular the odd
 part has a bound independent of the sizes of its prime factors.
+An immediate sufficient condition, requiring only modular arithmetic, is
+that c/gcd(c,σ*(c)) is 1, a prime, or a prime square. Cancelling the
+prime factors demanded by subsequent shifts can only decrease this
+remaining integer by divisibility.
 
 Indeed F=2^h+1 must use a prime p≡2 mod 3 directly from the core. It
 cannot use a copy already assigned to C. If b>1, A must use a further
@@ -151,19 +155,20 @@ case. If b=1 the sparse-order condition leaves a finite list of h.
 
 5. A restriction on the sizes of possible prime-square cores
 
-For a single repeated base p≥2^17 the suppliers of 5 and 7 are forced
-to be 19 and 223. Here a≥64 by the previous single-base theorem.
-Delete the shifts using p and their upward paths. Including the factor
-from the core and from 2^a costs at most
+Whenever the sum of the reciprocals of the repeated primes is at most
+2^−14, the suppliers of 5 and 7 are forced to be 19 and 223. Delete
+the shifts using repeated primes and their upward paths. Section 5 of
+Erdős1052-core-625.txt bounds the loss by 3s/(1−s) at reciprocal sum s.
+Including the factors from the core and from 2^a costs at most
 
-    (1+2^−64)(1+2^−34)/(1−3/(2^17−1)).
+    (1+2^−16)/((1−2^−28)(1−3/(2^14−1))).
 
-Multiplying that expression by 2−2^−14 gives a number strictly below
-2. Thus the retained abundancy lies in [2−2^−14,2). For each of the
+Multiplying that expression by 2−1/2048 gives a number strictly below
+2. Thus the retained abundancy lies in [2−1/2048,2). For each of the
 other three supplier pairs, the core-1 interval test with 3,5,7 and the
-two suppliers required excludes that interval. These tests use 24,14,35
+two suppliers required excludes that interval. These tests use 24,15,35
 nodes for (19,433),(79,13),(79,223), respectively. All mandatory primes
-are below 2p−1 and survive the deletion. See large_base_suppliers()
+are below the least possible deleted prime and survive the deletion. See large_base_suppliers()
 in erdos1052_group_bounds.py.
 
 For a prime-square core let x=p/2^floor(log₂p). Some m∈{1,2} must
@@ -172,7 +177,7 @@ power of two putting y in [1,2), and put t=min(y,2/y). Then
 
     t < 4237/4096     or     256/223 < t < 19/16.                    (2)
 
-This applies to all p≥2^17. For b=1 there are just two groups, for
+This applies to all p≥2^14. For b=1 there are just two groups, for
 F=Y+1 and (p²+1)/2. The F terminal is p^m for m=1 or 2. If
 t≥4237/4096 then y and 2/y are both far enough above 1 that the
 normalized group abundancies are y/(1+1/Y) and (2/y)/(1+p^−2).
@@ -264,12 +269,158 @@ the bound, with no restriction on the prime factors of b. It also
 gives a finite test for each c,h with such a witness. There is no
 argument here that every sparse core has a witness to both inequalities.
 
+8. Two uniform consequences
+
+First, a=16 is impossible for every nonempty sparse core. The full
+2-adic balance gives Σ_(q∈S)v₂(q+1)=a+1−v₂(σ*(c))≤16. Delete the
+core-using paths from S as in section 5 of Erdős1052-core-625.txt.
+The retained set satisfies the same bound, its abundancy is below
+2, and it must reach
+
+    2(1−4096^−2)(1−3/4095)/(1+2^−16).
+
+The four possible pairs of suppliers all survive. In the interval
+search, if u units of 2-adic valuation are still available then at
+most u further primes can occur. Above y their total factor is at
+most (1+1/(y+1))^u. At a selected q subtract v₂(q+1) from u.
+Applying this along with the ordinary tail bound excludes all four
+pairs, with (nodes,largest cutoff) equal to (16,310), (17,568),
+(12,3368), (20,223), respectively, in the order of the supplier
+list in section 6. The program checks the four certificates exactly.
+Consequently every sparse solution has a≥48: h=16 would require
+b≥3 and the remaining permitted h are at least 64. In particular
+there is no completion at any sparse core whose compulsory C-group
+leaves only 65537 or 65537². Section 4 would force b=1 and the
+order of 2 modulo 65537 would force h=16. An empty remaining core
+already excludes every exponent because F must consume a core factor.
+
+Second, the exclusion for the single base in section 6 extends to an
+unbounded range of bases. Let p≥2^30 be prime and let x=p/2^floor(log₂p).
+For every 2≤e≤8192, no core p^e with
+
+    |x/(5/4)−1| ≤ 2^−35
+
+admits any exponent a. This includes every prime 5·2^t+1 for t≥33.
+To certify the entire interval, enclose each power x^s (s≤8192) by
+the corresponding power of 5/4 times [1−sε,1/(1−sε)] with ε=2^−35.
+This follows from Bernoulli's inequality on both sides. The binary
+mantissa of (5/4)^s equals that of 5^s. Use 2^30 as a lower bound
+for p in the path loss, and bound 1/Y and 1/p^e by 2^−56, since
+h≥64 and e≥2. The same allocation test over these outward intervals
+excludes every i,j. Its two search cutoffs are 2^18 and 2^26.
+The order argument imposes no upper bound on h or p here. The program
+also verifies this whole band with its default command.
+
+9. Removing every occurrence of a repeated prime from shifted factors
+
+For fixed prime p write d'(q) for oddpart(q+1) with all factors of p
+removed. If ∏oddpart(q+1) divides p^u D∏q, then ∏d'(q) divides D∏q.
+This is immediate by taking the part coprime to p on both sides. Apply
+the same weight proof as in section 2 directly to d'. Its proof uses
+only that d'(q)>0 and 2d'(q)≤q+1. The starting primes are precisely
+those of the form 2^j p^s−1 for j≥1, s≥0. Their contribution beyond
+the cutoff tends to one as the cutoff increases. The exponent u
+contributes no fixed error.
+
+Here are the exact changes to the interval test. The possible next
+primes satisfy q=2^j p^s d−1, where d divides the ordinary remaining
+tokens. A selection consumes d and makes q available. If all remaining
+primes exceed x, the tail bound is the old one multiplied by a bound
+on ∏w(q) over additional starts q>x with s≥1. For p=65537 every such
+prime up to 2^35 is found by trial division:
+
+    262147, 1073758207, 4295032831, 17180131327.
+
+For each retained start add 2/(q+1) to the loss. Put L=max(2^35+1,x+1).
+For each p^s≤L, s≥1, let z be the first 2^j p^s>L, j≥1. The sum of
+losses over these possible starts beyond L is at most 4/z, counting
+all larger j. If p^k is the largest power at most L (allow k=0),
+the contribution from all s>k is at most 2/(p^k(p−1)). One minus
+the total loss bounds the reciprocal of the additional product below.
+All quantities are rational. More generally every finite set P of
+repeated bases can be stripped in the same way. Its possible starts
+have q+1=2^j d with d supported on P. The sum of 2^(1−j)/d over all
+j≥1 and all such d converges to 2∏_(p∈P)(1−1/p)^−1. Thus their
+tail losses tend effectively to zero for an arbitrary fixed P.
+
+Apply the single-base version at p=65537 and 2≤e≤8192. The order of
+2 forces h=16, so F=p and the V-group is empty. Section 8 excludes
+b=1. For b≥3 put Y=65536 and let i be the exponent of p consumed by
+the A-group. Then 1≤i≤e−1. Because (1+1/Y)^8192<8/7, the normalized
+ratios in [1,2) of the A-group and the C-group are exactly
+
+    (1+1/Y)^(i+1)/(1+Y^−b),     2/((1+1/Y)^(i+1)(1+p^−e)).
+
+The first is below 8/7, so both mandatory closures in section 5
+belong to the C-group. Its abundancy is at least 8192/4237.
+Compute intervals for the two displayed ratios with b≥3 and e≥2.
+Their endpoints may be rounded outwards with 96 binary fractional
+bits. Use the stripped demands and assign the optional small Mersenne
+primes and the four additional starts to disjoint groups or to neither.
+The cutoff 2^18 excludes every i except 8,2097,2105,2109. At these
+four indices the cutoff 2^30 excludes both groups occurring together.
+The script prints the four indices. The result is uniform in b and e
+throughout the stated range.
+
+Together with section 6 and the earlier complete Fermat-base sieve,
+this proves that no core p^e with 4096<p≤10^12 and 2≤e≤8192 has a
+unitary perfect completion. The same proof at 65537 also eliminates
+the exact core exponent 8192 left open by the previous valuation
+certificates. The check of the base sieve is erdos1052_fermat_bases.py;
+the stripped-demand check is in erdos1052_group_bounds.py.
+
+10. What an unbounded odd multiplier would force at a fixed core
+
+Fix c and one of its permissible h, and cancel the fixed seeds as in
+section 7. Let D be the remaining core and R the binary normalization of
+D(2^h+1). If there are arbitrarily large odd multipliers b, there must
+exist an infinite set T of simple odd primes, disjoint from all those
+already assigned to the fixed seeds, such that
+
+    ∏_(q∈T) (1+1/q) = R.
+
+Every finite initial segment of T satisfies the stripped divisibility
+in section 9: the product of its stripped demands divides its product
+of primes. In particular this is a problem about attaining one explicit
+nonintegral dyadic rational, for each of finitely many h at the core.
+
+For a proof, the A-groups have abundancies R/(1+2^−(hb)) for large b.
+Take a diagonal subsequence on which membership at every fixed prime
+eventually stabilizes. Stripped demands of a prefix ending at X only
+involve smaller primes. Their valuations on the full right side can
+therefore be supplied entirely by the prefix. On passing to primes
+above X, the available ordinary tokens are a divisor of the product
+of prefix primes, so their number is at most π(X). The uniform tail
+bound for the stripped groups is consequently
+
+    (1+2/X)^π(X) ∏_(r>X, r+1=2^j d, d supported on core bases) w(r),
+
+where the product runs over primes r. The first factor tends to one
+because π(X)/X tends to zero. The second does so by the convergent
+series in section 9. Hence the group products converge uniformly in
+their tails; the limiting set T realizes the asserted product exactly.
+A finite product of (1+1/q) has odd denominator in lowest terms, whereas
+R∈(1,2) is dyadic. Thus T must be infinite.
+
+This also gives a finite certificate whenever this obstruction is
+absent. The class of sets whose finite prefixes obey the stated
+divisibilities and exclusions is closed in the product of the prime
+membership coordinates. The product map is continuous by the same
+uniform tail estimate. If R is outside its compact image, for some
+finite X the intervals obtained by multiplying each possible prefix
+abundancy by [1,U(X)], with U(X) any effective tail bound tending
+to one as above, all miss R. Their positive distance from R bounds a
+since R−B_A=R/(2^a+1). This criterion does not determine whether
+the requisite infinite set exists for every remaining sparse core.
+
 The Lean theorem Erdos1052.PrimeSquare.prime_square_of_perfect verifies
 the prime-square implication from the definition of unitary perfection
 given the sparse-order and divisibility conclusions listed in section 1.
 Its proof includes the assignment of groups, the exclusion of 3 from
 both competing groups, the geometric tail, and the short gap at a power
 of two. The sparse hypotheses themselves use the earlier paper estimates
-and exact finite interval certificates. Sections 4–7 supply further
+and exact finite interval certificates. Sections 4–10 supply further
 written arguments and, for the finite tests, exact rational verification.
+Erdos1052.Stripped.strip_balance and strip_tail verify the general
+single-base divisibility and tail lemma in section 9.
 The general fixed-core bound and the uniform bound on c are still open.

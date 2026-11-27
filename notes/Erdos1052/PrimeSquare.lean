@@ -2471,3 +2471,38 @@ theorem prime_square_of_perfect {n p v h b : ℕ} (hn : Erdos1052.IsUnitaryPerfe
   rw [hexp,prime_square_odd_part hp hp5 hf hv hh ho hF hb hsp h5S hB hd,mul_one]
 
 end Erdos1052.PrimeSquare
+
+namespace Erdos1052.Stripped
+
+open Erdos1052.CoreBounds Erdos1052.Core625
+
+/-- Remove all powers of p from every demand. The remaining supply is
+independent of the multiplicity of p available in the original group. -/
+theorem strip_balance {S : Finset ℕ} {p u D : ℕ} (hp : p.Prime)
+    (hd : demands S∣p^u*(D*primesProduct S)) :
+    (∏ q∈S, ordCompl[p] (demand q))∣D*primesProduct S := by
+  have hprod (T : Finset ℕ) : ordCompl[p] (demands T) = ∏ q∈T, ordCompl[p] (demand q) := by
+    induction T using Finset.induction_on with
+    | empty => simp
+    | @insert q T hq ih =>
+      simp only [demands,Finset.prod_insert hq] at ih ⊢
+      rw [Nat.ordCompl_mul,ih]
+  have H := Nat.ordCompl_dvd_ordCompl_of_dvd hd p
+  rw [hprod, Nat.ordCompl_self_pow_mul _ _ hp] at H
+  exact H.trans (Nat.ordCompl_dvd _ _)
+
+/-- A compatible group's tail is controlled by the simple tokens and
+starts q whose odd shift is a power of p. -/
+theorem strip_tail {S : Finset ℕ} {p u D x : ℕ} (hp : p.Prime) (hx : 1≤x)
+    (hD : D≠0) (hS : primeSupport S) (hcut : ∀ q∈S, x<q)
+    (hd : demands S∣p^u*(D*primesProduct S)) :
+    abundancy S ≤ weightProd x D *
+      ∏ q∈S, (if ordCompl[p] (demand q)=1 then pathBound q else 1) := by
+  apply compatible_weight_bound S (fun q => ordCompl[p] (demand q)) hx hD _ (strip_balance hp hd)
+  intro q hq
+  obtain ⟨hpr,h2⟩ := hS q hq
+  refine ⟨hpr,hcut q hq,Nat.ordCompl_pos _ (Nat.ordCompl_pos 2 (by omega)).ne',?_⟩
+  exact (Nat.mul_le_mul_left 2 (Nat.ordCompl_le _ _)).trans
+    (twice_oddPart_shift_le (hpr.odd_of_ne_two h2))
+
+end Erdos1052.Stripped
