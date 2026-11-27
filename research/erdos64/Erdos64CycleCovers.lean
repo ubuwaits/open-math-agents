@@ -1,7 +1,10 @@
 import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.GroupTheory.Perm.Fin
+import Mathlib.GroupTheory.GroupAction.Primitive
+import Mathlib.GroupTheory.GroupAction.SubMulAction.OfStabilizer
 import Mathlib.GroupTheory.PGroup
+import Mathlib.GroupTheory.Solvable
 import Mathlib.Tactic
 
 /-!
@@ -10,7 +13,8 @@ import Mathlib.Tactic
 A lap around a simple cycle permutes the sheets. A sheet of period `d`
 gives a simple cycle upstairs of length `d` times the base length.
 The sheet counts for which *every* return permutation has a power-of-two
-orbit are exactly 1, 2 and 4.
+orbit are exactly 1, 2 and 4. If the monodromy group is solvable and transitive,
+every power-of-two sheet degree also preserves each dyadic base cycle.
 -/
 
 namespace Erdos64CycleCovers
@@ -414,6 +418,200 @@ theorem lift_affine_two_primary {U A : Type*} [AddCommGroup A] [Finite A] {G : S
   have count : 2^d ≤ 2^r := by
     let := Fintype.ofFinite A
     rw [← hd, ← size, Nat.card_eq_fintype_card]
+    exact minimalPeriod_le_card
+  have bound : d ≤ r := (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp count
+  have length : minimalPeriod (advance edge) (0,x) = 2^(k+d) := by
+    rw [period_above,hd,pow_add]
+  have large : 3 ≤ minimalPeriod (advance edge) (0,x) := by
+    rw [length]
+    have four : 4 ≤ 2^(k+d) := Nat.pow_le_pow_right (by decide : 0 < 2) (by omega : 2 ≤ k+d)
+    omega
+  have cyc := orbit_cycle (advance edge) label (fun z => adj z.1 z.2) (0,x) large
+  exact ⟨k+d,by omega,by omega,length ▸ cyc⟩
+
+/-! ## Solvable monodromy on a power of two sheets
+
+The group-action lemma is also a consequence of P. Hall's theorem on soluble
+groups. The proof here uses block systems and an average in a regular abelian
+normal subgroup, without assuming Hall's theorem.
+-/
+
+open MulAction
+open scoped Pointwise
+
+private theorem solvable_abelian_normal {G : Type*} [Group G] [Group.IsSolvable G]
+    [Nontrivial G] : ∃ N : Subgroup G, N ≠ ⊥ ∧ N.Normal ∧ IsMulCommutative N := by
+  classical
+  have terminating : ∃ n : ℕ, derivedSeries G n = ⊥ := Group.IsSolvable.solvable
+  let m := Nat.find terminating
+  have last : derivedSeries G m = ⊥ := Nat.find_spec terminating
+  have pos : m ≠ 0 := by
+    intro z
+    rw [z,derivedSeries_zero] at last
+    exact top_ne_bot last
+  obtain ⟨k,hk⟩ : ∃ k, m = k+1 := ⟨m-1,by omega⟩
+  refine ⟨derivedSeries G k, ?_, derivedSeries_normal G k, ?_⟩
+  · intro trivial
+    have le : m ≤ k := Nat.find_min' terminating trivial
+    omega
+  · rw [hk,derivedSeries_succ] at last
+    exact Subgroup.commutator_self_eq_bot_iff.mp last
+
+private theorem primitive_coprime_fixed {G X : Type*} [Group G] [Group.IsSolvable G]
+    [MulAction G X] [FaithfulSMul G X] [IsPreprimitive G X] [Finite X] [Nonempty X]
+    (g : G) {m : ℕ} (coprime : (Nat.card X).Coprime m) (torsion : g^m = 1) :
+    ∃ x : X, g • x = x := by
+  classical
+  by_cases trivial : Subsingleton X
+  · exact ⟨Classical.arbitrary X, trivial.elim _ _⟩
+  let : Nontrivial X := not_subsingleton_iff_nontrivial.mp trivial
+  obtain ⟨origin,y,xy⟩ := exists_pair_ne X
+  obtain ⟨t,ht⟩ := MulAction.exists_smul_eq G origin y
+  let : Nontrivial G := ⟨⟨t,1,fun he => xy (by simpa only [he,one_smul] using ht)⟩⟩
+  obtain ⟨N,nn,normal,comm⟩ := solvable_abelian_normal (G := G)
+  let : N.Normal := normal
+  let : IsMulCommutative N := comm
+  let : CommGroup N := { (inferInstance : Group N) with mul_comm := mul_comm' }
+  have nonfixed : fixedPoints N X ≠ Set.univ := by
+    intro allFixed
+    apply nn
+    apply eq_bot_iff.mpr
+    intro n hn
+    change n = 1
+    apply eq_of_smul_eq_smul (α := X)
+    intro x
+    have fixed : x ∈ fixedPoints N X := allFixed ▸ Set.mem_univ x
+    simpa only [Subgroup.smul_def,one_smul] using (mem_fixedPoints.mp fixed (⟨n,hn⟩ : N))
+  let : IsPretransitive N X := IsQuasiPreprimitive.isPretransitive_of_normal nonfixed
+  let coords : N ≃ X := Equiv.ofBijective (fun n : N => n • origin) ⟨by
+    intro n t same
+    apply Subtype.ext
+    apply eq_of_smul_eq_smul (α := X)
+    intro x
+    obtain ⟨h,rfl⟩ := MulAction.exists_smul_eq N origin x
+    change n • (h • origin) = t • (h • origin)
+    simpa only [smul_comm n h,smul_comm t h] using congrArg (fun z : X => h • z) same,
+    fun x => MulAction.exists_smul_eq N origin x⟩
+  let e : Additive N ≃ X := Additive.toMul.trans coords
+  let L : Additive N →+ Additive N := (MulAut.conjNormal g).toMonoidHom.toAdditive
+  let b := e.symm (g • origin)
+  have affine (x : Additive N) : e (L x + b) = g • e x := by
+    change ((MulAut.conjNormal g x.toMul) * coords.symm (g • origin)) • origin =
+      g • (x.toMul • origin)
+    rw [mul_smul]
+    have base : coords.symm (g • origin) • origin = g • origin := coords.apply_symm_apply _
+    rw [base]
+    change ((MulAut.conjNormal g x.toMul : N) : G) • (g • origin) =
+      g • ((x.toMul : G) • origin)
+    simp only [MulAut.conjNormal_apply, ← mul_smul, mul_assoc, inv_mul_cancel, mul_one]
+  let z (i : ℕ) := e.symm ((g^i) • origin)
+  have step (i : ℕ) : z (i+1) = L (z i) + b := by
+    apply e.injective
+    simp only [z,Equiv.apply_symm_apply,affine,pow_succ',mul_smul]
+  have closed : z m = z 0 := by simp [z,torsion]
+  obtain ⟨x,hx⟩ := fixed_of_coprime_affine_orbit L b m ((Nat.card_congr e).symm ▸ coprime)
+    z step closed
+  exact ⟨e x,(affine x).symm.trans (congrArg e hx)⟩
+
+/-- In a finite transitive solvable permutation action, an element whose
+order is coprime to the number of points fixes a point. -/
+theorem solvable_coprime_fixed {G X : Type*} [Group G] [Group.IsSolvable G]
+    [MulAction G X] [IsPretransitive G X] [Finite X] [Nonempty X]
+    (g : G) {m : ℕ} (coprime : (Nat.card X).Coprime m) (torsion : g^m = 1) :
+    ∃ x : X, g • x = x := by
+  classical
+  by_cases prim : IsPreprimitive G X
+  · let ρ := MulAction.toPermHom G X
+    let M := ρ.range
+    let f : X →ₑ[ρ.rangeRestrict] X := ⟨id, fun _ _ => rfl⟩
+    let : Group.IsSolvable M := Group.isSolvable_of_surjective ρ.rangeRestrict_surjective
+    let : IsPreprimitive M X := IsPreprimitive.of_surjective (f := f) Function.surjective_id
+    apply primitive_coprime_fixed (ρ.rangeRestrict g) coprime
+    rw [← map_pow,torsion,map_one]
+  obtain ⟨B,block,nontrivial⟩ : ∃ B : Set X, IsBlock G B ∧ ¬ IsTrivialBlock B := by
+    by_contra! all
+    exact prim ⟨fun h => all _ h⟩
+  have nonsingle : ¬ B.Subsingleton := fun h => nontrivial (Or.inl h)
+  have proper : B ≠ Set.univ := fun h => nontrivial (Or.inr h)
+  have two : 1 < B.ncard := Set.one_lt_ncard_iff_nontrivial.mpr
+    (Set.not_subsingleton_iff.mp nonsingle)
+  have present := ((Set.ncard_pos (s := B)).mp (by omega : 0 < B.ncard))
+  have product := block.ncard_block_mul_ncard_orbit_eq present
+  have orbPos : 0 < (orbit G B).ncard := (Set.ncard_pos (s := orbit G B)).mpr (MulAction.nonempty_orbit B)
+  have smallerOrbit : Nat.card (orbit G B) < Nat.card X := by
+    change (orbit G B).ncard < Nat.card X
+    nlinarith
+  have simpOrbit : (Nat.card (orbit G B)).Coprime m :=
+    coprime.coprime_dvd_left ⟨B.ncard,product.symm.trans (Nat.mul_comm _ _)⟩
+  let : Nonempty (orbit G B) := ⟨⟨B,mem_orbit_self B⟩⟩
+  obtain ⟨C,fixed⟩ := solvable_coprime_fixed (X := orbit G B) g simpOrbit torsion
+  obtain ⟨t,ht⟩ := C.property
+  have translated : IsBlock G (C : Set X) := ht ▸ block.translate t
+  have count : (C : Set X).ncard = B.ncard := by rw [← ht, Set.ncard_smul_set]
+  have smallBlock : Nat.card (C : Set X) < Nat.card X := count.trans_lt (Set.ncard_lt_card proper)
+  have copBlock : (Nat.card (C : Set X)).Coprime m := by
+    change (C : Set X).ncard.Coprime m
+    rw [count]
+    exact coprime.coprime_dvd_left (block.ncard_dvd_card present)
+  let : Nonempty (C : Set X) := Set.nonempty_coe_sort.mpr ((Set.ncard_pos (s := (C : Set X))).mp (by omega))
+  let : IsPretransitive (stabilizer G (C : Set X)) (C : Set X) := ⟨fun x y => by
+    have mem : (y : X) ∈ orbit (stabilizer G (C : Set X)) (x : X) := by
+      rw [translated.orbit_stabilizer_eq x.property]
+      exact y.property
+    obtain ⟨s,hs⟩ := mem
+    exact ⟨s,Subtype.ext hs⟩⟩
+  let gC : stabilizer G (C : Set X) := ⟨g,congrArg Subtype.val fixed⟩
+  obtain ⟨x,hx⟩ := solvable_coprime_fixed (X := (C : Set X)) gC copBlock
+    (by apply Subtype.ext; exact torsion)
+  exact ⟨x,congrArg Subtype.val hx⟩
+termination_by Nat.card X
+decreasing_by all_goals assumption
+
+/-- In any transitive solvable action on a power of two points, every group
+element has a cycle of power-of-two length. -/
+theorem solvable_dyadic_period {G X : Type*} [Group G] [Finite G] [Group.IsSolvable G]
+    [MulAction G X] [IsPretransitive G X] [Finite X] [Nonempty X]
+    (r : ℕ) (size : Nat.card X = 2^r) (g : G) :
+    ∃ (x : X) (j : ℕ), IsPeriodicPt (MulAction.toPermHom G X g) (2^j) x := by
+  obtain ⟨j,m,odd,order⟩ := Nat.exists_eq_two_pow_mul_odd (orderOf_pos g).ne'
+  have torsion : (g^(2^j))^m = 1 := by rw [← pow_mul,← order,pow_orderOf_eq_one]
+  have coprime : (Nat.card X).Coprime m := size ▸ odd.coprime_two_left.pow_left r
+  obtain ⟨x,hx⟩ := solvable_coprime_fixed (X := X) (g^(2^j)) coprime torsion
+  refine ⟨x,j,?_⟩
+  change ((MulAction.toPermHom G X g : X → X)^[2^j]) x = x
+  rw [← Equiv.Perm.coe_pow, ← map_pow]
+  exact hx
+
+/-- A simple cycle of length 2^k lifts to a simple cycle of length 2^d,
+k ≤ d ≤ k+r, if its edge matchings belong to a finite solvable group acting
+transitively on the 2^r sheets. -/
+theorem lift_solvable_two_power {U X H : Type*} [Group H] [Finite H] [Group.IsSolvable H]
+    [MulAction H X] [IsPretransitive H X] [Finite X] [Nonempty X]
+    {G : SimpleGraph U} (r : ℕ) (size : Nat.card X = 2^r) {k : ℕ} (hk : 2 ≤ k)
+    (steps : Fin (2^k) → H) (label : Fin (2^k) × X ↪ U)
+    (adj : ∀ i x, G.Adj (label (i,x)) (label (i+1,steps i • x))) :
+    ∃ d : ℕ, k ≤ d ∧ d ≤ k+r ∧ cycleGraph (2^d) ⊑ G := by
+  classical
+  let n := 2^k
+  let edge (i : Fin n) := MulAction.toPermHom H X (steps i)
+  have accumulated (t : ℕ) : ∃ a : H, ∀ x : X, ((advance edge)^[t] (0,x)).2 = a • x := by
+    induction t with
+    | zero => exact ⟨1,fun x => (one_smul H x).symm⟩
+    | succ t ih =>
+      obtain ⟨a,ha⟩ := ih
+      refine ⟨steps (t : Fin n) * a,fun x => ?_⟩
+      rw [iterate_succ_apply']
+      change steps _ • ((advance edge)^[t] (0,x)).2 = (steps _ * a) • x
+      have pos : ((advance edge)^[t] (0,x)).1 = (t : Fin n) := by simp [phase]
+      rw [pos,ha,mul_smul]
+  obtain ⟨a,ha⟩ := accumulated n
+  obtain ⟨x,j,hx⟩ := solvable_dyadic_period r size a
+  have eq : (lap edge : X → X) = MulAction.toPermHom H X a := funext ha
+  have period : IsPeriodicPt (lap edge) (2^j) x := eq ▸ hx
+  obtain ⟨d,_,hd⟩ := (Nat.dvd_prime_pow Nat.prime_two).mp period.minimalPeriod_dvd
+  have count : 2^d ≤ 2^r := by
+    let := Fintype.ofFinite X
+    rw [← hd,← size,Nat.card_eq_fintype_card]
     exact minimalPeriod_le_card
   have bound : d ≤ r := (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp count
   have length : minimalPeriod (advance edge) (0,x) = 2^(k+d) := by
