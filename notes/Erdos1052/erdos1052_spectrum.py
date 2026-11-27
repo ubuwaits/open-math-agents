@@ -65,19 +65,23 @@ def next_primes(previous, ceiling, tokens, bases):
 
 
 def exclude_interval(low, high, bases=(), required=(3, 5, 7, 19, 223),
-                     bit_cap=256, node_cap=200000, sharpen_tail=False):
+                     bit_cap=256, node_cap=200000, sharpen_tail=False, forbidden=(),
+                     multiplicities=None):
     """Exclude [low, high) for products of compatible primes with the required members.
 
     Inconclusive branches (including either resource limit) return None.
     A success gives (nodes, largest ceiling) for the entire finite certificate.
     """
     bases = tuple(sorted(bases))
+    initial = None if multiplicities is None else tuple(multiplicities[p] for p in bases)
     required = tuple(sorted(required))
+    forbidden = frozenset(forbidden)
     nodes = 0
     largest = 0
 
-    def visit(previous, tokens, numerator, denominator, missing):
+    def visit(previous, tokens, numerator, denominator, missing, remaining):
         nonlocal nodes, largest
+        available = bases if remaining is None else tuple(p for p,e in zip(bases,remaining) if e)
         nodes += 1
         if nodes > node_cap:
             return False
@@ -94,14 +98,14 @@ def exclude_interval(low, high, bases=(), required=(3, 5, 7, 19, 223),
             # cross the prefix. Every other path starts at a smooth shift.
             ceiling = max(previous, (2*len(tokens)+4)*target//gap)
             while (Fraction(2*len(tokens), ceiling+1)
-                   + root_loss(bases, ceiling+1)) * target >= gap:
+                   + root_loss(available, ceiling+1)) * target >= gap:
                 ceiling = 2*ceiling+1
                 if ceiling.bit_length() > bit_cap:
                     return False
         if ceiling.bit_length() > bit_cap:
             return False
         largest = max(largest, ceiling)
-        candidates = next_primes(previous, ceiling, tokens, bases)
+        candidates = next_primes(previous, ceiling, tokens, available)
         if sharpen_tail and not missing:
             far = 8*(ceiling+1)
             # Choose a suffix predecessor whenever one exists. Every suffix
@@ -110,12 +114,12 @@ def exclude_interval(low, high, bases=(), required=(3, 5, 7, 19, 223),
             scale = 1 << (far.bit_length()+24)
             def rounded(n, d):
                 return (n*scale+d-1)//d
-            smooth = root_loss(bases, far+1)
+            smooth = root_loss(available, far+1)
             charge = rounded(smooth.numerator, smooth.denominator)
             per_token = [rounded(2, far+1)]*len(tokens)
             charge += sum(per_token)
             choices = []
-            for row in sorted(next_primes(previous, far, tokens, bases), reverse=True):
+            for row in sorted(next_primes(previous, far, tokens, available), reverse=True):
                 q, _, mask, _ = row
                 bound = rounded(2, q+1)
                 if mask:
@@ -128,13 +132,28 @@ def exclude_interval(low, high, bases=(), required=(3, 5, 7, 19, 223),
                     choices.append(row)
             candidates = reversed(choices)
         for q, d, mask, factor in candidates:
+            if q in forbidden or q in bases:
+                continue
+            new_remaining = remaining
+            if remaining is not None:
+                odd = factor//(factor & -factor)
+                if odd != 1:
+                    counts = list(remaining)
+                    for i,p in enumerate(bases):
+                        while odd % p == 0:
+                            odd //= p
+                            counts[i] -= 1
+                    if min(counts) < 0:
+                        continue
+                    new_remaining = tuple(counts)
             new_tokens = tuple(t for i, t in enumerate(tokens) if not (mask >> i) & 1) + (q,)
             new_missing = missing[1:] if missing and q == missing[0] else missing
-            if not visit(q, new_tokens, numerator*factor, denominator//d*q, new_missing):
+            if not visit(q, new_tokens, numerator*factor, denominator//d*q, new_missing,
+                         new_remaining):
                 return False
         return True
 
-    if visit(1, (), 1, 1, required):
+    if visit(1, (), 1, 1, required, initial):
         return nodes, largest
     return None
 
@@ -311,9 +330,62 @@ def odd_multiplier_at_sixteen():
     assert gcd(layer,5*65537) == 1
 
 
+def supplier_and_large_base_certificates():
+    """Check the universal suppliers and the margins after deleting very large bases."""
+    two = Fraction(2)
+    s = Fraction(1, 4096)
+    pure = 4*s/(3*(1-s))
+    mixed = 3*s/32
+    assert two*(1-s*s)*(1-pure-mixed)/(1+Fraction(1, 1 << 16)) > two-Fraction(1, 1024)
+    for first, second in SUPPLIERS[1:]:
+        check(f"Alternative suppliers {first},{second}", two-Fraction(1,1024), two,
+              required=(3, 5, 7, first, second))
+    low = two*(1-s*s)*(1-pure-mixed)/(1+Fraction(1, 1 << 64))
+    fixed = (3, 5, 7, 19, 223)
+    for extra, forbidden in (((), (31,)), ((31,), (607,991)), ((31,991), (1783,)),
+                             ((31,607), (3967,8191))):
+        result = exclude_interval(low, two, required=fixed+extra, forbidden=forbidden,
+                                  sharpen_tail=True)
+        assert result is not None
+        print(f"Compulsory member of {forbidden} with {extra}: {result[0]} nodes")
+    assert all(certified_prime(q) for q in (31,607,991,1783,3967,8191))
+    assert prod(Fraction(q+1,q) for q in fixed+(31,607,991)) > two
+
+    # Joint correction for all bases above the cutoff in section 8.
+    keep = 1-Fraction(1, 1 << 100)
+    power = 1+Fraction(1, 1 << 64)
+    for p, e, a, bits in ((65537, 16, 80, 72), (167772161, 2, 64, 40)):
+        lower = two*keep/((1+Fraction(1, p**e))*(1+Fraction(1, 1 << a)))
+        assert lower > two-Fraction(1, 1 << bits)
+    small = Fraction(1, 1 << 38)
+    assert two*keep*(1-small**2)*(1-3*small/(1-small))/power > two-Fraction(1,1 << 35)
+    for p, r, threshold in ((274177, 67280421310721, 2), (137089, 67280421310721, 5),
+                            (13709, 67280421310721, 5), (114689, 26017793, 3)):
+        for e in range(2, threshold+1):
+            lower = two*keep/((1+Fraction(1, p**e))*(1+Fraction(1, r*r))*power)
+            upper = two/(1+Fraction(1, p**e)) if e < threshold else two
+            check(f"Large additional bases at {p},{r}, exponent {e}", lower, upper, (p,r))
+    for v, (p,r) in SPLITS.items():
+        if v != 12:
+            lower = two*keep/((1+Fraction(1, p*p))*(1+Fraction(1, r*r))*power)
+            check(f"Large additional bases at F_{v}", lower, two, (p,r))
+    for v,bits in ((10,38), (14,39), (16,40), (17,39)):
+        bound = 1 << bits
+        for p in PATHS[v]:
+            if 4096 < p <= 1 << 39:
+                lower = two*keep*(1-Fraction(4,bound-1)) / (
+                    (1+Fraction(1,p*p))*(1+Fraction(1,bound**2))*power)
+                check(f"Large additional bases at F_{v}, {p} with large partner", lower, two, (p,))
+            if p>4096 and v == 10:
+                r = 45592577
+                lower = two*keep/((1+Fraction(1,p*p))*(1+Fraction(1,r*r))*power)
+                check(f"Large additional bases at F_{v}, {p} with {r}", lower, two, (p,r))
+
+
 if __name__ == "__main__":
     single_base_certificates()
     two_base_certificates()
     remaining_two_base_valuations()
     additional_base_exclusions()
     odd_multiplier_at_sixteen()
+    supplier_and_large_base_certificates()

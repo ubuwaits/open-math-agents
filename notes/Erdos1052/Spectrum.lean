@@ -301,4 +301,146 @@ theorem prime_path_product_irrational {q j : ℕ → ℕ}
       (show Tendsto (fun n => ((q 0:ℝ)+1)/((q n:ℝ)/2^(s n))) atTop
         (𝓝 (((q 0:ℝ)+1)/x)) from tendsto_const_nhds.div ht hx.ne_zero)
 
+private theorem five_transition : ∀ x y : ZMod 5, ∀ d : Fin 4,
+    x ≠ 0 → y ≠ 0 → (d.val=1 ∨ d.val=3) → y+1=2^d.val*x →
+    y ≠ 4 ∧ (x=3 → y=3 ∧ d.val=3) ∧
+      (x=2 → y=3) ∧ (x=1 → y=1 → d.val=1) := by decide
+
+/-- On a pure prime path with odd jumps, reduction modulo five fixes both
+the eventual residue of the primes and the eventual jump class modulo four. -/
+theorem eventual_class_mod_four {q j : ℕ → ℕ}
+    (hq : ∀ n, (q n).Prime) (hlarge : ∀ n, 5 < q n) (hj : ∀ n, Odd (j n))
+    (hstep : ∀ n, q (n+1)+1=2^(j n)*q n) :
+    ∃ N r : ℕ, (r=1 ∨ r=3) ∧ ∀ n, N ≤ n → q n % 5=r ∧ j n % 4=r := by
+  let x (n : ℕ) : ZMod 5 := q n
+  have hx n : x n ≠ 0 := by
+    intro he
+    have hd : 5 ∣ q n := (ZMod.natCast_eq_zero_iff (q n) 5).mp he
+    have hp := (Nat.prime_dvd_prime_iff_eq (by decide : Nat.Prime 5) (hq n)).mp hd
+    have := hlarge n
+    omega
+  have trans n := by
+    let d : Fin 4 := ⟨j n % 4, Nat.mod_lt _ (by decide)⟩
+    have hr : d.val=1 ∨ d.val=3 := by
+      obtain ⟨k,h⟩ := hj n
+      dsimp [d]
+      omega
+    have hp : (2:ZMod 5)^(j n) = 2^d.val := by
+      have hh : j n = d.val+4*(j n/4) := (Nat.mod_add_div _ _).symm
+      conv_lhs => rw [hh,pow_add,pow_mul]
+      rw [show (2:ZMod 5)^4=1 by decide, one_pow, mul_one]
+    have he : x (n+1)+1 = (2:ZMod 5)^d.val*x n := by
+      rw [←hp]
+      simpa [x] using congrArg (fun z : ℕ => (z : ZMod 5)) (hstep n)
+    exact five_transition (x n) (x (n+1)) d (hx _) (hx _) hr he
+  have value n (r : ℕ) (hr : r < 5) (he : x n = (r:ZMod 5)) : q n % 5=r := by
+    have hh := congrArg ZMod.val he
+    simpa [x,ZMod.val_natCast,Nat.mod_eq_of_lt hr] using hh
+  by_cases hit : ∃ k, x k=3
+  · obtain ⟨k,hk⟩ := hit
+    have stays : ∀ t, x (k+t)=3 := by
+      intro t
+      induction t with
+      | zero => simpa using hk
+      | succ t ih => exact ((trans (k+t)).2.1 ih).1
+    refine ⟨k,3,Or.inr rfl,?_⟩
+    rintro n hn
+    obtain ⟨t,rfl⟩ := Nat.exists_eq_add_of_le hn
+    exact ⟨value _ 3 (by decide) (stays t), ((trans (k+t)).2.1 (stays t)).2⟩
+  · push Not at hit
+    have isOne : ∀ n, x (n+1)=1 := by
+      intro n
+      have h2 : x (n+1) ≠ 2 := fun h => hit _ ((trans (n+1)).2.2.1 h)
+      have only : ∀ z : ZMod 5, z≠0 → z≠2 → z≠3 → z≠4 → z=1 := by decide
+      exact only _ (hx _) h2 (hit _) (trans n).1
+    refine ⟨1,1,Or.inl rfl,?_⟩
+    rintro (_|n) hn
+    · omega
+    · exact ⟨value _ 1 (by decide) (isOne n),
+        (trans (n+1)).2.2.2 (isOne n) (isOne (n+1))⟩
+
+/-- Every infinite pure prime path escapes any two prescribed positive odd
+jumps, one in each odd residue class modulo four, infinitely often. -/
+theorem escapes_two_jumps {q j : ℕ → ℕ} {u w : ℕ}
+    (hu : u % 4=1) (hw : w % 4=3)
+    (hq : ∀ n, (q n).Prime) (hlarge : ∀ n, 5 < q n) (hj : ∀ n, Odd (j n))
+    (hstep : ∀ n, q (n+1)+1=2^(j n)*q n) :
+    ∀ M, ∃ n ≥ M, j n ≠ u ∧ j n ≠ w := by
+  intro M
+  by_contra! h
+  obtain ⟨N,r,hr,ht⟩ := eventual_class_mod_four hq hlarge hj hstep
+  let L := max N M
+  let d := if r=1 then u else w
+  have he n : j (L+n)=d := by
+    have h₁ : N ≤ L+n := (le_max_left N M).trans (Nat.le_add_right _ _)
+    have h₂ : M ≤ L+n := (le_max_right N M).trans (Nat.le_add_right _ _)
+    have hh := (ht _ h₁).2
+    have hor : j (L+n)=u ∨ j (L+n)=w := by
+      by_cases ha : j (L+n)=u
+      · exact Or.inl ha
+      · exact Or.inr (h _ h₂ ha)
+    rcases hr with h₃|h₃ <;> rcases hor with h₄|h₄ <;> simp_all [d]
+  have hd : 1 ≤ d := by dsimp [d]; split <;> omega
+  have htwo : 2 ≤ (2:ℕ)^d := by simpa using Nat.pow_le_pow_right (by decide : 0 < 2) hd
+  have hrec n : q (L+(n+1))+1=2^d*q (L+n) := by
+    simpa [←Nat.add_assoc,he] using hstep (L+n)
+  have hinc : StrictMono (fun n => q (L+n)) := strictMono_nat_of_lt_succ fun n => by
+    have hm := Nat.mul_le_mul_right (q (L+n)) htwo
+    have hh := hrec n
+    have hl := hlarge (L+n)
+    omega
+  apply no_bounded_errors (q:=fun n => q (L+n)) (j:=fun _ => d) (z:=fun _ => 1)
+    (B:=2^d-1) (fun _ => hq _) (fun n hq2 => by have := hlarge (L+n); omega) hinc hrec
+    (fun _ => by decide) (fun _ => by omega)
+  intro n
+  simp
+  omega
+
+/-- Uniform lower estimate for the reciprocal loss of the normalized group
+near a power of two. It applies both to Mersenne terminals and to a
+neighborhood of the dyadic powers. -/
+theorem normalized_layer_loss {y δ z : ℚ} (hy : 0 ≤ y) (hy1 : y ≤ 1)
+    (hd : 0 ≤ δ) (hd1 : δ ≤ 1/2) (hz : 0 ≤ z) (hu : z ≤ y^2) :
+    (1-δ)*y-3*y^2 ≤ 1-(1+z)/((1+y)*(1-δ*y)) := by
+  let x := (1-δ)*y-δ*y^2
+  have hδy : δ*y ≤ δ := by simpa using mul_le_mul_of_nonneg_left hy1 hd
+  have hx0 : 0 ≤ x := by
+    dsimp [x]
+    nlinarith [mul_nonneg hy (show 0 ≤ 1-δ-δ*y by linarith)]
+  have hxy : x ≤ y := by
+    dsimp [x]
+    nlinarith [mul_nonneg hd hy, mul_nonneg hd (sq_nonneg y)]
+  have hx2 : x^2 ≤ y^2 := by nlinarith [mul_nonneg (sub_nonneg.mpr hxy) (add_nonneg hy hx0)]
+  have hd2 : δ*y^2 ≤ y^2 := by
+    simpa using mul_le_mul_of_nonneg_right (show δ≤1 by linarith) (sq_nonneg y)
+  have he : (1+y)*(1-δ*y)=1+x := by dsimp [x]; ring
+  rw [he]
+  calc (1-δ)*y-3*y^2 ≤ x-x^2-z := by dsimp [x] at *; linarith
+       _ ≤ 1-(1+z)/(1+x) := by
+         rw [le_sub_comm,div_le_iff₀ (by linarith : 0<1+x)]
+         nlinarith [pow_nonneg hx0 3, mul_nonneg hx0 hz]
+
+theorem mersenne_loss_gap {y δ L : ℚ} (hy : 0 < y) (hsmall : y ≤ 1/65536)
+    (hlo : (1-δ)*y-3*y^2 ≤ L)
+    (hhi : L ≤ (23/24-δ)*y+2*y^2) : False := by
+  nlinarith [mul_pos hy (show 0 < 1/24-5*y by linarith)]
+
+private def smallResidues : List (ℤ × ℤ) := [(3,1),(5,1),(7,2),(11,9),(13,3)]
+
+/-- An upper bound in units of 1/(1024*(X-1)) for a path starting at
+2^t*X+c, with the five congruences forced in the Fermat-terminal case. -/
+def fermatPathBound : ℕ → ℕ → ℤ → ℕ
+  | 0, _, _ => 2
+  | fuel+1, t, c =>
+    if 10<t then 2
+    else if smallResidues.any (fun pr => ((2:ℤ)^t*pr.2+c)%pr.1=0) then 0
+    else 2^(10-t)+(List.range (10-t)).foldl (fun best i =>
+      let j := i+1
+      if j%2=1 then max best (fermatPathBound fuel (t+j) (2^j*c-1)) else best) 2
+
+theorem fermat_path_table :
+    [1,3,5,7,9].map (fun t => fermatPathBound 11 t (-1))=[533,194,0,14,5] ∧
+    [2,4,6,8,10].map (fun t => fermatPathBound 11 t ((2:ℤ)^t-1))=[266,117,27,6,0] := by
+  decide
+
 end Erdos1052.Spectrum

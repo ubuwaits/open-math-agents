@@ -21,6 +21,24 @@ less than exp(2^56), independently of the number of core bases. The
 separate bound min(P)<2^38 |P| follows directly from
 Theorem 1. Section 6 proves the absolute bound.
 
+Theorem 4. Fix a permitted h and cancel the fixed odd seeds C and
+F=2^h+1. Let D be the remaining divisor of c. Every odd multiplier b
+satisfies D ≥ (2^24+1)^Ω(b). In particular D≤2^24 forces a=h.
+Sections 8 and 9 give the compulsory small prime groups and the exact
+finite certificate. They also bound a for many arbitrarily large D.
+
+Theorem 5. At any fixed sparse core, exponent finiteness is equivalent
+to a uniform bound on the number of simple primes congruent to 31
+modulo 32. Given such a bound, the proof in section 10 computes an
+upper bound for b. Whether sparsity alone bounds this count is open.
+
+Theorem 6. If the remaining divisor D at h is a prime one unit from
+a power of two, of any size, then a=h. A second sufficient condition on an arbitrary D is
+that |D/2^k−1|≤2^(−h−7) for some integer k and that the sum of 1/p
+over its distinct prime divisors is at most 2^(−h−7). Section 12
+proves the Mersenne case and the second criterion. Section 13 proves
+the Fermat case.
+
 1. Input from the order and small-prime arguments
 
 We use the following earlier sparse-core conclusions. All sparse
@@ -356,8 +374,12 @@ than 2^−38. Each successor path contributes at most its starting w.
 The core itself contributes at most 1/(1−s/L), using e≥2.
 Since 64|a, the retained ordinary product is at least
 2(1−s/L)(1−2^−38)/(1+2^−64)>2−2^−35 and is strictly below 2.
-The five mandatory small primes survive. This contradicts section 3's
-neutral certificate, and proves Theorem 3.
+The small supplier primes survive. For arbitrary s<1/4096, section 8
+below proves that (19,223) is the mandatory supplier pair. This gives
+the five primes required in section 3's neutral certificate and proves
+Theorem 3. Alternatively the neutral interval is excluded for all four
+original supplier pairs, in 112, 27, 13 and 44 nodes with the sharpened
+tail. The size of each base alone does not bound their reciprocal sum.
 
 The same sieve controls deletions when only the bases above L are
 removed and smaller fixed bases are retained. For pure starts
@@ -452,3 +474,420 @@ supports surviving these tests.
 FermatSearch supplied numerical Fermat divisors. The certificates
 verify each divisor used in the proof independently.
 https://www.fermatsearch.org/factors/faclist.php
+
+8. Compulsory small primes at every sparse core
+
+Here and below s denotes the sum of reciprocal core bases. In deleting
+the paths that use a core base, the bound in section 3 can be sharpened.
+At a pure start q+1=2^j m with m>1 supported on P, one has q≡1 mod 3.
+For each m this prescribes the parity of j. Hence the sum of 2/2^j
+over the eligible j≥1 is at most 4/3. Summing over m costs at most
+4s/(3(1−s)). For mixed starts choose an ordinary predecessor r and a
+core divisor p. The predecessors chosen are distinct. None is 3, 5 or 7,
+since these three tokens are already spent in 5 and the two small suppliers.
+The sum of 1/r over all remaining ordinary primes is at most 3/32,
+since their product of 1+1/r is less than 2/((4/3)(6/5)(8/7))=35/32.
+The mixed starts therefore cost at most 3s/32 in reciprocal loss.
+At s₀=1/4096 the retained neutral product is at least
+
+    L(a₀)=2(1−s₀²)(1−4s₀/(3(1−s₀))−3s₀/32)/(1+2^(−a₀))
+
+whenever a≥a₀. The three alternative supplier pairs each exclude
+[2−1/1024,2) in the neutral test, and L(16)>2−1/1024. Thus 19 and
+223 are compulsory for every sparse core. In particular 13 cannot be
+simple since 13 and 223 would both use 7. For instance, at v₂(a)=6
+the mandatory repeated base 67280421310721 is 8 modulo 13 and 2
+modulo 3. Its exponent is divisible by 4: an odd exponent would
+supply an extra 3, and an exponent equal to 2 modulo 4 would force 13.
+
+Using a≥64, the neutral interval [L(64),2) yields the following further
+certificates. Each row excludes a support omitting all the primes in
+the second column while requiring the extra primes in the first.
+The five primes 3,5,7,19,223 are required in every row.
+
+    extra required     all omitted       nodes (sharpened tail)
+    none               31                  19
+    31                 607,991             14
+    31,991             1783                16
+    31,607             3967,8191           20
+
+All named primes are at most 8191 and survive the deletion. Including
+both 607 and 991 would give a product greater than 2. A prime below a
+larger prime in its shifted factor must belong to the same assigned seed
+group, since each ordinary prime has only one copy. Thus in every
+partition into seed groups, one of the following arrangements applies.
+Every displayed block lies wholly inside a single group. Different
+blocks may belong to the same group.
+
+    {3,5,19,607}, {7,223},      {31,3967}
+    {3,5,19,607}, {7,223},      {31},      {8191}
+    {3,5,19},     {7,223,1783}, {31,991}
+
+The identities 607+1=32·19, 991+1=32·31, 1783+1=8·223 and
+3967+1=128·31 give the connections beyond the original pairs.
+If both 3967 and 8191 occur in the first alternative, either of the
+first two arrangements can be used as a necessary condition.
+
+Write w_j for each block's product of 1+1/q. The three rows have weights
+
+    (1024/607, 256/223, 4096/3967)
+    (1024/607, 256/223, 32/31, 8192/8191)
+    (32/19, 2048/1783, 1024/991).
+
+If a particular group receives the blocks indexed by J, then
+
+    ∏_(j∈J) w_j ≤ β(group) < 2/∏_(j∉J) w_j.                        (5)
+
+Here the upper inequality follows by applying β(S)<2 to the group and
+its complement. This gives 32 short intervals, including overlaps.
+Their combined length on a base-two logarithmic scale is at most
+8 log₂(536977087/536870912)+16 log₂(34371000481/34359738368)
++8 log₂(33572107/33554432), less than 0.016 of one octave.
+
+9. A lower bound on the amount of core used by every prime-power layer
+
+Put F=2^h+1. For the entire variable group A=(2^a+1)/F, write D for
+its terminal divisor after the fixed seeds C,F are cancelled. Set
+k=floor(log₂(DF)) and R=DF/2^k. Since DF is odd and exceeds 1,
+1<R<2. If a>k, the unique normalized product in [1,2) is
+
+    β(A)=R/(1+2^(−a)).
+
+For any candidate interval [l,u) of (5), this rules out a>k if R≤l.
+If R>u, it gives 2^a<u/(R−u). All the upper endpoints in (5) are
+dyadic with denominator dividing 2^35, so a≤max(k,35) whenever R
+misses all the closed intervals. Known membership of the fixed groups
+discards any incompatible allocation of the small blocks. For instance,
+h=16 and D=13709 give a≤29, hence b=1. More generally the simpler
+condition 5/4≤R≤8/5 already gives a≤k: a group containing 19 has
+product at least 32/19 and one omitting its block has product below 19/16.
+
+For an odd prime l dividing b and 0≤i<v_l(b), consider the factor
+
+    A_i=(2^(u·l)+1)/(2^u+1),       u=h·l^i.
+
+Every such factor can be split simultaneously from (2^a+1)/F, by the
+cyclotomic factorization proved in the large-prime note, sections 9
+and 13. Descending allocation assigns pairwise disjoint ordinary
+supports, even if two numerical seed factors have a common prime.
+Their terminal divisors d_i have product dividing D. Section 13 of
+that note proves d_i>1 for each of these prime-power indices.
+
+We prove d_i>2^24. Otherwise d_i=p is prime with 4096<p≤2^24, since
+two prime factors counted with multiplicity already exceed 4096².
+Call its group product B. The odd balance says that B is a power of
+two times p(2^u+1)/(2^(u·l)+1). There are two ranges for u.
+
+If u=16, the exclusion 3∤b at h=16 gives 16·l≥80. Write
+m=p·65537 and R=m/2^floor(log₂m). Since floor(log₂m)<80, we get
+
+    R/(1+2^(−80)) ≤ B < R.
+
+Every other possible u is at least 64: h≥64 or h=16 and the prime
+dividing b is at least 5. Write T=p/2^floor(log₂p). Then
+T(1+2^(−64))<2 since p<2^24. The normalized value is
+
+    B=T(1+2^(−u))/(1+2^(−u·l)),       T<B<T(1+2^(−64)).
+
+Intersect the corresponding range with (5), requiring every member
+of the chosen blocks and forbidding every member of the complementary
+ones. For remaining intersections run the finite interval certificate
+of section 2, with one copy of p available in the shifted factors.
+A shift that uses p exhausts the copy. Subsequent starts and the tail
+bound then use the empty base set. Reject p itself as an ordinary prime
+throughout. These rules follow from ∏d(q) | p∏q within this group.
+
+The inclusive sieve through 2^24 examines 1,077,307 primes above
+4096. There are 34,750 nonempty interval tests and all close in 594,109
+nodes altogether. The separate verification enumerated the prime ranges
+by scaling the interval endpoints, used ordinary token subsets and the
+coarser tail (2·number of tokens+4)/(y+1), and closed the same 34,750
+tests in 1,081,584 nodes. Neither implementation caps the simple primes
+in the theorem. The reproducible certificate is small_terminal_certificate
+in erdos1052_chain_bounds.py.
+
+There are Ω(b) of the prime-power indices. Taking the product of
+d_i≥2^24+1 proves Theorem 4, including b=1 by the empty product.
+In particular a fixed core has only the allowed powers of two as
+exponents if D≤2^24 at every allowed h. Writing Ω_large(D) for the
+number of prime factors of D above 2^24 counted with multiplicity also
+gives 2Ω(b)≤Ω(D)+Ω_large(D), since a single-copy terminal must be
+large. These estimates leave the size of a single prime in b open when
+a sufficiently large terminal divisor is available.
+
+10. Counting simple primes in one residue class
+
+On an infinite pure path above 5 let q'=2^j q−1. Both primes are 1
+modulo 3, so j is odd. Write x=q mod 5. A successor is never 4 modulo
+5 since 5 does not divide 2q. For x=1 the two possibilities j≡1,3
+modulo 4 lead to x'=1,2, respectively. At x=2 only j≡1 is possible
+and it gives x'=3. At x=3 only j≡3 is possible and it gives x'=3.
+Thus either the path eventually stays at 1 with j≡1 modulo 4, or it
+eventually stays at 3 with j≡3 modulo 4.
+
+An eventually periodic sequence of jumps is impossible. Over a whole
+period the map on the current prime is affine with slope a power of two.
+Modulo the odd prime at the start of the periodic tail this is a
+permutation. Iterating the period returns to residue zero and produces
+a larger prime divisible by the starting prime. In particular no pure
+infinite path has all but finitely many jumps in {1,3}. The same holds
+for any prescribed pair of positive odd jumps, one in each class mod 4.
+Theorems eventual_class_mod_four and escapes_two_jumps in Spectrum.lean
+verify the mod-5 argument and this escape from each pair in Lean.
+
+Fix h,D and t. Consider finite ordinary supports compatible with D
+and containing at most t vertices with odd v₂(q+1) outside {1,3}.
+There is no infinite such support satisfying the balance at every
+prefix. Indeed there are only finitely many Mersenne starts: apart
+from the even exponent 2, a Mersenne prime exponent is odd, with all
+but the two designated values counted against t. There are at most
+Ω(D) other starts with core demand. As in section 7, there are then
+finitely many merges and core uses, leaving at least one infinite pure
+path if the support is infinite. Its eventual jumps would be in {1,3}.
+
+Here is a terminating way to extract a numerical exponent bound. At
+each sorted prefix W let U=D∏_(q∈W)q/∏_(q∈W)d(q) and B=β(W).
+The reduced denominator of B is odd, so B≠R for the nonintegral
+dyadic target R of section 9. If B>R, abandon that prefix. If B<R,
+choose an integer X>(2Ω(U)+4)(R+B)/(R−B). When the next prime is
+above X, the reciprocal loss of the whole suffix is at most
+(2Ω(U)+4)/(X+1): at most Ω(U) starting paths use a prefix token and
+every other start is a Mersenne prime. The resulting total product
+is at most (R+B)/2. Since its exact value is R/(1+2^(−a)) for a>k,
+this possibility gives 2^a+1≤2R/(R−B). Otherwise branch only on
+primes q≤X with d(q) dividing U, updating U to Uq/d(q) and charging
+each exceptional jump. This tree is finitely branching and has no
+infinite branch by the preceding paragraph, so it is finite by
+König's lemma. The maximum of k and its local exponent bounds works.
+The construction also permits using a provable upper bound for Ω(U).
+
+A bound on the number of q≡31 mod 32 bounds the count just used,
+since every exceptional odd jump is at least 5. Conversely the exact
+2-adic balance is v₂(σ*(c))+Σ_(q∈S)v₂(q+1)=a+1. Thus bounding a
+bounds the number of q≡31 mod 32 by floor((a+1)/5). This proves
+Theorem 5 after taking the maximum over the finitely many h at c.
+
+The finite-state calculation can allow additional odd jumps. With
+j in {3,7}, reduce modulo 7,11,13,17,19 in succession. For {1,9}
+use 7,11,13,17,19,23,29,31,37. Above each sieving prime p, both
+0 and −1 are forbidden residues on a pure path, the latter because
+the preceding prime exceeds p. The transitions are x↦2^j x−1.
+Every infinite walk eventually stays in one strongly connected
+component. A component with at most one internal label per vertex
+can only give an eventually periodic infinite word. Keep only the
+other components before adjoining the next modulus, counting distinct
+labels even when they have the same destination. The numbers of kept
+vertices are respectively (4,18,112,221,0) and
+(4,26,87,783,5445,576,576,9099,0). This verifies the same terminating
+exponent bound when only odd jumps outside {1,3,7,9} are counted.
+
+The exact balance also sharpens the several-path limit in section 7.
+Take a prefix beyond all finite paths, core uses and mergers, including
+a last vertex q_i on each surviving path. Its residual U has the form
+V∏q_i with V an odd positive integer. Each further path step replaces
+its corresponding prime token by its successor. Let E₀ be the total
+shift valuation of this prefix. After arbitrary further path segments
+with exponent sums s_i, the product is 2^(E₀+Σs_i)D/(V∏q_(i,n_i)).
+Sending all indices to infinity and using R=DF/2^k gives
+
+    F V ∏α_i = 2^(E₀+k).
+
+Hence the reduced numerator of the joint product is a power of two
+and its denominator is divisible by F. Individual path irrationality
+and the mod-5 restriction do not yet exclude this equality.
+
+11. Bounded witnesses among the repeated primes
+
+Put L=exp(2^128). At any permitted v=v₂(a) there are at least two
+distinct repeated primes at most max(L,2^(2^v)+1). For 6≤v≤19 at
+least three distinct repeated primes are at most L. These bounds
+allow arbitrarily many other core primes and arbitrary multiplicities.
+
+Delete all paths using a core base larger than L. At mixed starts the
+total loss is below 1/L. At pure starts pick one such base r and write
+q+1=2^j m r. For each j,m the sieve (4) applies at L and summing
+2/(2^j m) costs at most 2/(1−s). Their loss is bounded by
+100000/((1−s)log L). The abundancy of the deleted part of the core is
+at most 1/(1−s/L). Even together these corrections retain a factor
+greater than 1−2^−100 at the lower endpoint of each interval. The
+same estimates apply for any higher cutoff. If the core has at most
+t bases the alternative cutoff 2^104 t suffices: the reciprocal sum
+above it is at most 2^−104, and summing over a designated large factor
+in each start gives loss at most 2·2^−104/(1−s)+2^−104. In the
+three-prime assertion also take the maximum with 2^(2^v)+1 to contain
+all witnesses below the Fermat seed.
+
+If only one base p is at most max(L,2^(2^v)+1), the Fermat seed's
+required prime equal to 2 modulo 3 is p. All forced descending paths
+from this seed are also below the cutoff. If p≥2^38, remove p from
+the retained set by section 3, with s there replaced by 2^−38.
+Even with the additional 1−2^−100 factor this contradicts the neutral
+gap. For smaller p the sole-base Fermat sieve from section 4 applies
+to this fixed seed and its descendants, leaving 65537 or 167772161.
+At 65537 the seed gives v=4 and a≥80, and the known small-prime
+constraints still give 16|e. At 167772161 we can use a≥64. The single
+base spectrum intervals in section 4 absorb the 1−2^−100 correction
+in either case.
+
+For 6≤v≤19 the entire Fermat seed is below L. It already forces the
+two small witnesses described in section 5. If these are the only two
+bases below L, repeat the two-base argument there on the retained set.
+If both exceed 2^39, their combined reciprocal mass is below 2^−38
+and the corrected neutral gap applies. For an enumerated pair or a
+single known base with partner above the stated bound, multiply the
+lower endpoint from section 5 by 1−2^−100. Every resulting interval
+is still excluded. The calculations, including the small-prime
+certificates in section 8, are in supplier_and_large_base_certificates.
+An upper bound for the entire repeated core and a proof that uniformly
+bounds the single large primes in b for every sparse core remain open.
+
+12. Mersenne residual divisors of arbitrary size
+
+Let D=p=2^k−1 be prime in the group A=(2^a+1)/(2^h+1), with
+b=a/h>1 odd. Here h is the allowed power-of-two part of a. Put Y=2^h,
+y=1/Y, z=2^(−a)≤y³ and write L(B)=1−1/B for reciprocal loss. The
+same proof works for an individual first layer with a=h·l and l|b prime.
+
+First suppose k>h. Since k is an odd prime, d=k−h is odd. Put
+δ=2^(−d), so 1/p=δy/(1−δy). Normalizing the group identity gives
+
+    B=(1+y)(1−δy)/(1+z),           1<B<1+y.
+
+The inequalities follow from δ≤1/2 and y≤1/65536. Every prime in the
+group is therefore greater than Y. A lower bound on its reciprocal loss is
+
+    L(B) ≥ (1−δ)y−3y².                                               (6)
+
+Indeed, for x=(1−δ)y−δy² one has 0≤x≤y and
+1−(1+z)/(1+x)≥x−x²−z. The latter inequality follows on multiplication
+by 1+x, since x³+xz≥0.
+
+Remove the one possible vertex using p in its shifted factor and its
+successors. Its path costs at most 1/p≤δy+2y². The rest is neutral.
+A neutral path can start only at a Mersenne prime above Y. If
+r=2Y−1 is such a prime, h+1 is prime, hence v₂(h) is a power of two
+and is divisible by 4 since v₂(h)≥4. It follows that h≡6 mod 10
+and 2r−1=2^(h+2)−3 is divisible by 11. The next possibilities 4r−1
+and 6r−1 are excluded by divisibility by 3 in the prime or its shift.
+Thus a successor of r is at least 8r−1. The entire path costs at most
+1−1/((1+1/r)w(8r−1))=5y/8. This also bounds its cost if r is absent.
+The remaining neutral starts have exponents h+3,h+5,... and total
+loss at most y/3.
+
+If d≥3, the Mersenne start at exponent h+d is p itself. It cannot occur
+in the ordinary group, so subtract 2δy from that last upper estimate.
+The resulting bound is
+
+    L(B) ≤ (23/24−δ)y+2y².
+
+This contradicts (6) since 5y<1/24. If d=1, the start 2Y−1 is p
+and is absent. The same check of 2p−1,4p−1,6p−1 shows that any
+vertex using p is at least 8p−1. Its cost is at most 1/(4p).
+Together with y/3 for the remaining starts this gives at most
+(11/24)y+2y². This is precisely the same contradiction at δ=1/2.
+
+Now let k≤h. Here B=2(1−2^(−k))(1+y)/(1+z), which is greater
+than 2(1−2^(−k)) and less than 2. For k≥37 this forces the five
+small mandatory primes through 223 into this group: if one of them
+were absent its contribution in the complement would put the total
+above 2. They survive removing the one possible p-using path. The
+remaining neutral product is at least (1−1/p)B>2−2^(2−k)≥2−2^−35,
+which contradicts the neutral gap in section 3. The case k≤24
+is covered by Theorem 4. Between 24 and 37 the only prime exponents
+are 29 and 31, and 233 divides 2^29−1. For k=31, h≥64. Set
+T=(2^31−1)/2^30. Three intervals from (5) intersect
+[T,T(1+2^−64)). With one copy of p available the finite certificates
+close in 90, 83 and 18 nodes. This completes the proof for all p.
+
+There is a neighborhood of the dyadic powers with a related exclusion
+that allows arbitrary residual factorizations. Suppose D=2^k(1+ε)
+with |ε|≤y/128, and put t=Σ_(p|D)1/p≤y/128. Assuming b>1, the
+normalized group has B=(1+ε)(1+y)/(1+z) in (1,1+2y). Every ordinary
+prime in it exceeds Y. If its least prime were at most Y, its odd
+shift could not use any core prime since every p|D is at least 128Y.
+It would be a Mersenne prime. The value Y−1 is composite since h is
+even, and a smaller Mersenne prime is at most Y/2−1, already giving
+product greater than 1+2y.
+
+Remove the core-using paths. Section 3 bounds their loss by 3t/(1−t).
+The neutral remainder has loss at most (5/8+1/3)y=23y/24 as above.
+By monotonicity, (6) with δ=1/128 bounds L(B) from below. This gives
+
+    (127/128)y−3y² ≤ L(B) ≤ (23/24+3/127)y,
+
+impossible for y≤1/65536. Thus every allowed h passing either
+criterion has only the candidate a=h. To conclude exponent finiteness
+at a specified c, evaluate the criteria at each of its finitely many h.
+
+Spectrum.lean proves (6), the strict contradiction in the Mersenne
+case, and the prime-path escape theorem. LayerMass.lean derives the
+multiplicative bound from the subgroup bounds and the original odd
+balance, splitting the supports of all prime-power cyclotomic factors
+in Lean. The finite interval computations are verified with rational
+arithmetic in Python. The full fixed-core finiteness statement is open.
+
+13. Fermat residual divisors of arbitrary size
+
+Suppose D=p=2^k+1 is prime. Here k is a power of two and k≥16 by
+sparsity. If k>h then k≥2h, so 2^(−k) and 1/p are at most 2^(−h−7).
+The neighborhood criterion of section 12 gives b=1. Suppose instead
+b>1 and put X=2^k. If k=h, the group's product is
+(1+1/X)²/(1+2^(−a)). Every prime in the group exceeds X/2−1.
+The Mersenne starts begin at exponent k+1 since X−1 is composite,
+with total reciprocal loss at most 4/(3X). Any p-using vertex is
+at least 4p−1, since 2p−1 is divisible by 3. It adds at most 1/(2p).
+But X times the required reciprocal loss is at least (2X−1)/(X+1),
+which exceeds 11/6, a contradiction.
+
+It remains to handle k<h. Here h≥2k, and
+
+    1+1/X < B=(1+1/X)(1+2^(−h))/(1+2^(−a)) < 1+2/X.
+
+Every ordinary prime in this group exceeds X. Otherwise its smallest
+prime would have to be a Mersenne prime at most X/2−1, contradicting
+the upper bound. If 2X−1 were absent, the remaining Mersenne starts
+would cost at most 1/(3X) and removal of the possible p-using vertex
+at most 1/(2p). Their total is below 1/(X+1), whereas B>1+1/X.
+Consequently 2X−1 is prime. Writing k=2^w, primality of 2X−1
+forces k+1 prime and hence w a power of two. Thus 4|w. One obtains
+
+    X ≡ 1, 1, 2, 9, 3     modulo 3, 5, 7, 11, 13 respectively.
+
+For 7,11,13 use k≡1 mod 3, k≡6 mod 10, and k≡4 mod 12 respectively.
+These five congruences suffice for the following finite bound. As in
+section 2, partition the group into increasing paths by choosing an
+ordinary predecessor whenever possible. The starts are Mersenne primes
+and at most one prime having shift of odd part p. For the latter start
+the shift valuation is even, since p≡2 mod 3. All pure ordinary edges
+above the starts have odd shift valuations.
+
+Represent a vertex by Q=2^t X+c, initially c=−1 with t odd for a
+Mersenne start, or c=2^t−1 with t even for the p-using start. Across
+a pure edge with jump j the new pair is (t+j,2^j c−1). In all cases
+|c|≤2^t−1. Each such vertex costs at most 2^(−t)/(X−1) in reciprocal
+loss. Use a horizon t=10 and measure losses in units 1/(1024(X−1)).
+If the next pure edge crosses the horizon the entire suffix from its
+next prime costs at most 2 units by the path bound. The same bound
+holds at the first impure edge: beside the chosen predecessor the
+shift has a factor at least X, and so its size is at least 2X².
+This includes any p used at a later vertex.
+
+For t≤10 set H(t,c)=0 if one of the five residues proves Q composite.
+All vertices being tested exceed the sieving primes. Otherwise set
+
+    H(t,c)=2^(10−t)+max({2} ∪ {H(t+j,2^j c−1): j odd, 1≤j≤10−t}).
+
+Induction down from the horizon bounds each path, including paths that
+end early. At the Mersenne starts t=1,3,5,7,9 the values are
+(533,194,0,14,5). At the five possible p-using starts t=2,4,6,8,10
+they are (266,117,27,6,0). Use the largest among these latter values
+and the two-unit fallback for such a start beyond the horizon. All
+Mersenne starts with t>10 together cost at most two units by the
+geometric sum, since there is at most one start per exponent.
+The complete group's loss is therefore at most
+
+    (533+194+14+5+266+2)/(1024(X−1))=507/(512(X−1)) < 1/(X+1).
+
+The lower bound on B gives the opposite strict inequality. This proves
+b=1 in the last case. Spectrum.fermat_path_table verifies both finite
+tables by kernel computation.
