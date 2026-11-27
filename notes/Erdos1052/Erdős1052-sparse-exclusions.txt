@@ -1,0 +1,448 @@
+Sparse odd cores in the unitary perfect number problem
+
+Let n be unitary perfect and write n=2^a c ∏_(q∈S) q. The distinct odd
+primes in S occur to exponent one. The core c contains the full powers
+of the odd primes that occur at least twice. Write P for its prime
+divisors, s=Σ_(p∈P)1/p and β(S)=∏_(q∈S)(1+1/q).
+
+Theorem 1. Every nonempty core satisfies s>2^−38. In particular, if
+s<1/4096, the core must have at least two distinct prime divisors.
+There is no unitary perfect number with core p^e for any prime p>4096
+and any e≥2. Both e and a range over all exponents.
+
+Theorem 2. For a sparse core (s<1/4096) with exactly two prime bases,
+either v₂(a)=4 or v₂(a)≥20. The former requires 65537 and a second
+base below 2^78. Several entire pairs of bases are excluded uniformly
+in both core exponents and a.
+
+Theorem 3. For every nonempty sparse core its least prime divisor is
+less than exp(2^56), independently of the number of core bases. The
+separate bound min(P)<2^38 |P| follows directly from
+Theorem 1. Section 6 proves the absolute bound.
+
+1. Input from the order and small-prime arguments
+
+We use the following earlier sparse-core conclusions. All sparse
+solutions have a≥48, and either 64 divides a or v₂(a)=4 and 65537∈P.
+Writing h=2^v₂(a), the Fermat number 2^h+1 has a prime divisor p∈P
+equal to 2 modulo 3, and the multiplicative order of 2 modulo this p
+is exactly 2h. Every simple prime except 3,5 is 1 modulo 3. The set
+S contains 3,5,7 and one of the supplier pairs
+
+     (19,223), (19,433), (79,13), (79,223).
+
+The first member supplies 5 in its shift, the second supplies 7.
+For s≤2^−14 the only pair is (19,223). These conclusions and their
+exact interval checks are in Erdős1052-core-625.txt §5,
+Erdős1052-odd-part.txt §6 and Erdős1052-prime-square.txt §§5,8.
+
+For q odd let d(q) be the odd part of q+1. The odd-part balance implies
+
+     ∏_(q∈S) d(q) | c ∏_(q∈S) q.                                  (1)
+
+For any finite set of allowed core bases P, remove all their factors
+from each d(q), obtaining d_P(q). Then ∏d_P(q) divides ∏q. We allow
+any multiplicity of those removed bases. For a prefix of S in
+increasing order, record the unused ordinary primes in a set U.
+Initially U is empty. The next prime q satisfies
+
+     q+1 = 2^j b d,     j≥1, b supported on P, d | ∏_(r∈U)r.
+
+Indeed any ordinary prime in d(q) is smaller than q and has only one
+available copy in (1). On selecting q, consume the primes of d and
+insert q in U. The exact partial product β is updated by (q+1)/q.
+
+2. A finite interval certificate with no size cutoff on S
+
+Draw an edge r→q when r is an ordinary predecessor of q in its shifted
+factor. There is at most one outgoing edge per r by (1). Choose one
+ordinary predecessor whenever any exists. This partitions the vertices
+into disjoint increasing paths. When all remaining primes exceed y,
+at most |U| paths starting in the remainder can use a predecessor in U.
+All other paths start at primes q with q+1=2^j b and b supported on P.
+
+An edge r→q has q≥2r−1. Put w(r)=(r+1)/(r−1). The identity
+(1+1/r)w(2r−1)=w(r) shows that a whole finite path starting at r
+contributes at most w(r). Since 1−1/w(r)=2/(r+1), subadditivity of
+1−1/B under products B≥1 gives the following reciprocal loss bound for
+the entire remaining product H.
+
+    1−1/H ≤ 2|U|/(y+1) + L(P,y+1),
+    L(P,x) = Σ_(j≥1, b supported on P, 2^j b>x) 2/(2^j b).            (2)
+
+L is a rational number even though the sum has infinitely many terms.
+For P empty it is 4/2^max(1,bit_length(x)). To add a base p, sum
+p^−i L(P\{p},floor(x/p^i)) until p^i>x, then sum the remaining
+geometric progression. The tail for powers starting at p^k>x is
+2 p^−k ∏_(r∈P)(1−1/r)^−1.
+
+Suppose the required interval is [l,u) and the current partial value
+is N/D. If N/D≥u the branch closes. If a compulsory prime is still
+missing, the next prime cannot exceed the least missing one.
+Otherwise select a ceiling y such that the right side in (2) is
+strictly less than 1−N/(Dl). Every continuation with all primes above
+y, including the empty continuation, is thereby excluded. Branch only
+on the finite list q=2^j b d−1 between the previous prime and y.
+If a resource limit is reached or a qualifying partial value is found,
+the verifier reports an inconclusive result. In particular a ceiling
+never limits the primes permitted in a solution.
+
+The script erdos1052_spectrum.py implements these rules with integers
+and rational numbers. It rejects a candidate for compositeness only
+by trial divisibility or a witness to Fermat's little theorem.
+A pseudoprime surviving these tests adds branches. The powers of the
+permitted bases are unbounded in (2). This is what permits a single
+finite test to cover infinitely many core exponents.
+
+An optional refinement chooses a predecessor in the suffix whenever
+possible. Each path start then uses only ordinary primes of U, if any.
+List all possible starts up to a farther ceiling. Charge each start
+with an ordinary factor to its first used token. Distinct starts
+must use distinct charged tokens. Use the largest individual charge for
+each token, allowing 2/(farther ceiling+1) above the range, and sum
+the separate charges for starts with no ordinary factor, with the smooth
+tail in (2) beyond that ceiling. This bounds the possible loss for
+each suffix of the candidate list. With sharpen_tail=True the neutral
+and main 65537 gap checks take 112 and 1505 nodes, respectively.
+
+3. A quantitative restriction on the entire repeated core
+
+With P empty and 3,5,7,19,223 compulsory, the interval [2−2^−35,2)
+is excluded in 362 nodes. Here the largest local ceiling is
+1,139,725,879,647. For a contradiction suppose a nonempty core has
+s≤2^−38. The sparse-core theorem gives 64|a since 65537 cannot be
+a core divisor. The five compulsory primes all survive deleting the
+vertices with p|q+1 for some p∈P and their successors. Such a deleted
+vertex is at least 2 min(P)−1. The retained set G satisfies (1) with
+core 1.
+
+For clarity, the deleted product is at most 1/(1−3s/(1−s)).
+A starting shift supported only on 2 and P contributes at most
+2/(q+1) in reciprocal loss. Summing over all such starts with
+nontrivial P-part gives at most 2s/(1−s). At any mixed start select
+a simple predecessor r and a core divisor p. Its loss is at most
+1/(pr). The r's are all distinct and Σ_(r∈S)1/r<1. This last sum
+is bounded by β(S)−1. The mixed loss is at most s. Each successor
+path is covered by the factor w(q) already charged at its start.
+
+Also σ*(c)/c≤1/(1−s²) because the exponents are at least two. The
+unitary-perfect equation gives
+
+    2 > β(G) ≥ 2(1−s²)(1−3s/(1−s))/(1+2^−64) > 2−2^−35.
+
+The final inequality at s=2^−38 is checked as a rational inequality.
+This contradicts the neutral interval exclusion. Consequently s>2^−38
+and min(P)<2^38 |P|.
+
+4. No sparse prime-power core
+
+If P={p}, the preceding section gives p<2^38. The Fermat-order sieve
+in Erdős1052-large-prime-branches.txt §11 leaves just p=65537 and
+p=167772161 in this range. For v=6,...,19 it uses divisibility
+certificates for the Fermat numbers or a forced descending chain outside
+the core. For v≥20 it enumerates all integers 1 mod 2^(v+1) in the
+bounded range which are 2 mod 3 and satisfy 2^(2^v)≡−1 modulo that
+integer. Only 167772161 at v=23 survives. The case v=4 gives 65537.
+The script checks the certificates and the progression search directly.
+
+For p=167772161, allowing arbitrary p powers in every shift, 412 nodes
+exclude [2−2^−40,2). The exact simple product
+
+    β(S) = 2 / ((1+2^−a)(1+p^−e))                                (3)
+
+lies inside this interval for a≥48, e≥2.
+
+For p=65537 the order gives v₂(a)=4. Moreover 16|e. To see the last
+claim, if v₂(e)=j with 0≤j≤3, then respectively 3,5,17,257 divides
+p^e+1, because p is 2 modulo each of these primes. The first two
+copies are already supplied in 5+1 and 19+1. The last two are 2
+modulo 3 and cannot be simple or repeated here. Hence e≥16.
+
+For P={65537} the following intervals are all excluded. Here
+T_a=2/(1+2^−a).
+
+      interval                       nodes       largest local ceiling
+      [2−2^−72,2)                    11766       2408433478466113845097697
+      [T_16−2^−72,T_16)                468       1545569852169
+      [T_48−2^−72,T_48)               8680       1254217326242092199
+
+For a≥80 formula (3) lies in the first interval. The only positive
+a<80 with v₂(a)=4 are 16 and 48, and (3) lies in the corresponding
+interval since e≥16. This completes the exclusion, uniformly in a,e.
+An independent implementation evaluated the five main certificates
+using Fraction products, a dyadic ceiling, a different prime filter
+and a looser bound on the tails. Its node counts for the neutral,
+167772161, and three 65537 intervals were 587,631,11871,504,8232.
+
+5. Two repeated bases
+
+There are also direct restrictions on the odd multiplier b when h=16,
+valid without any ceiling on its prime factors. For every sparse core,
+gcd(b,21)=1. If 3|b, then 193 divides 2^48+1 and therefore 2^a+1.
+The prime 193 is simple and forces the simple prime 97 from its shift.
+But 97+1=2·7² uses two copies of 7. If 7|b, 449 divides 2^112+1 and
+its shift is divisible by 9, with the same obstruction at 3. In both
+cases all primes used in the contradiction are below 4096.
+In particular every sparse solution has a≥64.
+
+With exactly two repeated primes one also has gcd(b,55)=1 at h=16.
+If 5|b then both 414721 and 44479210368001 divide 2^80+1 and
+therefore divide 2^a+1. Their shifts contain 11 and 71 respectively.
+Neither 11 nor 71 can be simple, so both of the large primes would
+have to be repeated alongside 65537. If 11|b write
+(2^176+1)/65537 = 5304641·u. Both factors are 2 modulo 3, coprime
+to one another and to 5·65537. Each forces a different repeated
+prime. Consequently an exactly-two-base solution with v₂(a)=4
+would require b≥13 and gcd(b,1155)=1. The case b=1 was excluded in
+the earlier a=16 certificate.
+
+At v₂(a)=6 the Fermat number is 274177·67280421310721. Both factors
+are prime. The second, equal to 2 modulo 3, must be repeated. If
+274177 is simple, its shift forces 137089. If that is also simple,
+its shift 137090=10·13709 forces the prime 13709, which is 2 modulo
+3 and therefore repeated. With only two bases the support is one of
+
+    {274177,67280421310721}, {137089,67280421310721},
+    {13709,67280421310721}.
+
+At v₂(a)=12 the two primes 114689 and 26017793 both divide the Fermat
+number, and both are 2 modulo 3. They fill the entire repeated support.
+In fact the four named supports cannot occur for any a. Each omits
+65537, so every possible exponent is at least 64.
+
+Write (p,r) for a pair in the order printed, and e,f≥2 for the core
+exponents. For a fixed e the simple product lies in
+
+    [2/((1+p^−e)(1+r^−2)(1+2^−64)), 2/(1+p^−e)).
+
+For all e≥E together use p^−E at the lower endpoint and 2 at the
+upper endpoint. Taking E respectively 2,5,5,3 gives a certificate for
+every e,f. At p=13709 all four supplier pairs must be checked. The other
+three supports have s≤2^−14 and require only (19,223). The script
+checks every listed interval and the primalities and divisibilities used
+to force the two bases.
+
+For an arbitrary *specified* sparse factorization the same program
+provides exponent_bound(factorization,bits). Put R=2c/σ*(c). If for
+each permissible supplier pair the simple products avoid
+[R−2^−m,R), then a≤m. Indeed R−β(S)=R/(2^a+1), where 0<R≤2.
+This is a proof for any input producing a certificate. A search that
+returns None supplies no bound.
+
+The same argument excludes all remaining v from 6 through 19. For
+v=9,11,13,15,18,19 the two numbers in the corresponding SPLITS row
+are in fact prime. The new Lucas certificates verify their primality
+by recursive factorizations of p−1. They both equal 2 modulo 3, so they
+are the entire core support. One interval from
+2/((1+p^−2)(1+r^−2)(1+2^−64)) up to 2 excludes all exponents at each
+pair. For v=7,8 the Fermat number factors as the first prime in PATHS
+times respectively 59649589127497217 or 1238926361552897. The latter
+factor in each case is a prime equal to 2 modulo 3 and exceeds 2^39.
+The forced descending path in the former must meet a second core base.
+All eligible vertices exceed 2^39 since vertices below 4096 cannot be
+in a sparse core. Having both bases above 2^39 contradicts section 3.
+
+For v=10,14,16,17 the PATHS row again requires a core base p outside
+the required prime r≡2 mod 3 dividing the Fermat number. Each possible
+last vertex in these rows is prime, which the program checks. Enumerate
+all such r up to 2^38, 2^39, 2^40, 2^39 respectively. A sieve in the
+progression r≡1 mod 2^(v+1), r≡2 mod 3 and an exact modular power test
+leave only r=45592577 at v=10. The two supports there are excluded by
+the same interval test as above. For a possible p>2^39 and an unlisted
+partner beyond its bound, both exceed 2^39, contradicting section 3.
+For each remaining p with r>R, delete the r-using shifts and their
+successors. The retained set may use unlimited copies of p. Pure core
+starts containing r cost at most 2p/((p−1)(r−1)) and mixed starts
+less than 1/r. Hence the total reciprocal loss is below 4/(R−1).
+The retained product lies between
+
+    2(1−4/(R−1))/((1+p^−2)(1+R^−2)(1+2^−64)) and 2.
+
+The verifier excludes this interval at each of the finitely many p,R.
+The small Fermat-divisor enumeration was also run independently, testing
+the same progressions without prime certification apart from division by
+5,7,11,13,17,19. It returned the same four lists. Combining these cases
+with the restrictions for v≤5 proves the stated alternative for exactly
+two bases.
+
+There is also an exclusion uniform in an arbitrary number of further
+bases. When 65537∈P, their reciprocal sum t must exceed 2^−78. When
+167772161∈P it must exceed 2^−44. To prove this, keep the indicated
+base p and remove paths using any further core prime. The pure starts
+with a further factor cost at most 2p t/((p−1)(1−t)) and the mixed
+starts at most t. Thus their total reciprocal loss is below 4t/(1−t)
+for positive t in the indicated range. The further part of the core
+has abundancy at most 1/(1−t²). At t=0 section 4 already applies.
+All five required small primes survive. The factor 16 divides the
+exponent of 65537 even with the additional bases, since 3,5 are
+already supplied and 17,257 are excluded from the entire support. The
+intervals from section 4, with the new corrections at the lower
+endpoints, again exclude all a≥80 and a=16,48. The other potential
+small value a=64 would need a repeated prime equal to 2 modulo 3 in
+2^64+1. This number is coprime to 65537 and smaller than 2^78, whereas
+each additional base is at least 2^78. At 167772161 the single corrected
+interval already covers every a≥48. For exactly two primes the
+claimed bound on the other prime at v=4 follows immediately.
+
+6. A uniform upper limit on the smallest repeated base
+
+We prove a uniform form of the elementary upper-bound sieve. Let k be
+even with Σ_(t|k, t odd prime)1/t≤1/4096. For any real L≥exp(16),
+
+    Σ_(r>L, r and kr−1 prime) 1/r ≤ 50000/log L.                     (4)
+
+Here are details accounting for uniformity in k. On X<r≤2X take
+z=floor(X^(1/8)) and use the odd primes t≤z not dividing k. Each t
+excludes two residue classes, since t|r(kr−1) precisely for r=0 or
+k^−1 modulo t. For squarefree d on these primes the simultaneous
+conditions have ν(d)=2^ω(d) classes, by the Chinese remainder theorem.
+Their count in the interval differs from X g(d) by at most ν(d),
+where g(d)=ν(d)/d. Put h(t)=g(t)/(1−g(t))=2/(t−2) and extend h
+multiplicatively on squarefree d.
+
+For the squarefree supported d≤z set G=Σ h(d). Choose weights λ_d
+such that Σ_(d multiple of l) g(d)λ_d=μ(l)h(l)/G. Finite Möbius
+inversion gives λ_1=1 and
+
+    |λ_d| = (h(d)/g(d)) Σ_(m≤z/d, (m,d)=1) h(m)/G ≤1.
+
+In this formula m is squarefree and supported on the sieving primes.
+The inequality follows by counting all m times all divisors of d in
+G and using h(d)/g(d)=∏_(t|d)(1+h(t)). Majorize the sifted count by
+summing (Σ_(d|r(kr−1)) λ_d)^2. The main quadratic form is
+
+    Σ_(d,e) λ_d λ_e g(lcm(d,e))
+      = Σ_l (1/h(l))(Σ_(l|d)g(d)λ_d)^2 = 1/G,
+
+because 1/g(gcd(d,e))=Σ_(l|gcd(d,e))1/h(l). The error is at most
+Σ_(d,e≤z)ν(lcm(d,e))≤z^4. All r,kr−1 prime in the interval are
+sifted because both exceed z.
+
+To lower-bound G let Y=floor(sqrt(z)) and H=Σ_(n≤Y, n odd)1/n.
+In the double sum H² remove pairs sharing an odd prime, pairs with a
+nonsquarefree member, and pairs with a member divisible by an odd prime
+of k. The fraction removed is at most
+
+    3 Σ_(j≥1)1/(2j+1)^2 + 2/4096 < 3/4+2/4096.
+
+Here 1/(2j+1)^2<1/((2j)(2j+2)) and the sum on the right telescopes
+to 1/4. The retained pairs (m,n) have squarefree product d≤z and
+are coprime. Their weights sum to at most G since h(d)≥2^ω(d)/d.
+Thus G≥H²/5≥(log z)^2/80. For X≥exp(16) we have log z≥log X/16
+and sqrt(X)≤X/(log X)^2. The sifted count is at most
+21000 X/(log X)^2. Summation over X=2^j L, using the integral bound
+for Σ_(j≥0)(log L+j log 2)^−2, proves (4).
+
+Now suppose all p∈P exceed or equal L=exp(2^56). In a mixed
+core-using shift choose a core prime p and an ordinary predecessor r.
+The r's are all distinct, giving total reciprocal loss less than 1/L.
+At a pure core-using shift choose a core prime r, and write
+q+1=2^j d r. Summing over *every* such representation is an upper
+bound. For fixed j and P-smooth d, formula (4) applies to k=2^j d.
+The sum of 2/(q+1) over all these starts is therefore at most
+
+    [2/(1−s)] · 50000/log L.
+
+The harmless endpoint r=L can equivalently be avoided by taking
+L=exp(2^56)/2 in (4), for which the same inequalities below hold.
+In particular the total loss from these and the mixed starts is less
+than 2^−38. Each successor path contributes at most its starting w.
+The core itself contributes at most 1/(1−s/L), using e≥2.
+Since 64|a, the retained ordinary product is at least
+2(1−s/L)(1−2^−38)/(1+2^−64)>2−2^−35 and is strictly below 2.
+The five mandatory small primes survive. This contradicts section 3's
+neutral certificate, and proves Theorem 3.
+
+The same sieve controls deletions when only the bases above L are
+removed and smaller fixed bases are retained. For pure starts
+the coefficient k may still use the smaller bases, with the same
+uniform estimate. The results above give no upper limit on all the
+other repeated bases or their exponents from a bound on the smallest.
+
+7. The obstruction that remains at an arbitrary fixed sparse core
+
+Fix one allowed h, let b=a/h, and cancel the fixed seeds consisting
+of the odd part of σ*(c) and F=2^h+1. This fixes both their simple
+primes and the residual divisor D of the core. With b unbounded, the
+compactness argument in Erdős1052-prime-square.txt §10 gives an
+infinite set T of simple primes of limiting product equal to the
+unique dyadic normalization of DF in (1,2). The finite products tend
+to this value because the path bound, after stripping the fixed core
+bases, gives a uniformly negligible tail. A finite product has odd
+denominator, whereas this target is a nonintegral dyadic rational.
+
+More is true for the unstripped demands. For every X, with
+T_X={q∈T:q≤X}, one has ∏_(q∈T_X)d(q) | D ∏_(q∈T_X) q. Indeed the
+members of the prefix stabilize along the diagonal subsequence. Any
+odd prime dividing a demand in this prefix is smaller than the prime
+making that demand, so the supply needed on the right is entirely
+contained in the prefix and the fixed D. Consequently at most Ω(D)
+vertices anywhere in T can use a core factor. An ordinary vertex can
+supply at most one other vertex.
+
+If only finitely many Mersenne primes belong to T, it has finitely
+many starting vertices because each start is a Mersenne prime or
+spends a core factor. Choose one ordinary predecessor whenever possible.
+The resulting paths partition T, since every backward sequence is
+strictly decreasing. Every discarded ordinary edge consumes a source
+which has no chosen successor. A path has at most one such terminal
+vertex, and there are only finitely many paths. Thus only finitely
+many vertices use multiple ordinary predecessors. Beyond all these
+vertices and those spending a core factor, the paths split into finitely
+many disjoint infinite chains plus a finite set. On each infinite chain
+
+    q_(n+1)=2^j(n) q_n−1,    j(n)≥1.
+
+After discarding 3 and 5 all q_n are 1 modulo 3, forcing each j(n)
+odd. Write s_0=0, s_n=Σ_(i<n)j(i). Then
+
+    α=lim q_n/2^s_n=q_0−Σ_(n≥1)2^−s_n > 0,
+    ∏_(n≥0)(1+1/q_n)=(q_0+1)/α.
+
+Each α is irrational. If α=A/B, the integers z_n=Bq_n−A2^s_n satisfy
+0<z_n≤B and z_(n+1)+B=2^j(n) z_n. The upper bound uses the geometric
+tail Σ_(m>n)2^(s_n−s_m)≤1. Given z_n, the exponent j(n) is unique
+because B<2^j(n)z_n≤2B. The finite sequence of possible errors thus
+enters a cycle. On any full period of its exponent sequence the
+q-recurrence is an affine map with slope a power of two. Reduce this
+map modulo the odd prime at the beginning of the period. It permutes
+residues, so a positive number of whole periods brings the residue
+back to zero. This would make that prime divide a strictly larger prime.
+
+Hence failure of exponent finiteness at a fixed sparse core would
+require either infinitely many Mersenne primes in T, or at least two
+disjoint infinite chains as above whose irrational α's have rational
+product. The latter conclusion uses the exact rational total product
+and the finitely many discarded vertices. Excluding that product
+for several disjoint chains is an additional open step.
+
+A rational joint product also restricts how far all those chains can
+jump simultaneously. Write ∏α_i=A/B, with k chains and B positive.
+Truncate each chain at any index with cumulative exponent s_i, and
+let t_i be the next cumulative exponent on that chain. Its truncated
+value x_i=q_i/2^s_i exceeds α_i by at most 2^(1−t_i). Since ∏x_i
+strictly exceeds A/B, its difference is at least 1/(B·2^(Σs_i)).
+Telescoping the product on the upper side gives
+
+    min_i t_i ≤ Σ_i s_i + log₂(2B Σ_i ∏_(j≠i) q_(j,0)).
+
+This is a necessary restriction on any proposed set of multiple
+infinite paths with the required product.
+
+The Lean theorem Erdos1052.Spectrum.prime_path_irrational_limit proves
+existence and irrationality of the real limit of every such infinite
+prime chain. Its elementary arithmetic content is no_bounded_errors
+and no_rational_shadow. The theorem finite_test_of_gap converts a gap
+for the eligible supports into finiteness of the exponent set using
+the exact integer balance appearing in R2. The separate theorem
+SpectrumSeeds.exclude_three_seven gives the restrictions at 3 and 7
+directly from unitary perfection and absence of 3,7,97,193,449 from
+the repeated core. The finite interval
+certificates in sections 3–5 were verified in exact Python arithmetic.
+An end-to-end Lean proof of Theorems 1–3 remains outstanding, as do
+the full-core bound and the fixed-core exponent bound for the sparse
+supports surviving these tests.
+
+FermatSearch supplied numerical Fermat divisors. The certificates
+verify each divisor used in the proof independently.
+https://www.fermatsearch.org/factors/faclist.php
