@@ -653,3 +653,197 @@ residue classes of ℓ for each r, apart from finitely many exceptions.
 The resulting density bound ∏(1−1/(r−1)) tends to zero. In the
 single-prime case b=ℓ the first layer can use the core, so this last
 restriction leaves it open.
+
+13. Every prime-power layer uses part of the core
+
+With h=2^v≥16, a=hb, b odd, and K=Ω(c/gcd(c,oddpart(σ*(c))(2^h+1))),
+the stronger bound is
+
+    Ω(b) ≤ K.                                                      (13.1)
+
+Thus b≤L^K if every prime divisor of b is at most L. At K=1 the
+only possibilities are 1 and an odd prime. In particular every square
+of a prime is excluded in that case, for primes of arbitrary size.
+This argument still permits a single large prime when K≥1.
+
+Here is a proof. In the terminology of sections 9 and 10, take an odd
+multiplier f≥3 and an exponent s divisible by 16, with 3∤s. Suppose a
+group for (2^(sf)+1)/(2^s+1) has core divisor 1. Put Y=2^s. Its simple
+primes all exceed Y. Their abundancy B satisfies
+
+    Y²/(Y²−Y+1) ≤ B < 1+1/Y.
+
+The sum of their shift valuations v₂(q+1) is (f−1)s. Write w(q)=(q+1)/(q−1).
+Partition the group into paths as in section 2 of Erdős1052-odd-part.txt.
+Each path starts at a Mersenne prime, each edge r→q satisfies r|q+1,
+and the full path contributes at most w(r). A vertex with oddpart(q+1)=r
+has exactly that predecessor. These facts also cover paths with one vertex.
+
+In fact all three Mersenne primes 2^(s+i)−1 for i=1,3,7 have to occur.
+For an odd lower endpoint i, the total reciprocal loss 2/(q+1) from
+all possible Mersenne starts at exponents at least s+i is at most
+(4/3)·2^(1−i)/Y, by summing over the odd exponents. If a family of
+paths has starts with total loss at most t<1, its abundancy is at most
+1/(1−t).
+
+The first start r=2Y−1 is forced by section 2 of the odd-part note.
+Since s+1 must consequently be prime, 3∤s implies s≡1 mod 3. The
+assumption 16|s gives s≡4 mod 12. Write Q_i=1+2^i(Y−1).
+Since 2^s≡3 mod 13, Q₅ is divisible by 13 and exceeds 13.
+
+If the start t=8Y−1 is absent, s+5 cannot supply a start either since
+3|s+5. Thus the other starts have total loss at most 1/(48Y). On the
+path from r=Q₁, at the first missing minimal step Q_i with i≤5, the
+next prime is at least 2Q_i+1 or the path ends. Minimal steps telescope
+and w(2Q_i+1)/w(Q_i)=1−1/Q_i. This bounds the path by
+w(r)(1−1/Q₅). It follows that
+
+    B ≤ [Y/(Y−1)] (1−1/(32Y))/(1−1/(48Y))
+      < [Y/(Y−1)] (1−1/(96Y)) < Y²/(Y²−Y+1).
+
+The last inequality uses Y²−Y+1>96Y. This contradiction forces t.
+
+After a prime x≡1 mod 3 on these paths, if 2x−1 is absent, the next
+prime is at least 8x−1. Indeed 4x−1 is composite and 6x−1 would
+put 3 into the group. If 2x−1 is absent and 8x−1 is absent as well,
+the next prime is at least 16x−1: the remaining even multipliers
+10,12,14 bring in one of 3,5,7, all smaller than Y. Along either
+path one may also stop, which only lowers the product.
+
+The prime u=4Y−3 must follow r. Otherwise the path contributes at
+most (1+1/r)w(8r−1)=8Y/(8Y−5); all other starts have loss ≤1/(3Y).
+The combined reciprocal loss is at most (5/8+1/3)/Y=23/(24Y),
+giving B≤1/(1−23/(24Y))<Y²/(Y²−Y+1). The two gains from r,u
+and the gain from t also show 8Y−7 cannot be in the group. These
+four distinct vertices would have reciprocal sum greater than
+(1/2+1/4+1/8+1/8)/Y=1/Y, contrary to B<1+1/Y.
+
+The prime z=16Y−3 must likewise follow t. Otherwise the first path
+is bounded by (1+1/r)(1+1/u)w(8u−1)=16Y/(16Y−13), since 2u−1
+is absent. The second path is bounded by (1+1/t)w(8t−1)=32Y/(32Y−5).
+All other starts have loss at most 1/(48Y). Adding the losses gives
+(13/16+5/32+1/48)/Y=95/(96Y), again too little because Y>96.
+
+Now suppose 2^(s+7)−1 is absent. Other starts then have loss ≤1/(192Y).
+On the second path, 2z−1=32Y−7 is divisible by 5 because 4|s.
+The path from t therefore contributes at most
+
+    (1+1/t)(1+1/z)w(8z−1)=64Y/(64Y−13).
+
+On the first path put x=8u−1=32Y−25. If x occurs, its own immediate
+successor 2x−1=64Y−51 is divisible by 7, since s≡1 mod 3 gives
+Y≡2 mod 7. The next prime is at least 8x−1. If x is absent, the next
+prime after u is at least 16u−1=2x+1, and w(2x+1)=1+1/x. Thus the
+same upper bound works in both cases:
+
+    (1+1/r)(1+1/u)(1+1/x)w(8x−1)=128Y/(128Y−101).
+
+The first two paths and the other starts together give
+
+    B ≤ 1/(1−(101/128+13/64+1/192)/Y)
+      = 1/(1−383/(384Y)) < Y²/(Y²−Y+1),
+
+since Y>384. This forces the third Mersenne prime.
+
+If 5∤s these requirements are impossible. For s≡4,2,3 modulo 5
+respectively, one of s+1,s+3,s+7 is a multiple of 5 exceeding 5.
+For s≡1 modulo 5 one has s≡6 modulo 10 and 11 divides the forced
+prime u=2^(s+2)−3. This deals with every multiplier when gcd(s,15)=1.
+
+The multiplier f=5 is impossible even when 5|s. Its total shift
+valuation is 4s. The three forced Mersenne primes have shift
+valuations s+1,s+3,s+7. Any fourth one would take the sum past 4s.
+Thus these three are all the starts, and the shift valuations of
+all the other vertices sum to s−11.
+
+To see the contradiction, treat Y as the value of an indeterminate X.
+Start the three vertices with polynomials 2X−1,8X−1,128X−1. For
+each other vertex q, its odd shift part is the product of smaller
+vertices r, each available only once by the squarefree balance.
+Replace all these polynomials by
+
+    P_q(X)=2^j ∏_r P_r(X)−1,        j=v₂(q+1)≥1.
+
+Processing the vertices by increasing size, after putting in the three
+starts, is legitimate since every dependency is smaller than the vertex.
+At each step P_q(Y)=q. The product F of the final polynomials therefore
+satisfies F(Y)=(Y^5+1)/(Y+1)=Y⁴−Y³+Y²−Y+1, by the group balance.
+In particular F(0)≡1 mod Y.
+
+All current constant terms are nonzero odd integers. Track the product
+of |z|+1 over these terms. It starts at 8. At a replacement it grows
+by a factor of at most 2^j because
+
+    |2^j∏z−1|+1 ≤ 2^j∏|z|+2 ≤ 2^j∏(|z|+1).
+
+The last inequality uses at least one predecessor and j≥1. Hence
+|F(0)|≤8·2^(s−11)=Y/256. On the other hand the product of |z| can
+never decrease, since |2^j m−1|≥|m| for every nonzero integer m.
+The forced vertex u has only r as predecessor, with j=1, so its
+constant term is −3. This gives |F(0)|≥3. The congruence F(0)≡1 mod Y
+and the absolute upper bound force F(0)=1, a contradiction.
+
+Finally, for each odd prime p|b and each 0≤j<ν_p(b), take s=h p^j
+and f=p. For p outside {3,5} one has gcd(s,15)=1. For p=5 use the
+quintic argument, and for p=3 use the cubic obstruction in section 3
+of the odd-part note. Thus every one of the Ω(b) distinct cyclotomic
+indices p^(j+1) needs a nontrivial core divisor. The simultaneous
+allocation of section 9 proves (13.1).
+
+LayerConstants.lean checks the rational loss comparison and the
+integer-product argument for the quintic case. The formation of its
+frontier from the group and the three forced Mersenne primes use the
+written path argument above. The earlier formal proof of Ω(b)≤2K is
+in SparseOddExponent.lean.
+
+There is also a divisor-count refinement. Put i=max(ν₃(b)−1,0),
+j=max(ν₅(b)−1,0), and b₀=b/(3^i 5^j). With τ the number of positive
+divisors,
+
+    τ(b₀)+i+j ≤ K+2.
+
+For d|b₀, d>1, write d=u m with m the product of its distinct prime
+divisors. Then gcd(u,15)=1. The cyclotomic identity Φ_d(X)=Φ_m(X^u)
+follows from the orders of the roots, since all primes of u divide m.
+Apply the estimates of section 10 with s=hu and y=2^(−s). When ω(m)
+is odd, a group using no core would have
+
+    1+(511/512)y < (1+y)(1−y³/(1−y)) ≤ B < 1+y.
+
+Here y≤1/65536. This lower bound suffices throughout the three-start
+proof: each 1/(1−k y) with k≤383/384 is below 1+(511/512)y, and the
+other upper bound (1−y/96)/(1−y) is also below it. Since gcd(s,15)=1,
+the modulo 5 contradictions still apply. Thus every such index charges.
+When ω(m) is even, the section 10 argument gives B>3/2 for a group
+using no core, so at most one such index can be free. Finally the i+j
+prime powers of 3 and 5 excluded from the divisors of b₀ all charge by
+(13.1)'s proof. Counting these disjoint indices gives the refinement.
+
+14. A size bound on each shifted prime in the single-prime case
+
+Take an odd prime ℓ|b, N=hℓ, d₀=2^h+1 and A=(2^N+1)/d₀. Every simple
+prime q in the group assigned to A satisfies
+
+    (q−1)(2^v₂(q+1)−1) < 2(2^N+1).
+
+In particular, for a Mersenne prime q=2^t−1 in this group one has
+t≤N/2. This holds for all its descendants, including when a shifted
+factor has several large prime divisors.
+
+Indeed, follow q upwards to a prime p|A. Every simple prime used in a
+shift has only one such successor. The primes strictly increase on the
+path, so it ends at a prime of A by the group balance. The endpoint
+satisfies p=Lq−u for positive L and 0≤u<L. Start with L=1 and u=0.
+At a successor of shape kx−1, with integer k≥2, the new pair is
+(kL,ku+1) and retains the same inequalities. Put A=Hp and t=v₂(q+1).
+Since q≤p≤A<2^N, one has t≤N. Reducing
+2^N+1=d₀H(Lq−u) modulo 2^t shows
+
+    2^t | d₀H(L+u)+1.
+
+The right side is positive. Thus 2^t−1≤d₀H(L+u)<2d₀HL, while
+L(q−1)<p. This gives the claimed bound. For a Mersenne prime it becomes
+q(q−1)<2(2^N+1). If t≥N/2+1, the left side is at least
+(2·2^(N/2)−1)(2·2^(N/2)−2), greater than the right side since
+2^(N/2)>3. This proves t≤N/2. The estimate bounds each such prime
+in terms of ℓ; a bound independent of ℓ is still needed for finiteness.

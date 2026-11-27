@@ -99,9 +99,10 @@ def bounds(powers):
                 m = prime_order(p, q)
                 p_stride = 1 if p == 3 else m + int(q == h * p + 1)
                 choices.append((max(p - 1, p_stride) * k, p, q, m))
-        omega_bound, p, q, m = min(choices)
-        omega_bound = min(omega_bound, 2 * k)
-        result.append((v, k, omega_bound, p, q, m))
+        _, p, q, m = min(choices)
+        # Every prime-power index charges once by section 13. Retain the
+        # witnesses for the earlier order bound in the documented output.
+        result.append((v, k, k, p, q, m))
     return result
 
 
@@ -150,6 +151,5 @@ if __name__ == "__main__":
         if k == 0:
             print(f"v2(a) = {v}: b must equal 1, so only a = {2**v} is possible.")
         else:
-            print(f"v2(a) = {v}, K = {k}. The exponent of 3 plus the number of other "
-                  f"distinct primes in b is at most {k}. Omega(b) <= {count}. "
+            print(f"v2(a) = {v}, K = {k}. Omega(b) <= {count}, counting multiplicity. "
                   f"The number of distinct primes in b is at most {(k + 2).bit_length() - 1}.")

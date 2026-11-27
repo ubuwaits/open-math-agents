@@ -29,8 +29,8 @@ When K=0, b=1 is the only possibility, without any restriction on its
 prime factors. The proof of this last assertion is at the end of section 2.
 The general size of the largest prime divisor of b remains unresolved.
 
-Sections 9–11 of Erdős1052-large-prime-branches.txt sharpen these
-bounds to Ω(b)≤2K and 2^ω(b)≤K+2. They also rule out every sparse
+Sections 9–13 of Erdős1052-large-prime-branches.txt sharpen these
+bounds to Ω(b)≤K and 2^ω(b)≤K+2. They also rule out every sparse
 prime-power core with base at most 10¹² apart from two specified
 families. The bounds below give the earlier argument.
 
