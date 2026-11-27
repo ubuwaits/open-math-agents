@@ -273,4 +273,32 @@ theorem prime_path_irrational_limit {q j s : ℕ → ℕ}
     have hm := (div_le_div_iff₀ (by positivity) hbpos).mp hh
     exact_mod_cast (by nlinarith : (B:ℝ)*(q n:ℝ) ≤ A*2^(s n)+B)
 
+/-- An infinite increasing chain of odd primes with shifts equal to a power
+of two times their predecessor has irrational limiting abundancy. -/
+theorem prime_path_product_irrational {q j : ℕ → ℕ}
+    (hq : ∀ n, (q n).Prime) (hodd : ∀ n, q n ≠ 2) (hj : ∀ n, 1 ≤ j n)
+    (hstep : ∀ n, q (n+1)+1 = 2^(j n)*q n) :
+    ∃ y : ℝ, Irrational y ∧ Tendsto (fun n => ∏ k ∈ Finset.range (n+1),
+        (((q k : ℝ)+1)/(q k : ℝ))) atTop (𝓝 y) := by
+  let s (n : ℕ) := ∑ k ∈ Finset.range n, j k
+  have hs n : s (n+1) = s n+j n := Finset.sum_range_succ j n
+  obtain ⟨x,hx,ht⟩ := prime_path_irrational_limit hq hodd hj hs hstep
+  have hpositive n : (0:ℝ) < q n := by exact_mod_cast (hq n).pos
+  have partialprod n : (∏ k ∈ Finset.range (n+1), (((q k : ℝ)+1)/(q k : ℝ))) =
+      ((q 0:ℝ)+1)/((q n : ℝ)/2^(s n)) := by
+    induction n with
+    | zero => simp [s]
+    | succ n ih =>
+      rw [Finset.prod_range_succ,ih,hs,pow_add]
+      have hr : (q (n+1):ℝ)+1 = 2^(j n)*(q n:ℝ) := by exact_mod_cast hstep n
+      rw [hr]
+      field_simp [(hpositive n).ne',(hpositive (n+1)).ne']
+  refine ⟨((q 0:ℝ)+1)/x,?_,?_⟩
+  · have hy : Irrational (((q 0+1:ℕ):ℝ)/x) :=
+      irrational_natCast_div_iff.mpr ⟨by omega,hx⟩
+    simpa using hy
+  · simpa only [partialprod] using
+      (show Tendsto (fun n => ((q 0:ℝ)+1)/((q n:ℝ)/2^(s n))) atTop
+        (𝓝 (((q 0:ℝ)+1)/x)) from tendsto_const_nhds.div ht hx.ne_zero)
+
 end Erdos1052.Spectrum
