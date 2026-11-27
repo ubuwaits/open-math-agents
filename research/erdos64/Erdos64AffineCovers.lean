@@ -1,4 +1,8 @@
 import Mathlib.Combinatorics.SimpleGraph.CycleGraph
+import Mathlib.GroupTheory.GroupAction.Primitive
+import Mathlib.GroupTheory.GroupAction.ConjAct
+import Mathlib.GroupTheory.Solvable
+import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
 import Mathlib.Tactic
 
 /-!
@@ -1145,5 +1149,174 @@ theorem scalar_affine_short {K A V : Type*} [DivisionRing K] [AddCommGroup A]
     rw [sub_smul,one_smul]
   rw [← funext action]
   exact MulAction.bijective u
+
+/-! ## Solvable groups on a prime number of sheets -/
+
+open MulAction
+
+private theorem abelianNormal {G : Type*} [Group G] [Group.IsSolvable G] [Nontrivial G] :
+    ∃ N : Subgroup G, N ≠ ⊥ ∧ N.Normal ∧ IsMulCommutative N := by
+  classical
+  have terminating : ∃ n : ℕ, derivedSeries G n = ⊥ := Group.IsSolvable.solvable
+  let m := Nat.find terminating
+  have last : derivedSeries G m = ⊥ := Nat.find_spec terminating
+  have pos : m ≠ 0 := by
+    intro z
+    rw [z,derivedSeries_zero] at last
+    exact top_ne_bot last
+  obtain ⟨k,hk⟩ : ∃ k, m = k+1 := ⟨m-1,by omega⟩
+  refine ⟨derivedSeries G k, ?_, derivedSeries_normal G k, ?_⟩
+  · intro trivial
+    have le : m ≤ k := Nat.find_min' terminating trivial
+    omega
+  · rw [hk,derivedSeries_succ] at last
+    exact Subgroup.commutator_self_eq_bot_iff.mp last
+
+private theorem automorphism_fixed {N : Type*} [Group N] (prime : (Nat.card N).Prime)
+    (u : MulAut N) (ne : u ≠ 1) (x : N) (hx : u x = x) : x = 1 := by
+  classical
+  by_contra nx
+  let : Fact (Nat.card N).Prime := ⟨prime⟩
+  apply ne
+  ext y
+  obtain ⟨k,rfl⟩ := mem_zpowers_of_prime_card (p := Nat.card N) rfl nx (g' := y)
+  simp only [map_zpow, hx, MulAut.one_apply]
+
+/-- A faithful transitive solvable permutation group on a prime number of
+sheets gives a tetrahedral cover with a simple 4-, 8-, or 16-cycle. -/
+theorem prime_solvable_short {G X V : Type*} [Group G] [Group.IsSolvable G]
+    [MulAction G X] [FaithfulSMul G X] [MulAction.IsPretransitive G X] [Finite X]
+    (prime : (Nat.card X).Prime) (graph : SimpleGraph V) (e : Color × X ↪ V)
+    (p q r : G)
+    (star : ∀ i : Color, i ≠ 0 → ∀ x, graph.Adj (e (0,x)) (e (i,x)))
+    (oneTwo : ∀ x, graph.Adj (e (1,x)) (e (2,p • x)))
+    (twoThree : ∀ x, graph.Adj (e (2,x)) (e (3,q • x)))
+    (threeOne : ∀ x, graph.Adj (e (3,x)) (e (1,r • x))) : HasShortCycle graph := by
+  classical
+  let : Nontrivial X := Finite.one_lt_card_iff_nontrivial.mp prime.one_lt
+  obtain ⟨origin,y,xy⟩ := exists_pair_ne X
+  obtain ⟨g,hg⟩ := MulAction.exists_smul_eq G origin y
+  let : Nontrivial G := ⟨⟨g,1,fun he => xy (by simpa only [he,one_smul] using hg)⟩⟩
+  obtain ⟨N,nn,normal,comm⟩ := abelianNormal (G := G)
+  let : N.Normal := normal
+  let : IsMulCommutative N := comm
+  let : CommGroup N := { (inferInstance : Group N) with mul_comm := mul_comm' }
+  let : IsPreprimitive G X := IsPreprimitive.of_prime_card prime
+  have nonfixed : fixedPoints N X ≠ Set.univ := by
+    intro allFixed
+    apply nn
+    apply eq_bot_iff.mpr
+    intro n hn
+    change n = 1
+    apply eq_of_smul_eq_smul (α := X)
+    intro x
+    have fixed : x ∈ fixedPoints N X := allFixed ▸ Set.mem_univ x
+    simpa only [Subgroup.smul_def,one_smul] using (mem_fixedPoints.mp fixed (⟨n,hn⟩ : N))
+  let : IsPretransitive N X := IsQuasiPreprimitive.isPretransitive_of_normal nonfixed
+  let coords : N ≃ X := Equiv.ofBijective (fun n : N => n • origin) ⟨by
+    intro n m same
+    apply Subtype.ext
+    apply eq_of_smul_eq_smul (α := X)
+    intro x
+    obtain ⟨h,rfl⟩ := MulAction.exists_smul_eq N origin x
+    change n • (h • origin) = m • (h • origin)
+    simpa only [smul_comm n h,smul_comm m h] using congrArg (fun z : X => h • z) same,
+    fun x => MulAction.exists_smul_eq N origin x⟩
+  have card : (Nat.card N).Prime := (Nat.card_congr coords).symm ▸ prime
+  let : Finite N := Finite.of_equiv X coords.symm
+  let : DistribMulAction (MulAut N) (Additive N) := {
+    smul u x := Additive.ofMul (u x.toMul)
+    one_smul x := rfl
+    mul_smul u v x := rfl
+    smul_zero u := u.map_one
+    smul_add u x y := u.map_mul _ _ }
+  let shift (h : G) : Additive N := Additive.ofMul (coords.symm (h • origin))
+  let linear (h : G) : MulAut N := MulAut.conjNormal h
+  let label : Color × Additive N ↪ V :=
+    ((Equiv.refl Color).prodCongr (Additive.toMul.trans coords)).toEmbedding.trans e
+  have affine (h : G) (x : Additive N) :
+      coords ((linear h • x + shift h).toMul) = h • coords x.toMul := by
+    change ((MulAut.conjNormal h x.toMul) * coords.symm (h • origin)) • origin =
+      h • (x.toMul • origin)
+    rw [mul_smul]
+    have base : coords.symm (h • origin) • origin = h • origin := coords.apply_symm_apply _
+    rw [base]
+    change ((MulAut.conjNormal h x.toMul : N) : G) • (h • origin) =
+      h • ((x.toMul : G) • origin)
+    simp only [MulAut.conjNormal_apply, ← mul_smul, mul_assoc, inv_mul_cancel, mul_one]
+  apply finite_frobenius_short graph label (S := MulAut N) _ (fun _ => 1) (fun _ => 0)
+    (linear p) (linear q) (linear r) (shift p) (shift q) (shift r)
+  · intro i hi x
+    change graph.Adj (e (0,coords x.toMul)) (e (i,coords (((1 : MulAut N) • x + 0).toMul)))
+    simpa only [one_smul,add_zero] using star i hi (coords x.toMul)
+  · intro x
+    change graph.Adj (e (1,coords x.toMul)) (e (2,coords ((linear p • x + shift p).toMul)))
+    rw [affine]
+    exact oneTwo _
+  · intro x
+    change graph.Adj (e (2,coords x.toMul)) (e (3,coords ((linear q • x + shift q).toMul)))
+    rw [affine]
+    exact twoThree _
+  · intro x
+    change graph.Adj (e (3,coords x.toMul)) (e (1,coords ((linear r • x + shift r).toMul)))
+    rw [affine]
+    exact threeOne _
+  · intro u nu x hx
+    exact automorphism_fixed card u nu x.toMul hx
+
+/-- The standard four-fiber graph with its three star matchings normalized. -/
+def permutationCover {X : Type*} (p q r : Equiv.Perm X) : SimpleGraph (Color × X) :=
+  SimpleGraph.fromRel fun u v =>
+    (u.1 = 0 ∧ v.1 ≠ 0 ∧ v.2 = u.2) ∨
+    (u.1 = 1 ∧ v.1 = 2 ∧ v.2 = p u.2) ∨
+    (u.1 = 2 ∧ v.1 = 3 ∧ v.2 = q u.2) ∨
+    (u.1 = 3 ∧ v.1 = 1 ∧ v.2 = r u.2)
+
+/-- A connected prime-sheeted tetrahedral cover whose chord permutations
+generate a solvable group contains a cycle of length 4, 8, or 16. -/
+theorem prime_solvable_cover_short {X : Type*} [Finite X] (p q r : Equiv.Perm X)
+    (prime : (Nat.card X).Prime) (solvable : Group.IsSolvable (Subgroup.closure ({p,q,r} : Set _)))
+    (connected : (permutationCover p q r).Connected) : HasShortCycle (permutationCover p q r) := by
+  classical
+  let M := Subgroup.closure ({p,q,r} : Set (Equiv.Perm X))
+  let : Group.IsSolvable M := solvable
+  let P : M := ⟨p,Subgroup.subset_closure (by simp)⟩
+  let Q : M := ⟨q,Subgroup.subset_closure (by simp)⟩
+  let R : M := ⟨r,Subgroup.subset_closure (by simp)⟩
+  let rel (u v : Color × X) : Prop :=
+    (u.1 = 0 ∧ v.1 ≠ 0 ∧ v.2 = u.2) ∨ (u.1 = 1 ∧ v.1 = 2 ∧ v.2 = p u.2) ∨
+    (u.1 = 2 ∧ v.1 = 3 ∧ v.2 = q u.2) ∨ (u.1 = 3 ∧ v.1 = 1 ∧ v.2 = r u.2)
+  have directed {u v : Color × X} (h : rel u v) : ∃ g : M, g • u.2 = v.2 := by
+    rcases h with h | h | h | h
+    · exact ⟨1,(one_smul M _).trans h.2.2.symm⟩
+    · exact ⟨P,h.2.2.symm⟩
+    · exact ⟨Q,h.2.2.symm⟩
+    · exact ⟨R,h.2.2.symm⟩
+  have adjacent {u v : Color × X} (h : (permutationCover p q r).Adj u v) :
+      ∃ g : M, g • u.2 = v.2 := by
+    rcases h.2 with h | h
+    · exact directed h
+    · obtain ⟨g,hg⟩ := directed h
+      exact ⟨g⁻¹,by rw [← hg,inv_smul_smul]⟩
+  have path {u v : Color × X} (w : (permutationCover p q r).Walk u v) :
+      ∃ g : M, g • u.2 = v.2 := by
+    induction w with
+    | nil => exact ⟨1,one_smul M _⟩
+    | cons edge tail ih =>
+      obtain ⟨g,hg⟩ := adjacent edge
+      obtain ⟨h,hh⟩ := ih
+      exact ⟨h*g,by rw [mul_smul,hg,hh]⟩
+  let : IsPretransitive M X := ⟨fun x y => by
+    obtain ⟨w⟩ := connected.preconnected (0,x) (0,y)
+    exact path w⟩
+  apply prime_solvable_short (G := M) prime _ (Function.Embedding.refl _) P Q R
+  · intro i hi x
+    simp [permutationCover, hi, Ne.symm hi]
+  · intro x
+    simp [permutationCover, P]
+  · intro x
+    simp [permutationCover, Q]
+  · intro x
+    simp [permutationCover, R]
 
 end Erdos64AffineCovers
