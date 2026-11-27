@@ -86,37 +86,44 @@ def possible_next_primes(x, y, tokens):
     return sorted(candidates)
 
 
-def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=None):
+def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=None,
+                required=()):
     """Exclude the interval [target, upper) of compatible odd abundancies.
 
     max_prime limits the certificate search. The tail lemma covers all larger
     primes at every successful leaf. None indicates an inconclusive search.
-    With upper=None the certificate proves a strict upper bound.
+    With upper=None the certificate proves a strict upper bound. If some
+    primes are required, a continuation cannot skip its least missing one.
     """
     state = forced(core, seed_divisor)
     if state is None:
         return 0, 0
     fixed, initial_tokens, initial_ratio = state
     forbidden = fixed | set(dict(factor(core)))
+    pending = tuple(sorted(set(required) - fixed))
+    if any(q in forbidden or (allowed is not None and not allowed(q)) for q in pending):
+        return 0, 0
     nodes = 0
     max_cut = 0
 
-    def visit(x, tokens, count, ratio):
+    def visit(x, tokens, count, ratio, needed):
         nonlocal nodes, max_cut
         nodes += 1
         if upper is not None and ratio >= upper:
             return True
-        if ratio * tail_bound(max_prime, count) >= target:
+        y = min(max_prime, needed[0]) if needed else max_prime
+        if ratio * tail_bound(y, count) < target:
+            # All continuations whose next prime exceeds this cutoff fall below target.
+            low, high = x - 1, y
+            while high - low > 1:
+                mid = (low + high) // 2
+                if ratio * tail_bound(mid, count) < target:
+                    high = mid
+                else:
+                    low = mid
+            y = high
+        elif not needed or needed[0] > y:
             return False
-        # Find a cutoff certifying all continuations whose next prime exceeds it.
-        low, high = x - 1, max_prime
-        while high - low > 1:
-            mid = (low + high) // 2
-            if ratio * tail_bound(mid, count) < target:
-                high = mid
-            else:
-                low = mid
-        y = high
         max_cut = max(max_cut, y)
         for p, odd in possible_next_primes(x, y, tokens):
             if p in forbidden or (allowed is not None and not allowed(p)):
@@ -124,12 +131,13 @@ def uniform_gap(core, seed_divisor, target, max_prime=4096, upper=None, allowed=
             use = dict(factor(odd))
             remaining = tuple((q, e - use.get(q, 0)) for q, e in tokens if e > use.get(q, 0))
             next_count = count + 1 - sum(use.values())
-            if not visit(p, remaining + ((p, 1),), next_count, ratio * Fraction(p + 1, p)):
+            left = needed[1:] if needed and p == needed[0] else needed
+            if not visit(p, remaining + ((p, 1),), next_count, ratio * Fraction(p + 1, p), left):
                 return False
         return True
 
     count = sum(e for _, e in factor(initial_tokens))
-    return (nodes, max_cut) if visit(1, factor(initial_tokens), count, initial_ratio) else None
+    return (nodes, max_cut) if visit(1, factor(initial_tokens), count, initial_ratio, pending) else None
 
 
 def known_multiple_certificate():

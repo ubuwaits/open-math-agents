@@ -1,0 +1,275 @@
+Exponent finiteness for every sparse prime-square core
+
+Let n be unitary perfect. Suppose its only repeated odd prime is p>4096
+and its exponent is exactly two. Write a=v₂(n). Then
+
+    a=2^v,     ord_p(2)=2^(v+1).
+
+Thus a fixed prime-square core admits at most one exponent. This theorem
+has no upper bound on p. It also excludes every odd multiplier greater
+than one, including a single arbitrarily large prime. The case of a
+pure power of two can still occur in the necessary conditions at some
+bases; for any fixed p the order fixes that one candidate.
+
+1. Two groups forced by a square core
+
+Write a=hb, h=2^v, b odd, Y=2^h. The sparse-core results in section 5
+of Erdős1052-core-625.txt and section 6 of Erdős1052-odd-part.txt give
+h≥16, p|Y+1, 5∤p²+1, and both 3 and 5 in the simple support S. The
+prime p divides Y+1 since the latter has a factor equal to 2 modulo 3
+which must belong to the core. Its order is therefore 2h.
+
+Suppose b>1 and put Z=Y^b. Cancel one copy of p from Y+1 in the
+odd-part balance. Split the remaining seed into three integers
+
+    C=oddpart(p²+1),     V=(Y+1)/p,     A=(Z+1)/(Y+1).
+
+Descending prime cancellation assigns disjoint subsets of S to these
+integers. Each subset T satisfies m∏oddpart(q+1)=D∏q for its seed m,
+and the three terminal integers D have product p. The group for A must
+use p. Indeed, the first-step theorem in Erdős1052-odd-part.txt
+applies at h with the odd multiplier b≥3. Equivalently, choose a prime
+ℓ|b and split the first cyclotomic factor at ℓ from A. The Lean
+theorem first_layer_charges requires its group to use a core factor.
+The groups of C and V thus have terminal integer 1. Denote the groups
+for V and A by T_V and T_A and their abundancies by B_V and B_A.
+All group abundancies are at least 1, and their product is less than 2.
+
+Let 2^k<p<2^(k+1) and x=p/2^k. The product identity in each group,
+including its shift valuations at 2, forces
+
+    B_V=x/(1+1/Y),       B_A=x(1+1/Y)/(1+1/Z).                    (1)
+
+Indeed B_V is a power of two times p/(Y+1), and B_A a power of two
+times p(Y+1)/(Z+1). There is exactly one value in [1,2) in each
+dyadic progression. The displayed B_V is at least 1 because
+2^k≤p−1≤Y. The displayed B_A exceeds x since Z>Y, and is less than
+2 since (2^(k+1)−p)Y>p. For p≤Y this last inequality follows from
+p<Y (Y is even), and for p=Y+1 it follows from k=h and Y≥16.
+
+By (1), x²=B_A B_V(1+1/Z)<2(1+1/Z). Hence both B_V and B_A are
+less than 8/5, using Y≥65536. Since oddpart(5+1)=3 and no terminal
+integer is a multiple of 3, the group containing 5 must also contain 3.
+It contributes at least (6/5)(4/3)=8/5. Thus neither T_A nor T_V
+contains 3.
+
+2. Disjoint Mersenne starts separate the two abundancies
+
+For any B≥1 put d(B)=1−1/B. In a group with terminal 1 the path
+bound gives B≤∏w(r), where the product is over its Mersenne starts
+r=2^j−1 and w(r)=(r+1)/(r−1). For terminal p the same bound has an
+extra factor of at most p/(p−1). One way to see the latter is to
+remove the simple prime whose shift contains p, if there is one, and
+all its successors. There is at most one such starting prime, and
+its path contributes at most w(2p−1)=p/(p−1). The retained shifts
+only use retained simple primes. Alternatively, apply the completely
+multiplicative weight with value q/(q−1) at every odd prime q to
+the full divisibility, keeping its factor p/(p−1) exactly.
+
+If neither group has a Mersenne start, then B_V=1, so (1) and
+2^k≤Y give p−2^k=2^k/Y≤1. Otherwise let r=2^t−1 be the smallest
+Mersenne start in either group, and put α=2^(−t). Since 3 is absent,
+all these Mersenne exponents are odd primes. Disjointness makes
+every Mersenne exponent in the other group at least t+2. Its Mersenne
+factors have total reciprocal loss at most
+
+    Σ_(j≥t+2, j odd) 2^(1−j) = (2/3)α.
+
+Here 1−1/∏w(r)≤Σ(1−1/w(r)). The group containing r has loss at
+least 1−1/(1+1/r)=α. The other group consequently satisfies one of
+the following two bounds, depending on which group contains r:
+
+    r in T_A:  d(B_V) ≤ (2/3)d(B_A);
+    r in T_V:  d(B_A) ≤ 1/p+(2/3)d(B_V).
+
+This argument also works when the other group has no Mersenne start.
+
+3. The forced base
+
+Set d₀=1−1/x=(p−2^k)/p. Formula (1) gives
+
+    d(B_V)=d₀−1/(xY),       d₀<d(B_A)≤d₀+1/(xY).
+
+In the first case of section 2 it follows that d₀≤5/(xY), so
+p−2^k≤5·2^k/Y≤5. In the second, d₀≤1/p+2d₀/3, so p−2^k≤3.
+Including the empty case gives 1≤p−2^k≤5 throughout.
+
+As ord_p(2)=2h, one has p≡1 modulo 2h. In particular 2h≤p−1
+and 2h divides 2^k since both are powers of two. Thus p−2^k≡1
+modulo 2h≥32. Its size forces p=2^k+1. Primality forces k to be a
+power of two: an odd prime divisor of k would give the proper factor
+2^(k/r)+1 of 2^k+1. Since p>4096, one has 4|k. Hence p≡2 modulo 5
+and 5|p²+1. This contradicts the sparse-core condition in section 1.
+We conclude b=1 and a=h as asserted.
+
+4. A test for cores with several repeated primes
+
+Write C=oddpart(σ*(c)). First cancel C alone by descending prime
+factorization: a factor in the core uses up one copy, and a factor q
+outside the core forces the simple prime q and then oddpart(q+1).
+Excess demand excludes the core. This finite procedure depends only on
+c. If its remaining core is 1, a prime, or the square of a prime, then
+every completion at this sparse core has b=1. In particular the odd
+part has a bound independent of the sizes of its prime factors.
+
+Indeed F=2^h+1 must use a prime p≡2 mod 3 directly from the core. It
+cannot use a copy already assigned to C. If b>1, A must use a further
+core factor. This deals with the first two cases. If the remaining core
+is p², cancel one p from F. The groups of V=F/p and A then have
+terminals 1 and p as before. The primes assigned to C may already
+include 3 and 5. The group containing 5 includes 3 because no terminal
+is divisible by 3, so the argument giving 3∉T_A,T_V still holds.
+Sections 1–3 up through p=2^k+1 apply verbatim. Comparing the orders
+of 2 modulo p gives k=h: primality makes k a power of two and
+ord_p(2)=2k=2h. Hence p=Y+1, V=1 and
+
+    B_A=(1+1/Y)²/(1+1/Z).
+
+The following argument removes the dependence on the exponent of p
+in the original core. A Mersenne start r≤Y/2−1 in T_A would give
+1+1/r≥Y/(Y−2)>(1+1/Y)². Every possible starting exponent is
+therefore at least h. The index h is even and greater than two, so
+the indices are odd and start at h+1 or later. Their total loss from
+the path bound is at most ∑_(j≥h+1, j odd)2^(1−j)=4/(3Y).
+There can be at most one shift using p. Its prime q satisfies
+q≥4p−1, since 2p−1=2Y+1 is a proper multiple of 3. Delete q and all
+its successors in the direction of larger primes. These form one
+path of product at most w(q) and thus cost at most 1/(2p) in reciprocal
+loss. In the remainder all demands divide the product of the retained
+primes, since any retained shift using a deleted prime would itself
+have been deleted. Consequently
+
+    d(B_A) ≤ 1/(2p)+4/(3Y) < 11/(6Y).
+
+But Z≥Y³ gives Y·d(B_A)≥(2Y−1)/(Y+1)>11/6 for Y>17. This excludes
+the last case. The same test applies if cancelling F and C separately
+shows that F uses exactly one copy of p, that p divides F, and that the
+entire unused core after both cancellations is exactly p. The neutral
+group of F/p and the group of A again have the displayed ratios. The
+earlier Ω(b) bound by itself allows an arbitrarily large prime in this
+case. If b=1 the sparse-order condition leaves a finite list of h.
+
+5. A restriction on the sizes of possible prime-square cores
+
+For a single repeated base p≥2^17 the suppliers of 5 and 7 are forced
+to be 19 and 223. Here a≥64 by the previous single-base theorem.
+Delete the shifts using p and their upward paths. Including the factor
+from the core and from 2^a costs at most
+
+    (1+2^−64)(1+2^−34)/(1−3/(2^17−1)).
+
+Multiplying that expression by 2−2^−14 gives a number strictly below
+2. Thus the retained abundancy lies in [2−2^−14,2). For each of the
+other three supplier pairs, the core-1 interval test with 3,5,7 and the
+two suppliers required excludes that interval. These tests use 24,14,35
+nodes for (19,433),(79,13),(79,223), respectively. All mandatory primes
+are below 2p−1 and survive the deletion. See large_base_suppliers()
+in erdos1052_group_bounds.py.
+
+For a prime-square core let x=p/2^floor(log₂p). Some m∈{1,2} must
+satisfy the following restriction. Write y for x^m divided by the unique
+power of two putting y in [1,2), and put t=min(y,2/y). Then
+
+    t < 4237/4096     or     256/223 < t < 19/16.                    (2)
+
+This applies to all p≥2^17. For b=1 there are just two groups, for
+F=Y+1 and (p²+1)/2. The F terminal is p^m for m=1 or 2. If
+t≥4237/4096 then y and 2/y are both far enough above 1 that the
+normalized group abundancies are y/(1+1/Y) and (2/y)/(1+p^−2).
+Both corrections are strict. Neither seed supplies 5 or 7 directly:
+the unique suppliers 19 and 223 supply their copies in shifts.
+Consequently 3,5,19 lie in the same group and 7,223 lie in the same
+group. These two closures contribute 32/19 and 256/223. If t≥19/16
+neither group can reach 32/19. If 4237/4096≤t≤256/223 the smaller
+uncorrected ratio is too small for either closure and the larger is at
+most 8192/4237=(32/19)(256/223). The strict correction makes it too
+small for both together. These contradictions prove (2). For instance
+all bases with 19/16≤x≤sqrt(32/19) or sqrt(19/8)≤x≤32/19 are excluded
+at e=2, with no upper size limit on p.
+
+6. Complete exponent exclusion for 167772161^e, 2≤e≤8192
+
+Let p=167772161. The earlier order and residue conditions require
+h=2^23 and 32|e. Split the seeds into C=(p^e+1)/2, V=(Y+1)/p and
+A=(Z+1)/(Y+1) as above. Write their terminal integers as p^(e−i−j),
+p^(j−1),p^i respectively, with j≥1 and i+j≤e. If b>1 the first
+layer requires i≥1. For b=1 the A-seed is 1 and descending cancellation
+assigns it the empty group (i=0). Up to powers of two, the group
+abundancies in the order A,V,C are
+
+    p^i(1+1/Y)/(1+1/Z),    p^j/(1+1/Y),    p^(−i−j)/(1+p^(−e)).
+
+Only the dyadic normalizations in [1,2) are possible. The verifier
+encloses them with the first 96 binary digits of each p^s, using
+1/Y,1/p^e<2^−96 and outward rounding. At a normalization boundary
+it checks both possible sides. It deletes p-using shifts and their
+upward paths separately in each group. For a terminal p^u the resulting
+loss is at most min(3/(p−1),u/(2p)). Indeed there are at most u such
+shifts and their primes are at least 4p−1 because 3|2p−1. The other
+bound is the single-base estimate of Erdős1052-core-bounds.txt §4.
+Larger primes lie on the deleted paths. The required small suppliers
+and their full downward closures remain in their original groups.
+
+For each i,j the verifier tests the resulting three intervals with the
+core-1 tail lemma and disjoint assignments of the two mandatory closures.
+It also distributes the optional Mersenne primes 31,127,8191,131071,
+524287 among the groups, including the possibility of absence. A
+required prime limits the least remaining prime to at most that prime;
+this allows the interval test to enforce its presence. A cutoff limits
+only finite branching and the tail bound covers every larger prime.
+With the first cutoff 262144, every i>0 is already excluded. The only
+remaining (i,j) have i=0 and
+
+    j ∈ {602,1206,3482,5169,5249,7445,8049,8129}.
+
+For these eight allocations the pair (19,223) is required by section 5.
+All eight are excluded with cutoff 2^26. Thus there are no completions
+for any exponent a and any core p^e in the stated range. Running
+python3 -B erdos1052_group_bounds.py reproduces every interval exclusion.
+
+7. An explicit odd-part bound for an arbitrary fixed core passing a comparison
+
+Fix a permissible h. Cancel the two fixed seeds C and F=2^h+1,
+retaining their simple primes and their terminal core factors. If
+either seed creates a repeated demand for a simple prime, or if the
+core is overdrawn, there is no completion. Otherwise let D be the
+unused part of the core. This determines the terminal of the group
+assigned to A=(2^(hb)+1)/F in any completion, independently of b.
+For T a group assigned to either fixed seed (or any fixed factor split
+off it), write B for its exact abundancy and E for its terminal. All
+these quantities are finite computations in c and h.
+
+Define W(d)=∏_(p^m||d)(p/(p−1))^m and λ(d)=1−1/W(d). Normalize the
+odd integer DF by a power of two to its unique value R in (1,2).
+Suppose 3 is absent from T and from the A-group. The latter follows,
+for example, if 3 is already forced by one of the two fixed seeds.
+It also follows in the range 2^(hb)≥1/(R−1) when R≤8/5: the A-group
+then has abundancy strictly below 8/5, and 3 and 5 belong together.
+If the fixed quantities satisfy
+
+    d(B) ≥ λ(E)+(2/3)d(R),        Δ = d(R)−λ(D)−(2/3)d(B) > 0,
+
+there is the explicit bound
+
+    2^(hb) ≤ max(1/(R−1), 1/(RΔ)).
+
+Indeed above the first threshold the normalized A-group abundancy is
+exactly R/(1+2^(−hb)). Its loss is d(R)−2^(−hb)/R. For arbitrary
+terminals E,D the least-start argument in section 2 gives at least one
+of d(B)≤λ(E)+(2/3)d(B_A) and d(B_A)≤λ(D)+(2/3)d(B). For this, use
+the multiplicative weight W on the terminal instead of the single
+prime weight. The first inequality is strictly impossible under the
+displayed assumption. The second is exactly RΔ≤2^(−hb). This proves
+the bound, with no restriction on the prime factors of b. It also
+gives a finite test for each c,h with such a witness. There is no
+argument here that every sparse core has a witness to both inequalities.
+
+The Lean theorem Erdos1052.PrimeSquare.prime_square_of_perfect verifies
+the prime-square implication from the definition of unitary perfection
+given the sparse-order and divisibility conclusions listed in section 1.
+Its proof includes the assignment of groups, the exclusion of 3 from
+both competing groups, the geometric tail, and the short gap at a power
+of two. The sparse hypotheses themselves use the earlier paper estimates
+and exact finite interval certificates. Sections 4–7 supply further
+written arguments and, for the finite tests, exact rational verification.
+The general fixed-core bound and the uniform bound on c are still open.

@@ -42,12 +42,29 @@ def prime_order(base, prime):
     return order
 
 
+def square_phase_possible(p):
+    """Check both possible terminal exponents in the prime-square theorem."""
+    if p < 1 << 17:
+        return True
+    for power in (p, p*p):
+        y = Fraction(power, 1 << (power.bit_length()-1))
+        t = min(y, 2/y)
+        if t < Fraction(4237, 4096) or Fraction(256, 223) < t < Fraction(19, 16):
+            return True
+    return False
+
+
 def bounds(powers):
     if not powers or any(p <= 2 or factor(p) != ((p, 1),) or e < 2
                          for p, e in powers.items()):
         raise ValueError("Each component must be an odd prime to an exponent of at least two.")
     if sum(Fraction(1, p) for p in powers) >= Fraction(1, 4096):
         raise ValueError("This bound requires the reciprocal sum to be below 1/4096.")
+    square = len(powers) == 1 and next(iter(powers.values())) == 2
+    if square and not square_phase_possible(next(iter(powers))):
+        return []
+    if len(powers) == 1 and powers.get(167772161, 8193) <= 8192:
+        return []
     if any((p % 3 == 2 and e % 2) or (p == 65537 and e % 16) for p, e in powers.items()):
         return []
     if any(pow(p, e, m) == m - 1 for p, e in powers.items() for m in (3, 5, 17, 257)):
@@ -102,7 +119,7 @@ def bounds(powers):
         _, p, q, m = min(choices)
         # Every prime-power index charges once by section 13. Retain the
         # witnesses for the earlier order bound in the documented output.
-        result.append((v, k, k, p, q, m))
+        result.append((v, k, 0 if square else k, p, q, m))
     return result
 
 
@@ -148,7 +165,7 @@ if __name__ == "__main__":
     if not result:
         print("These necessary conditions rule out every exponent at this core.")
     for v, k, count, p, q, m in result:
-        if k == 0:
+        if count == 0:
             print(f"v2(a) = {v}: b must equal 1, so only a = {2**v} is possible.")
         else:
             print(f"v2(a) = {v}, K = {k}. Omega(b) <= {count}, counting multiplicity. "
