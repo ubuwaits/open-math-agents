@@ -307,4 +307,122 @@ theorem lift_two_group {U S : Type*} [Group S] [Finite S] (two : IsPGroup 2 S)
   have cyc := orbit_cycle (advance edge) label (fun z => adj z.1 z.2) (0,1) big
   exact ⟨k + d, by omega, length ▸ cyc⟩
 
+/-- An affine map with an orbit of length coprime to the size of a finite
+abelian group has a fixed point, given by the orbit's average. -/
+theorem fixed_of_coprime_affine_orbit {A : Type*} [AddCommGroup A]
+    (L : A →+ A) (b : A) (m : ℕ) (coprime : (Nat.card A).Coprime m)
+    (z : ℕ → A) (step : ∀ i, z (i+1) = L (z i) + b) (closed : z m = z 0) :
+    ∃ x : A, L x + b = x := by
+  classical
+  let total := ∑ i ∈ Finset.range m, z i
+  have mulBij : Bijective (fun x : A => m • x) := coprime.nsmul_right_bijective
+  obtain ⟨x,hx⟩ := mulBij.surjective total
+  have shifted : (∑ i ∈ Finset.range m, z (i+1)) = total := by
+    have h := Finset.sum_range_succ' z m
+    rw [Finset.sum_range_succ, closed] at h
+    exact add_right_cancel h.symm
+  have invariant : L total + m • b = total := calc
+    L total + m • b = ∑ i ∈ Finset.range m, z (i+1) := by
+      simp only [total,map_sum,step,Finset.sum_add_distrib,Finset.sum_const,Finset.card_range]
+    _ = total := shifted
+  change m • x = total at hx
+  refine ⟨x,mulBij.injective ?_⟩
+  rw [nsmul_add, ← map_nsmul, hx]
+  exact invariant
+
+/-- Every affine permutation on an abelian group of power-of-two order
+has a point of power-of-two period. Its linear part can be arbitrary. -/
+theorem affine_dyadic_period {A : Type*} [AddCommGroup A] [Finite A]
+    (r : ℕ) (size : Nat.card A = 2^r) (f : Equiv.Perm A)
+    (L : A →+ A) (b : A) (affine : ∀ x, f x = L x + b) :
+    ∃ (x : A) (j : ℕ), IsPeriodicPt f (2^j) x := by
+  classical
+  have powers (n : ℕ) : ∃ (T : A →+ A) (c : A), ∀ x : A, (f : A → A)^[n] x = T x + c := by
+    induction n with
+    | zero => exact ⟨AddMonoidHom.id A,0,fun x => (add_zero x).symm⟩
+    | succ n ih =>
+      obtain ⟨T,c,h⟩ := ih
+      refine ⟨L.comp T,L c+b,fun x => ?_⟩
+      rw [iterate_succ_apply',affine,h,map_add,AddMonoidHom.comp_apply,add_assoc]
+  have positive := minimalPeriod_pos_of_mem_periodicPts (f.injective.mem_periodicPts (0:A))
+  obtain ⟨j,m,odd,period⟩ := Nat.exists_eq_two_pow_mul_odd positive.ne'
+  let g := (f : A → A)^[2^j]
+  obtain ⟨T,c,hg⟩ := powers (2^j)
+  let z (i : ℕ) := g^[i] 0
+  have step (i : ℕ) : z (i+1) = T (z i) + c := by
+    dsimp only [z]
+    rw [iterate_succ_apply']
+    exact hg _
+  have closed : z m = z 0 := by
+    change ((f : A → A)^[2^j])^[m] 0 = 0
+    rw [← iterate_mul, ← period, iterate_minimalPeriod]
+  have coprime : (Nat.card A).Coprime m := size ▸ odd.coprime_two_left.pow_left r
+  obtain ⟨x,hx⟩ := fixed_of_coprime_affine_orbit T c m coprime z step closed
+  exact ⟨x,j,(hg x).trans hx⟩
+
+/-- An abelian group of finite order has a power-of-two orbit for every
+affine permutation exactly when its order is a power of two. -/
+theorem all_affine_dyadic_iff (A : Type*) [AddCommGroup A] [Finite A] :
+    (∀ (f : Equiv.Perm A) (L : A →+ A) (b : A), (∀ x, f x = L x + b) →
+      ∃ (x : A) (j : ℕ), IsPeriodicPt f (2^j) x) ↔ ∃ r : ℕ, Nat.card A = 2^r := by
+  constructor
+  · intro all
+    have two : IsPGroup 2 (Multiplicative A) := by
+      intro u
+      let f := Equiv.addRight u.toAdd
+      obtain ⟨x,k,hx⟩ := all f (AddMonoidHom.id A) u.toAdd (fun _ => rfl)
+      have iter (n : ℕ) : (f : A → A)^[n] x = x + n • u.toAdd := by
+        induction n with
+        | zero => simp
+        | succ n ih =>
+          rw [iterate_succ_apply',ih,succ_nsmul]
+          exact add_assoc _ _ _
+      have zero : (2^k) • u.toAdd = 0 := add_left_cancel
+        (((iter (2^k)).symm.trans hx).trans (add_zero x).symm)
+      exact ⟨k,congrArg Multiplicative.ofAdd zero⟩
+    exact two.exists_card_eq
+  · rintro ⟨r,h⟩ f L b affine
+    exact affine_dyadic_period r h f L b affine
+
+/-- A simple dyadic cycle lifts through arbitrary affine matchings on sheets
+indexed by a finite abelian group of power-of-two order. -/
+theorem lift_affine_two_primary {U A : Type*} [AddCommGroup A] [Finite A] {G : SimpleGraph U}
+    (r : ℕ) (size : Nat.card A = 2^r) {k : ℕ} (hk : 2 ≤ k)
+    (linear : Fin (2^k) → A ≃+ A) (shift : Fin (2^k) → A)
+    (label : Fin (2^k) × A ↪ U)
+    (adj : ∀ i x, G.Adj (label (i,x)) (label (i+1,linear i x + shift i))) :
+    ∃ d : ℕ, k ≤ d ∧ d ≤ k+r ∧ cycleGraph (2^d) ⊑ G := by
+  classical
+  let n := 2^k
+  let edge (i : Fin n) : Equiv.Perm A := (linear i).toEquiv.trans (Equiv.addRight (shift i))
+  have accumulated (t : ℕ) : ∃ (L : A →+ A) (b : A), ∀ x : A,
+      ((advance edge)^[t] (0,x)).2 = L x + b := by
+    induction t with
+    | zero => exact ⟨AddMonoidHom.id A,0,fun x => (add_zero x).symm⟩
+    | succ t ih =>
+      obtain ⟨L,b,h⟩ := ih
+      let T := (linear (t : Fin n)).toAddMonoidHom
+      refine ⟨T.comp L,T b + shift (t : Fin n),fun x => ?_⟩
+      rw [iterate_succ_apply']
+      change linear _ (((advance edge)^[t] (0,x)).2) + shift _ = T (L x) + (T b + _)
+      have pos : ((advance edge)^[t] (0,x)).1 = (t : Fin n) := by simp [phase]
+      rw [pos,h,map_add,add_assoc]
+      rfl
+  obtain ⟨L,b,h⟩ := accumulated n
+  obtain ⟨x,j,period⟩ := affine_dyadic_period r size (lap edge) L b h
+  obtain ⟨d,_,hd⟩ := (Nat.dvd_prime_pow Nat.prime_two).mp period.minimalPeriod_dvd
+  have count : 2^d ≤ 2^r := by
+    let := Fintype.ofFinite A
+    rw [← hd, ← size, Nat.card_eq_fintype_card]
+    exact minimalPeriod_le_card
+  have bound : d ≤ r := (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp count
+  have length : minimalPeriod (advance edge) (0,x) = 2^(k+d) := by
+    rw [period_above,hd,pow_add]
+  have large : 3 ≤ minimalPeriod (advance edge) (0,x) := by
+    rw [length]
+    have four : 4 ≤ 2^(k+d) := Nat.pow_le_pow_right (by decide : 0 < 2) (by omega : 2 ≤ k+d)
+    omega
+  have cyc := orbit_cycle (advance edge) label (fun z => adj z.1 z.2) (0,x) large
+  exact ⟨k+d,by omega,by omega,length ▸ cyc⟩
+
 end Erdos64CycleCovers
