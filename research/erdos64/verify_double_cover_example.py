@@ -1,6 +1,9 @@
-"""Check an explicit cubic graph whose bipartite double has a short cycle."""
+"""Check a cubic graph and, optionally, Exoo's published 78-vertex graph."""
 
+from argparse import ArgumentParser
 from collections import deque
+from hashlib import sha256
+from zipfile import ZipFile
 
 
 MODULUS = 11
@@ -72,11 +75,9 @@ def check_cycle(neighbors, cycle):
     assert all(v in neighbors[u] for u, v in zip(cycle, cycle[1:] + cycle[:1]))
 
 
-def check_excluded_cycles(neighbors, lengths):
-    # Left multiplication in the matrix group preserves all port labels.
-    # Every vertex is therefore equivalent to one of these six roots.
+def check_excluded_cycles(neighbors, lengths, roots):
     limit = max(lengths)
-    for root in range(6):
+    for root in roots:
         used = {root}
 
         def visit(vertex):
@@ -105,15 +106,51 @@ def check_long_cycle(base, graph):
     check_cycle(graph, cycle)
 
 
-def check_double_octagon(graph):
-    word = [0, 1, 2, 0, 1, 5, 4, 3]
+def check_double_octagon(graph, word):
+    assert len(word) == 8
     lifted = [(v, position % 2) for position, v in enumerate(word)]
     assert len(set(lifted)) == 8
     for (u, i), (v, j) in zip(lifted, lifted[1:] + lifted[:1]):
         assert v in graph[u] and i != j
 
 
+def check_exoo(supplement):
+    # Vertex numbers refer to the zero-based graph6 order in Garcia's archive.
+    with ZipFile(supplement) as archive:
+        raw = archive.read("exoo_g78_correct.g6")
+    assert sha256(raw).hexdigest() == "c105a5324d596c3eeec01b5be2c87fa8e11c57b88bf2ed665a96c1c97094f333"
+    data = [character - 63 for character in raw.strip()]
+    assert data[:4] == [63, 0, 1, 14]  # graph6 extended order 78
+    bits = ((value >> shift) & 1 for value in data[4:] for shift in range(5, -1, -1))
+    graph = [set() for _ in range(78)]
+    for j in range(78):
+        for i in range(j):
+            if next(bits):
+                graph[i].add(j)
+                graph[j].add(i)
+    assert all(len(row) == 3 for row in graph)
+    # Removing each individual edge preserves connectivity.
+    for u in range(78):
+        for v in sorted(graph[u]):
+            if u < v:
+                graph[u].remove(v)
+                graph[v].remove(u)
+                assert connected(graph)
+                graph[u].add(v)
+                graph[v].add(u)
+    check_excluded_cycles(graph, {4, 8, 16}, range(78))
+    check_cycle(graph, [0, 5, 1, 56, 61, 57, 59, 60, 58, 51, 53, 52, 50, 16,
+                        18, 17, 19, 14, 22, 24, 25, 27, 23, 64, 70, 66, 68,
+                        67, 65, 63, 2, 6])
+    check_double_octagon(graph, [3, 1, 5, 3, 4, 2, 6, 4])
+    print("Exoo's 78-vertex graph: first dyadic cycle length 32. Double: 8-cycle.")
+
+
 def main():
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--exoo-supplement", metavar="ZIP",
+                        help="also check Garcia's supplement.zip (Zenodo 22180583)")
+    args = parser.parse_args()
     base = cayley_graph()
     assert len(base) == 1320 and first_relation(base, 9) == 9
     graph = replacement(base)
@@ -122,12 +159,15 @@ def main():
         assert len(row) == 3 and vertex not in row
         assert all(vertex in graph[neighbor] for neighbor in row)
     check_cycle(graph, [0, 1, 2])
-    check_excluded_cycles(graph, {4, 8, 16})
+    # Left multiplication preserves every port label, so these roots suffice.
+    check_excluded_cycles(graph, {4, 8, 16}, range(6))
     check_long_cycle(base, graph)
-    check_double_octagon(graph)
+    check_double_octagon(graph, [0, 1, 2, 0, 1, 5, 4, 3])
     print("Base: 1,320 vertices, girth 9. Replacement: 7,920 vertices, cubic.")
     print("Downstairs: triangle and 64-cycle, no 4-, 8-, or 16-cycle.")
     print("Upstairs: simple 8-cycle.")
+    if args.exoo_supplement:
+        check_exoo(args.exoo_supplement)
 
 
 if __name__ == "__main__":
