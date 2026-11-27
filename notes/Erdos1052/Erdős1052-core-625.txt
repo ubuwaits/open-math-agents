@@ -1,0 +1,232 @@
+The unitary perfect numbers with repeated odd core 625
+
+Theorem. Suppose n is unitary perfect and its only repeated odd prime
+power is 5^4. Then n = 146361946186458562560000. In particular there
+is no such number with v₂(n)=2ℓ for any prime ℓ.
+
+The proof below excludes every odd ℓ≥25 without assuming ℓ is prime.
+Section 4 covers the other exponents. Section 5 gives a restriction
+on general cores that can have any number of repeated prime factors.
+
+The Lean theorem Erdos1052.Core625.no_prime_double proves the prime
+case from the definition of a unitary perfect number. The theorem
+no_large_odd_double covers every odd ℓ≥25, and no_prime_double_test
+applies directly to the arithmetic test in R2.H2. The four finite
+inequalities are checked by the kernel. The full classification also
+uses the exact arithmetic checks in section 4. Section 5 uses the
+paper argument and the exact arithmetic in erdos1052_625.py.
+The single-file Lean proof, checked against the accepted R2 revision, is at
+https://github.com/ubuwaits/open-math-agents/blob/97cd73bdcb6daca2c349223dcbc96c22963be2ea/notes/Erdos1052/PrimeDouble625.lean
+Its exported exclusion theorems use only propext, Classical.choice and
+Quot.sound. The H2 problem desk records the result in note 29756.
+
+1. Divide the simple primes into two groups
+
+Write n=2^a·625·∏(q∈S)q with distinct odd primes q≠5. The unitary
+divisor sum of any prime power p^e is 1+p^e. Hence 625+1=2·313,
+313+1=2·157, 157+1=2·79 and 79+1=16·5 force 313,157,79 into S.
+Let R be S with these three primes removed and o(t) the odd part of t.
+After cancelling the forced factors, take odd parts and abundancies.
+For positive a the two resulting identities are
+
+  (2^a+1) ∏(q∈R)o(q+1) = 125 ∏(q∈R)q,
+  ∏(q∈R)(1+1/q) = (125/64)/(1+2^(−a)) < 125/64.                  (1)
+
+Now take a=2ℓ, ℓ=2k+1, k≥12, and put X=2^k and L=2^ℓ=2X².
+The integer factors
+
+  A₊ = L+2X+1,       A₋ = L−2X+1
+
+have product L²+1. Both are odd, and their difference is 4X, so they
+are coprime. Also 5 divides L²+1 since ℓ is odd.
+
+Here is a constructive way to split R. Start with the two odd integers
+A₊ and A₋ and process R in decreasing prime order. The current largest
+prime q divides one of the two running integers. Indeed their product
+times the unprocessed o(r+1)'s equals 125 times the unprocessed primes.
+No remaining o(r+1) can supply q because o(r+1)<q whenever r≤q and
+r is an odd prime. Assign q to the side it divides and replace that
+running integer H by (H/q)o(q+1). This preserves the identity. At the
+end the two integers have product 125, so they are 5^j₊ and 5^j₋ with
+j₊+j₋=3. Denote the two disjoint prime sets by R₊,R₋. We obtain
+
+  Aᵢ ∏(q∈Rᵢ)o(q+1) = 5^jᵢ ∏(q∈Rᵢ)q.                               (2)
+
+Put Eᵢ=Σ(q∈Rᵢ)v₂(q+1) and Bᵢ=∏(q∈Rᵢ)(1+1/q). Then
+
+  Bᵢ = 2^Eᵢ 5^jᵢ/Aᵢ = (5/4)^jᵢ · 2^(Eᵢ+2jᵢ−ℓ) · L/Aᵢ.              (3)
+
+Each Bᵢ is at least 1 and strictly below 125/64 by (1).
+Since X≥4096, both L/Aᵢ lie strictly between 1−1/2048 and 1+1/2048.
+For instance L/A₋−1=(2X−1)/(2X²−2X+1)<1/(X−1), and
+1−L/A₊=(2X+1)/(2X²+2X+1)<1/X. An exponent of at least one on the
+middle power of two in (3) would put Bᵢ above 125/64. An exponent of
+at most minus one would put it below 1 even at jᵢ=3. Consequently
+
+  Eᵢ+2jᵢ=ℓ,                Bᵢ=(5/4)^jᵢ L/Aᵢ.                         (4)
+
+In particular j₊≠0, since L/A₊<1.
+
+2. Four finite inequalities, valid for unbounded primes
+
+For j=1,2 let Iⱼ be the half-open interval with endpoints
+(5/4)^j(1−1/2048) and (5/4)^j(1+1/2048). Consider any finite set T
+of distinct odd primes disjoint from {5,79,157,313} satisfying
+
+  ∏(q∈T)o(q+1) | 5^h ∏(q∈T)q.
+
+The following four rows exclude ∏(q∈T)(1+1/q) from Iⱼ provided the
+indicated further primes are absent from T.
+
+   h    j    further primes absent    nodes checked    largest cutoff
+   0    1            3                      10                 598
+   1    1            3,7                     1                  14
+   1    1            3,31                   17                2119
+   1    2            7,31                   23                1229
+
+The arithmetic proof of the table is reproducible with erdos1052_625.py.
+For clarity, here is the bound and the full enumeration rule. With
+current integer D and all remaining primes greater than x≥1, set
+
+  U(x,D)=(1+2/x)^Ω(D) (2048/2047)
+         · ∏(p∈{3,7,31,127}, p>x) (p+1)/(p−1).
+
+This bounds every remaining abundancy whenever ∏o(q+1) divides D∏q.
+To see this, extend prime weights g(p)=1+2/x for p≤x and
+g(p)=p/(p−1) for p>x completely multiplicatively. If d=o(q+1)>1,
+choose p|d. From q≥x+1 and q≥2p−1 one obtains
+g(d)≥g(p)≥(q+1)/(q−1)=(1+1/q)g(q). When d=1, include the factor
+(q+1)/(q−1) separately. Multiply over q, use the divisibility and
+cancel ∏g(q). Each g(p)≤1+2/x. The separate factors have q=2^t−1.
+For t<13 the only such odd primes are 3,7,31,127 by trial division.
+For t≥13 the sum of 2^(1−t) is 1/2048, so the product of any finite
+subset of 1/(1−2^(1−t)) is at most 2048/2047. This proves the bound.
+
+Start at x=1,D=5^h,B=1. A node with B at least the upper endpoint of
+Iⱼ is finished. Otherwise find the smallest y from x through 4096
+such that BU(y,D) is below the lower endpoint. This deals with every
+continuation whose primes all exceed y, including the empty one.
+For the remaining possibilities test every allowed prime q∈(x,y].
+If q is the next prime, all factors of o(q+1) are smaller than q,
+so o(q+1) must divide D. In exactly these cases recurse with
+x=q, D replaced by Dq/o(q+1) and B replaced by B(1+1/q).
+The four searches terminate with the counts above. All comparisons
+are exact. The largest cutoff in a row only bounds explicit trial
+division in the proof. U also covers primes beyond that cutoff.
+
+We now use the table. If one group has j=1, (4) puts its abundancy
+in I₁, which is below 4/3, so it cannot contain 3. If 5 divides its
+Aᵢ, cancel 5 in (2) and use the first row with h=0. Otherwise the
+group satisfies the condition with h=1, and the next two rows force
+both 7 and 31 into it. The other group then has j=2. Its Aᵢ is
+divisible by 5, so it has allowance h=1 after cancellation in (2).
+It is disjoint from 7 and 31, and the fourth row excludes I₂.
+Thus the two j's cannot be 1 and 2. Since j₊≠0, only (3,0) remains.
+
+3. The group with j₋=0 is impossible
+
+Write T=R₋ and A=A₋=2X²−2X+1. Equations (2) and (4) give
+
+  A ∏(q∈T)o(q+1) = ∏(q∈T)q,        ∏(q∈T)(1+1/q)=2X²/A.            (5)
+
+T is nonempty. Each q∈T satisfies 1+1/q≤2X²/A, hence
+q≥A/(2X−1)>X−1. Its least prime r has o(r+1)=1, since (5) would
+otherwise supply a smaller prime in T. Thus r+1 is a power of two
+strictly greater than X, giving r≥2X−1.
+
+Every prime divisor of A belongs to T. Since 1<A<(2X−1)², A itself
+must be prime and must belong to T. More generally, every divisor of
+∏(q∈T)q strictly between 1 and (2X−1)² is a prime in T.
+
+Set Qᵢ=1+2^i(X−1). We have Qₖ₊₁=A. For i≥2, o(Qᵢ+1)=Qᵢ₋₁.
+Whenever Qᵢ∈T, (5) implies this odd part divides ∏(q∈T)q. It is
+strictly between 1 and (2X−1)². Descending induction forces every
+Q₁,...,Qₖ₊₁ to be prime.
+
+To contradict this, write k=u d with u the largest power of two
+dividing k and d odd. If d≥3, reduce modulo N=2^u+1. Then X=2^k≡−1
+and 2^(2u)≡1 mod N. Therefore Q₂ᵤ₋₁≡1−2^(2u)≡0 mod N. The index
+2u−1 is between 1 and k+1, and 1<N<Q₂ᵤ₋₁.
+
+If d=1, write k=2^m. For m odd we have k≡2 mod 3, and 7 divides
+Q₁=2^(k+1)−1. For m even, k≥12 implies m≥2, so k≡4 mod 12.
+Then 2^k≡3 mod 13 and Qₖ₊₁=1+2·2^k(2^k−1)≡0 mod 13. In each case
+the displayed divisor is proper. This completes the unbounded exclusion.
+
+4. The full classification
+
+The core-625 argument in section 3 of Erdős1052-core-bounds.txt rules
+out all odd exponents and all multiples of four. Its exact checks are
+also run by erdos1052_625.py. Every remaining exponent is twice an odd
+integer. Sections 1–3 exclude these as soon as ℓ≥25. For 0≤a≤49,
+the exact descending prime-factor test from (1), or equivalently
+the original unitary balance, returns only a=18. It gives
+
+  n=2^18 · 5^4 · 3·7·11·13·19·37·79·109·157·313.
+
+Direct multiplication of its unitary divisor factors gives 2n.
+Charles R. Wall's paper on the fifth unitary perfect number verifies
+this known example. The classification here fixes its repeated odd core.
+https://doi.org/10.4153/CMB-1975-021-9
+
+5. Progress on the bound for general cores
+
+Let P be the nonempty set of repeated odd prime bases in c. Suppose
+s=Σ(p∈P)1/p < 1/4096. This hypothesis allows any number of bases
+and unbounded exponents. Any unitary perfect completion satisfies
+either 64|a, or v₂(a)=4 and 65537∈P. In both cases every prime equal
+to 2 mod 3 dividing 2^a+1 belongs to P. Every member of P equal to
+2 mod 3 occurs to an even exponent in c. In particular, if 65537∉P
+then 64|a. This holds, for example, whenever s<1/65537.
+
+Here are the estimates extending the single-base argument. Every p in P
+is greater than 4096. Suppose S is a set of simple primes outside P with
+simple abundancy below 2, and that m ∏o(q+1) divides c ∏q for a seed m
+chosen from 3,5,17,257,641,65537, with m∉P. Draw an edge from r∈S to q∈S whenever
+r|q+1. Each vertex can supply at most one edge. Remove all q for which
+some p∈P divides q+1, together with all their successors. No prime of
+m is removed. For m≤641 every deleted vertex exceeds m. For m=65537
+the only odd primes dividing m+1=65538 are 3,11,331. Thus m cannot
+start a deleted path and none of its predecessors can be deleted.
+In the remaining set G, prime-by-prime cancellation gives
+m ∏(q∈G)o(q+1) | ∏(q∈G)q.
+
+Along an edge r→q, q≥2r−1. Since (1+1/r)w(2r−1)=w(r) for
+w(r)=(r+1)/(r−1), each path starting at r contributes at most w(r).
+It suffices to bound Σ 2/(q+1) over the starting vertices, even when
+paths overlap. For the starts whose odd part uses only primes in P,
+sum over 2^j ∏p^i with j≥1 and at least one i positive. The result
+is at most 2(∏(1−1/p)⁻¹−1)≤2s/(1−s). At any other start, choose
+a simple prime r and a core prime p dividing q+1. Different starts
+use different r, and 2/(q+1)≤1/(pr). Since Σ(r∈S)1/r<1, the mixed
+starts contribute at most s. Consequently the deleted abundancy is
+at most 1/(1−3/4095). The core contributes at most 1/(1−s²), since
+its local factors are 1+p^(−e) with e≥2 and Σ p^(−e)≤s².
+
+Put E=1/((1−1/4096²)(1−3/4095)). The retained G obeys the core-1
+tests in section 4 of Erdős1052-core-bounds.txt, with total correction
+at most E. The script rechecks each rational interval at this new E.
+For 0<a<20 it uses the exact required abundancy 2/(1+2^(−a)) with
+seed Fᵥ=2^(2^v)+1, where v=v₂(a).
+For a≥20 and v₂(a)≤5 use m=3,5,17,257,65537,641 respectively.
+These cases are excluded unless the seed is 65537 and belongs to P.
+The original reduction handles a=0, leaving only the two stated cases.
+
+For 64|a, any prime r≡2 mod 3 dividing 2^a+1 exceeds 1024. For
+v₂(a)=4 the sole possibility at or below 1024 is 449. Both statements
+follow by taking the exponent modulo r−1 for each prime r≤1024.
+The prime 449 would be simple, and 9|450 would require 9|c ∏q,
+which is impossible as 3∉P. If r>1024 and r∉P, it too must be
+simple. Remove r and use r|2^a+1 to cancel r on the right of the
+odd-part balance. This leaves the seed 3 from r+1. The extra factor
+1+1/1024 still gives (1024/513)E(1+1/1024)(1+2^(−16))<2.
+Thus all such r, including those dividing Fᵥ, belong to P. If a member
+p≡2 mod 3 of P had odd exponent e, then 3|p^e+1 would give the same
+contradiction at seed 3 directly.
+
+Finally Fᵥ≡2 mod 3, so at least one of its prime factors p is 2 mod 3.
+For such a p the multiplicative order of 2 modulo p is exactly 2^(v+1).
+Hence a fixed P satisfying the reciprocal condition gives at most |P|
+possible values of v₂(a), determined by the orders of 2 modulo its
+members. If none of the repeated primes is 2 mod 3 there is no
+completion at all. A uniform bound on c remains open.

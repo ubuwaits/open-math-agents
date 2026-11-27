@@ -1,0 +1,655 @@
+Two large prime factors in the fixed-core exponent problem
+
+Let n=2^a c ∏(q∈S)q be unitary perfect, with fixed odd repeated core c
+and the other odd primes occurring exactly once. Fix B≥2 larger than
+or equal to every prime factor of c. There is an effective W(c,B) such
+that, whenever a≥W, one of the following holds.
+
+  • Two distinct primes greater than B divide 2^a+1.
+  • Two distinct primes greater than B divide q+1 for the same q∈S.
+
+Consequently exponent finiteness holds unconditionally for completions
+in which the second-largest prime divisor of each of these numbers is
+bounded by a prescribed B. This allows arbitrarily large largest prime
+divisors and imposes no sparsity condition on c. It does not bound the
+second-largest divisor for all completions.
+
+The conclusion also localizes to a single multiplier. Write a=hb with
+b odd, and fix an odd prime ℓ dividing b. Let A=(2^(hℓ)+1)/(2^h+1).
+Enlarge B to include the prime factors of 2^h+1. For all sufficiently
+large ℓ (depending only on c,h,B), two primes above B must occur
+together in A or in q+1 for a simple prime forced from A. The latter
+means a simple prime reached by starting with the primes of A and
+recursively factoring the odd parts of their shifts, stopping at c.
+The previous bound for Ω(b) leaves precisely the possibility of large
+prime multipliers. This result restricts their entire forced descent.
+
+1. An interval missed by small multiples of prime powers
+
+Fix a positive integer D. Choose J with 2^J>2D, for example the
+smallest such integer. Put M=2^(2J)+D and P=(2D+2)(M²)!.
+For each odd u≤D and each e from J to 2J inclusive, m=2^e+u is odd
+and satisfies D<m≤M. Since φ(m²) divides P, Euler's theorem gives
+2^P≡1 mod m². For E=P+e this gives a factorization
+    2^E+u=m t,    t=1+2^e(2^P−1)/m,    gcd(m,t)=1.
+The second factor exceeds D because 2^P>2D and m≤2·2^e. Thus both
+coprime factors exceed D. It follows that 2^E+u cannot equal d p^j
+for any 1≤d≤D, prime p and j≥0. Otherwise each coprime factor would
+have to be divisible by p.
+
+We have a simultaneous interval [P+J,P+2J] for every allowed offset
+u and every denominator d. No primality testing of the numbers in the
+interval is used. The Lean theorem prime_power_free_interval uses a
+larger interval width 2D and the same argument.
+
+2. Why a single chain must enter this interval
+
+Use d(q)=oddpart(q+1). For any odd seed m dividing 2^a+1 the necessary
+divisibility is
+    m ∏(q∈S)d(q) | c ∏(q∈S)q.
+More generally one may start with any subset T of S and any seed m
+satisfying that divisibility on T. Take d₀ odd and fixed and suppose
+d₀m=2^N+1. For the first conclusion take d₀=1 and N=a. For the local
+version take d₀=2^h+1, N=hℓ; decreasing-prime cancellation gives a
+subset T forced from A with A ∏(q∈T)d(q)=D' ∏(q∈T)q for some D'|c.
+
+Assume m and each q+1 in the chosen support have at most one prime
+above B counted with multiplicity. Take D=d₀ c ∏(p≤B, p prime)p.
+Remove the small prime factors of m. If a single large factor r
+remains, r must be simple and belongs to the chosen support. Replace
+r by oddpart(r+1), extract its small odd prime factors, and repeat.
+Each remaining large prime is smaller than the previous one. The
+product of all extracted small odd factors divides c ∏(p≤B)p: this
+follows from the displayed divisibility, since each shifted factor is
+used at most once. A square factor above B would already contradict
+the right side, hence whenever there are two large factors they are
+distinct.
+
+At each large prime the equation has the form
+    d r = 2^E+u,    d≤D,    1≤u≤d,    d and u odd.
+Initially d is d₀ times the extracted factors of m and u=1. If
+r+1=2^j t r' where t is the extracted odd factor and r' is the next
+large prime (or 1 at termination), then
+    2^j d t r' = 2^E+u+d.
+As long as E≥J, one has j<J. Indeed 0<u+d≤2D<2^J, so the right
+side cannot be divisible by 2^J. Also j≥1. The next exponent is E−j,
+the denominator is d t≤D, and the new offset (u+d)/2^j is positive,
+at most d and odd as long as E−j≥1. Oddness follows by reducing the
+next equation modulo 2.
+
+A starting E above the forbidden interval cannot cross it in one step,
+because the width is J and every decrement is less than J. The recursion
+terminates because the large primes decrease. Termination at an exponent
+at or above the interval would give 2^E+u=d for d≤D, which is impossible.
+This proves both conclusions with W=P+J.
+
+The first place where two large prime divisors occur is also close to
+the top of this particular chain. The same forbidden interval works with
+P replaced by tP for every t≥1. Given N≥P+J, choose t with
+tP+J≤N<(t+1)P+J. Every preceding single-prime step lowers E by at least
+one, and cannot cross the interval. Within at most P steps there must
+therefore be a factor with two primes above B, while E≥tP+J>N−P.
+The factor at that step has size (2^E+u)/d>2^(N−P)/D. This gives both
+a bounded distance from the initial quotient and a fixed positive lower
+bound on the factor's size relative to 2^N, for fixed c,h,B.
+
+3. Where the argument stops
+
+If a seed or shifted factor has two large primes, both can be unbounded
+and neither can be absorbed into the bounded denominator d. Tracking
+their product through the replacement of one of them adds a multiple of
+the other prime to u. That term defeats the uniform bound u≤D used in
+the construction of the forbidden interval. The unresolved fixed-core
+case now requires such pairs for arbitrarily large B. The separate
+unconditional bound on the size of all repeated cores is also open.
+
+4. How many simple primes one large multiplier forces
+
+There is also an unconditional size bound for the exponent in terms of the
+number of simple primes forced from the one quotient. Fix h≥1 and put
+
+    L=(2^h+1)c(2Ω(c)+5).
+
+Write N=hℓ and A=(2^N+1)/(2^h+1) for an odd multiplier ℓ≥3. Choose
+the assigned set T of simple primes and d|c as in section 2, so that
+A ∏(q∈T)o(q+1)=d ∏(q∈T)q. If k=|T|, then
+
+    N < 2^k log₂(2L).
+
+There are also individually bounded primes. If (2L)^(2^i)≤2^N, then
+T contains at least i+1 primes. Its (i+1)-st smallest prime is less
+than (2L)^(2^i). The bounds apply however many large factors occur
+together in the seed or its shifts.
+
+To prove this put F=d(2^h+1) and E=Σ(q∈T)v₂(q+1). The group identity
+and its abundancy strictly below two give
+
+    (1+2⁻ᴺ) ∏(q∈T)(1+1/q)=F/2^j=R,       j=N−E>0.
+
+Indeed R<2(1+2⁻ᴺ)≤3 and F≥3. Write the primes of T in increasing
+order q₁,...,qₖ. Let Qᵢ be the product of the first i, and Pᵢ their
+abundancy. Since Pᵢ<R, writing both sides over a common denominator
+gives 1−Pᵢ/R≥1/(F Qᵢ). This applies even at i=k.
+
+The unprocessed primes satisfy ∏o(q+1) | d Qᵢ ∏q by the original
+group identity, and Ω(d Qᵢ)≤Ω(c)+i. For r=qᵢ₊₁, inequality (4) in
+Erdős1052-core-bounds.txt bounds their abundancy by
+
+    (1+2/(r−1))^(Ω(c)+i) ∏(q≥r, q a Mersenne prime in T) (q+1)/(q−1).
+
+For each of the first Ω(c)+i factors, the loss of its reciprocal from
+one is 2/(r+1). For the Mersenne factors these losses sum to at most
+Σ(j≥ceil(log₂(r+1)))2^(1−j)≤4/(r+1). Since 1−∏(1−xᵢ)≤Σxᵢ,
+including the extra factor 1+2⁻ᴺ yields
+
+    1/(F Qᵢ) ≤ 1−Pᵢ/R ≤ 1/(2^N+1)+(2Ω(c)+2i+4)/(r+1).
+
+At i=k the second term is zero. It follows that the lesser z of 2^N
+and the next prime (or just 2^N at i=k) satisfies
+
+    z+1 ≤ F(2Ω(c)+2i+5)Qᵢ ≤ L·2^i Qᵢ.
+
+Starting at Q₀=1, continue until z=2^N. Before then Qᵢ₊₁≤L·2^i Qᵢ²,
+giving Qᵢ≤L^(2^i−1)·2^(2^i−i−1) by induction. Hence
+z+1≤L^(2^i)·2^(2^i−1)<(2L)^(2^i) at each step. This proves both
+claims, since the stopping index is at most k.
+
+For h a power of two and an odd prime ℓ not dividing 2^h+1, every prime
+dividing A has multiplicative order 2hℓ for the base 2. Indeed a common
+prime of A and 2^h+1 must divide ℓ, by evaluating the alternating quotient
+at −1. The order is a divisor of 2hℓ that does not divide hℓ, and order
+2h would give the excluded common divisor. Thus every seed prime is at
+least 2hℓ+1. For every i with (2L)^(2^i)≤2hℓ, at least i+1 simple
+primes in T are proper descendants below every prime dividing the seed.
+Their number tends to infinity with ℓ, even allowing unrestricted
+branching. A uniform upper bound on this count would bound ℓ. The
+present argument provides the lower bound.
+
+The project checker accepted the reduction of the fixed-core step to
+two bounds for pairs of prime divisors. The signed single-file submission
+records the proof of the chain theorem in sections 1 and 2.
+https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/7448
+
+5. Which primes supply 5 and 7 at a sparse core
+
+Suppose the nonempty core satisfies the reciprocal sum condition. The
+previous sparse-core argument forces 3,5,7 as simple primes, a≥16, and
+every simple prime except 3 and 5 to be 1 mod 3. Delete all simple primes whose shift uses a core
+prime, together with all their successors in the direction of larger
+primes. The surviving set G contains 3,5,7. It satisfies ∏o(q+1)|∏q.
+Its abundancy lies in [L₀,2), where
+
+    L₀=2/((1+2⁻¹⁶)E₀),    E₀=1/((1−4096⁻²)(1−3/4095)).
+
+For s=5 or 7 there must be a prime q in G with s|q+1. In fact if no
+such q existed, the spare s on the right would give s∏o(r+1)|∏r.
+The exact interval test with seed s excludes [L₀,2). Because s is
+simple, this q is unique even in the original support.
+
+In the direction of increasing primes, each r in G has at most one
+successor, since r can divide only one shifted factor. Deleting q and
+all its successors loses abundancy at most w(q)=(q+1)/(q−1). It frees
+s on the right while retaining s. The interval test at seed s excludes
+[L₀/w(X),2) with X=554 for s=5 and X=1040 for s=7. Thus q<X.
+Deleting only the proper successors of q instead frees q with loss at
+most w(2q−1). Test each prime s<q<X equal to −1 mod s. Exclude it if
+its downwards closure is inconsistent, contains a disallowed residue,
+or the seed q excludes [L₀/w(2q−1),2). This leaves
+
+    s=5: q=19 or 79.           s=7: q=13, 223 or 433.
+
+For a pair p,q from the two lists, their forced closures, listed below,
+are disjoint. Neither belongs to the other's proper successor chain.
+Removing both proper successor chains frees the seed pq with loss at
+most w(2p−1)w(2q−1), including when the chains coalesce. The pair
+(19,13) already has abundancy 512/247>2. The test for (79,433)
+excludes the requisite interval at its first node with cutoff 31.
+This leaves exactly four necessary alternatives for the two suppliers,
+
+    (19,223), (19,433), (79,13), (79,223).
+
+The closures are {19,5,3}, {79,5,3}, {13,7}, {223,7}, {433,7,31}.
+The interval tests use the proof in Erdős1052-core-bounds.txt and exact
+rational arithmetic. They can be rerun with erdos1052_sparse_parents.py.
+
+6. A fixed sparse core previously left open
+
+For c=65537^e, the earlier necessary conditions gave 128|e. In fact
+
+    8192|e,    v₂(e) is outside {15,17,18,20,23}.
+
+This also excludes the example c=65537^128 from the earlier bound on
+Ω(b), for every exponent a. Here are the certificates. At row j the
+prime r divides 65537^(2^j)+1; modular exponentiation gives −1. Hence
+r divides 65537^e+1 for every e=2^j(2k+1). It is outside the sole
+repeated prime and therefore simple. The last column shows factors of
+subsequent shifts. An arrow x→y means that y divides x+1.
+
+    j                 r       contradiction
+    7       14379237889       r→5,83; both shifts use 3
+    8     2478250459649       5²|r+1
+    9             70657       7²|r+1
+   10         341114881       r→170557441→11,12647; both shifts use 3
+   11         730882049       5²|r+1
+   12           4513793       r→752299 and 5²|752300
+   15           3604481       3²|r+1
+   17            786433       r→35747 and 3²|35748
+   18        2967994369       r→5,11; both shifts use 3
+   20         211812353       3²|r+1
+   23        3238002689       r→5 and 3|r+1, 3|5+1
+
+At j=7, for example, r+1=14379237890 is divisible by 5·83. The
+right side of the full unitary balance contains at most one copy of
+3, whereas the shifts 6 and 84 on the left supply two. This argument
+also works for a=0. No hypothesis on the primes dividing a is involved.
+For a general sparse core containing 65537^e at j=7 the same argument
+forces 14379237889 itself to be repeated, since neither 5 nor 83 can
+belong to the core. At other rows an intermediate prime may itself
+be repeated, so the single-base conclusion needs that hypothesis.
+
+FactorDB supplied candidate divisors for j=7,8,10,11. Other rows came
+from testing primes in the requisite congruence class. The program
+erdos1052_odd_part.py independently checks all the divisibilities and
+primalities by integer arithmetic. Its bounds now include these exclusions.
+https://factordb.com/index.php?id=1100000000576105678
+https://factordb.com/index.php?id=1100000000576105680
+https://factordb.com/index.php?id=1100000000576105683
+https://factordb.com/index.php?id=1100000000576105684
+
+7. A finiteness theorem in which the repeated core may vary
+
+Here the initial seed is 2^a+1 and there is one further source x+1 for
+each odd prime power x exactly dividing n. Fix any B≥2 and suppose that
+the product of the odd prime powers of n with base ≤B is bounded by D.
+Impose two conditions on the sources:
+
+  (i) Each source contains at most one distinct prime greater than B.
+ (ii) Each prime greater than B divides at most one source.
+
+Under these conditions there are only finitely many unitary perfect n.
+No assumption is made on the sizes or multiplicities of individual odd
+prime powers above B. In particular at B=4096 every sparse core in the
+question satisfies the small-prime bound D=∏(odd primes p≤4096)p.
+
+Indeed the odd-part balance is (2^a+1)∏o(x+1)=∏x for a>0. By (ii) a
+large prime encountered in a source occurs there with its entire
+valuation in n. By (i) the odd part of this source is t·p^e with t
+supported on small primes, or simply t. Starting at the seed and moving
+to p^e+1 gives a path of whole prime powers. These powers strictly
+decrease, because the next divides o(p^e+1)≤(p^e+1)/2<p^e. Thus each
+source on the path is used at most once. The product of all extracted
+t divides the small part of ∏x and is at most D. Repeat the proof in
+section 2 with p^e in place of the single prime. The interval in
+section 1 excludes every prime power with the same W(D), and the
+positive odd offset and exponent-decrement bounds are identical.
+This bounds a uniformly. The Lean theorem bounded_prime_power_paths
+checks this last step directly for every finite prime-power path.
+
+For completeness, bounded a implies finitely many n. For fixed a>0 let
+x₁<...<xₖ be the odd prime-power components. Each xᵢ+1 is even, so the
+2-adic valuation of the full balance gives k≤a+1. Their abundancy product
+equals R=2^(a+1)/(2^a+1). After any proper prefix of product Q and
+abundancy V, the positive rational gap 1−V/R is at least 1/(2^(a+1)Q).
+If x is the next component, the same gap is at most k/(x+1), by taking
+the product of the remaining reciprocal abundancies. Thus each next
+component has a finite bound determined by a and the prefix. For a=0,
+k≤1 by the same valuation argument, and no positive odd n is unitary
+perfect. This proves the asserted finiteness. In particular, outside a
+finite set, every hypothetical unitary perfect number with a sparse core
+must have either two different large prime divisors in one source or a
+single large prime divisor shared by two sources. The unrestricted
+uniform bound on repeated cores still requires treating those cases.
+
+The single-file Lean certificates for the prime-power paths and all eleven
+new core-valuation exclusions were checked together with the source of
+the accepted parent reduction. The audited declarations use only propext,
+Classical.choice and Quot.sound. The H2 desk records the chain reduction
+and the local size estimate in note 37506.
+https://github.com/ubuwaits/open-math-agents/blob/6497b522f319f69d9e713c92ff47877557486dcb/notes/Erdos1052/LargePrimeBranches.lean
+https://github.com/ubuwaits/open-math-agents/blob/6497b522f319f69d9e713c92ff47877557486dcb/notes/Erdos1052/FermatCore.lean
+
+8. Two bounded simple primes must occur on different branches
+
+Fix c and an odd initial denominator d₀. Suppose d₀A=2^N+1 and the
+assigned support satisfies A∏o(q+1)=d∏q, d|c, with all q simple
+and outside c. There exist effective L(c,d₀) and N₀(c,d₀) such that for
+N>N₀ two primes in this support, both at most L, are incomparable in
+the following sense. No descending path from one to the other exists,
+where an edge from r to q means q divides r+1. In particular a single
+path through all small simple primes cannot support arbitrarily large
+N, irrespective of the complexity of the other branches. Taking
+d₀=2^h+1 gives the assertion for any odd multiplier, including primes.
+
+Each simple q is supplied exactly once, either by A or by the shift of
+a unique larger prime. The latter inequality follows from q|(r+1)/2.
+Thus the predecessors form rooted trees. Suppose all simple primes
+at most L are on one path. Pick a path starting at a prime of A that
+contains all of them, using an empty path if necessary. Include a
+final endpoint 1. At the seed write A=z₀r₀ for the remaining path
+prime r₀, or 1 if the path is empty. Each subsequent step has
+
+    r+1=2^j z r',      j≥1.
+
+Here z collects all odd factors other than the next path prime r'.
+The off-path primes descending from each such z form disjoint sets Uᵢ.
+Cancelling factors in each subtree gives
+
+    zᵢ βᵢ = 2^(kᵢ) Dᵢ,    βᵢ=∏(q∈Uᵢ)(1+1/q),
+    kᵢ=Σ(q∈Uᵢ)v₂(q+1),    ∏Dᵢ=d.
+
+This includes a factor of zᵢ belonging directly to the core, even if
+there are no simple primes in its subtree. All off-path primes exceed
+L. Their union U satisfies ∏(q∈U)o(q+1) | c∏(q∈U)q. The tail estimate
+in section 4 gives 1−1/∏βᵢ≤(2Ω(c)+4)/(L+1). Thus by taking L large
+we can make the entire product of the βᵢ at most 1+η, for any prescribed
+η>0, independently of the number and sizes of the branches.
+
+Put D=d₀c. Choose J with 2^J>8D and construct the forbidden interval
+[W,Z] of section 1 with Z=W+J. Choose positive η≤1/8 so small that
+η(2^Z+D)<1/8, then L for this η. These choices depend only on c,d₀.
+
+After stripping off each z, the current prime r (or final 1) satisfies
+
+    d' r = K(2^E+w),    1≤K≤1+η,    0<w≤d'≤D.
+
+The integer d' is d₀ times the product of the Dᵢ used so far, and K
+is the product of their βᵢ. The exponent E is an integer, allowed to
+be negative, and w is positive rational. Initially, after stripping
+z₀, take E=N−k₀, w=2^(−k₀), K=β₀, d'=d₀D₀. At a shift with the next
+off-path data (β,k,Dᵢ), put Δ=j+k. The exact updates are
+
+    E' = E−Δ,   K' = Kβ,   d'' = d'Dᵢ,   w'=(w+d'/K)/2^Δ.
+
+In particular w'≤d' because Δ≥1. At the initial stripping Δ=k₀ may
+equal zero. At every step, including that initial stripping, the
+post-step residual satisfies 0<K'w'≤2(1+η)D/2^Δ.
+
+No step of size Δ≥J can land at an E'≤Z. Indeed K'w'<(1+η)/4. If
+E'≥0, d''r'−2^E' is a strictly positive integer, while its upper
+bound η2^Z+(1+η)/4 is less than one. If E'<0, d''r' is a positive
+integer at most (1+η)/2+(1+η)/4<1. Both possibilities are impossible.
+
+No post-step state can lie in [W,Z] either. There u=d'r−2^E is a
+positive odd integer with u≤η2^Z+(1+η)d'<d'+1. Hence 1≤u≤d'≤D.
+For r prime this contradicts the forbidden interval. For final r=1,
+d'≤D<2^W contradicts the same positive difference. The path cannot
+terminate at E>Z since its terminal value d' would exceed D there
+as well. Starting at N>Z, any first step landing at or below Z has
+size less than J, so it must land inside [W,Z]. This proves the claim.
+
+This argument yields an alternative sufficient condition for exponent
+finiteness at fixed c,h: if in every completion the small primes of the
+quotient branch all lie on a single path, using the effective L above,
+then its odd multiplier is bounded. Finiteness without the restriction
+on the arrangement of the small primes remains open. The Lean theorem
+Erdos1052.SinglePath.bounded_paths checks the normalized path bound. The
+translation from the subtree balances to its hypotheses is proved above.
+
+The conclusion persists in each prescribed range of large primes.
+Fix B≥2 covering the primes of c and retain only T'={q∈T:q>B}. In the
+balance for T, the product of o(q+1) for q≤B has no prime divisor above
+B. It therefore divides d times the product of the primes q≤B in T.
+After cancellation, A∏(q∈T')o(q+1)=d'∏(q∈T')q with
+d'|c∏(p≤B, p prime)p. Apply section 8 with this enlarged fixed budget.
+There are effective L(B)>B and N₀(B) such that every N>N₀(B) forces two
+incomparable simple primes in (B,L(B)]. For a prime multiplier ℓ these
+are strictly below every prime divisor of A once 2hℓ≥L(B). In particular
+the obstruction cannot reside entirely in a fixed finite collection of
+small branching primes.
+
+9. Counting simultaneous cyclotomic factors of the exponent
+
+Fix a nonempty sparse core, an allowed h=2^v≥16, and write a=hb with
+b odd. Put Y=2^h, C=oddpart(σ*(c)), g=gcd(c,C(Y+1)), K=Ω(c/g).
+Here Ω counts primes with multiplicity, ω counts distinct primes, and
+ν_r denotes the exponent of a prime r. Then
+
+    ν₃(b) + ω(b/3^ν₃(b)) ≤ K.                                  (9.1)
+
+In particular every distinct prime dividing b uses a separate copy of a
+core prime, and every copy of 3 does too. If K=1, then b is 1, is 3,
+or is a power of one prime different from 3.
+
+For i|b set A_i=|Φ_i(−Y)|, with Φ_i the i-th cyclotomic polynomial.
+The factorization of X^b−1 at −Y gives 2^(hb)+1=∏(i|b) A_i. The
+index 1 gives Y+1. For an odd prime r and any j≥0,
+
+    A_(r^(j+1)) (Y^(r^j)+1) = Y^(r^(j+1))+1.
+
+Consequently any collection of these layers can be split off at once,
+with the leftover factor still divisible by Y+1. This uses their distinct
+polynomial indices and allows common primes in the evaluated integers.
+The decreasing-prime partition of the odd-part balance in section 1 of
+Erdős1052-odd-part.txt then counts at most K indices whose group demands
+a nontrivial core divisor. Its first-step lemma charges A_r for every r,
+and its cubic lemma charges all the layers A_(3^(j+1)). This proves (9.1).
+
+There is a sharper bound with multiplicities as well. Choose primes
+p|h+1 and q|hp+1, and let m be the multiplicative order of p modulo q.
+Then
+
+    Ω(b) ≤ max(p−1,m+1) K.                                       (9.2)
+
+Indeed for r≠p charge every j divisible by p−1. The first index j=0
+uses the first-step lemma. If j>0, then p properly divides h r^j+1 by
+Fermat's theorem and h r^j+1>h+1. The composite-start lemma charges
+that prime-power layer. Each charged index covers at most p−1 successive
+indices in the range 0≤j<ν_r(b). For r=p charge j=0 and j=1+tm with
+t≥1. In the latter case q properly divides hp^j+1; the gap from j=0
+to the next charge is m+1, and subsequent gaps are m. Summing these
+separate charges over all prime powers proves (9.2). If hp+1 is itself
+composite one can also charge at j=1; the coefficient m+1 can then be
+replaced by m. The coefficient for r=p can always be taken as 1 if p=3.
+
+Several v give simpler coefficients. If v is odd, then h≡−1 mod 3.
+For r≡1 mod 3 every j>0 charges, and for r≡2 mod 3 every even j>0
+charges, since 3 properly divides h r^j+1. Include the first index
+for each r and all the cubic indices. This gives
+
+    ν₃(b) + Σ_(r≡1 mod 3) ν_r(b)
+           + Σ_(r≡2 mod 3) ceil(ν_r(b)/2) ≤ K,    Ω(b) ≤ 2K.
+
+If an odd prime t divides v, then h r^j is a t-th power whenever t|j,
+so h r^j+1 is composite. These indices give Ω(b)≤tK. If v≡2 mod 4,
+then for 4|j one has h r^j=4x⁴ and 4x⁴+1=(2x²−2x+1)(2x²+2x+1).
+Here x>1 because h≥16. The same count gives Ω(b)≤4K.
+
+Thus bounding the prime factors of b by L gives b≤L^H with H from
+(9.2) or the smaller applicable coefficient. When K=0 the only
+candidate is a=h. When K>0, (9.1) and (9.2) permit a single arbitrarily
+large prime r on their own. Sections 2, 4 and 8 restrict the support
+that r would force. A uniform bound on r is still needed.
+
+10. A uniform factor of two, and a bound on distinct prime divisors
+
+In fact for every allowed h, independently of its size,
+
+    Ω(b) ≤ 2K,     2^ω(b) ≤ K+2.                                 (10.1)
+
+The additional congruence needed for the first bound is this. If s≥16
+is even and s≡1 mod 5, then s≡6 mod 10. Put X=2^s. In a group with
+core divisor 1 for a prime-power layer starting at s, its abundancy B
+satisfies X²/(X²−X+1)≤B<1+1/X. Thus every member exceeds X.
+All Mersenne starts other than r=2X−1 are 2^j−1 with odd j≥s+3.
+On the path from r, the next prime cannot be 2r−1 because
+2r−1=2^(s+2)−3 is divisible by 11. It cannot be 4r−1 because this
+integer is divisible by 3, and 6r−1 would put a factor 3 into the
+group through its shift. The next prime is therefore at least 8r−1.
+Using the path estimate and summing 2^(1−j) over odd j≥s+3 gives
+
+    B ≤ [8X/(8X−5)] [3X/(3X−1)] < 1+63/(64X).
+
+This also bounds B if the candidate start r is absent. The lower bound
+is greater than 1+63/(64X) for X≥65536, a contradiction. So s≡1 mod 5
+charges the layer. If s≡−1 mod 5, or s≡−1 mod 3, then s+1 is composite
+and the earlier Mersenne bound charges it as well.
+
+For v even, h≡±1 mod 5. At each prime r≠5, every even j≥0 gives
+h r^j≡±1 mod 5, so at least ceil(ν_r(b)/2) layers charge. For r=5,
+j=0 charges, and at every odd j one has h5^j≡−1 mod 3. These give at
+least the same count. For v odd the argument modulo 3 in section 9
+applies. Hence Σ_r ceil(ν_r(b)/2)≤K, which proves Ω(b)≤2K. For K=1
+this restricts b to 1, one prime, or one prime squared. The cubic bound
+excludes the square of 3 in this case.
+
+The distinct-prime bound uses all squarefree divisor indices of b.
+For squarefree d>1 and y=2^(−h), Möbius inversion gives
+
+    V_d = A_d / (2^h)^φ(d) = ∏_(e|d)(1+y^e)^μ(d/e).
+
+When ω(d) is odd, the factor at e=1 is (1+y)⁻¹. In the correction
+H=(1+y)V_d, the smallest index e>1 is the least prime r|d and has
+sign +1. All denominator factors have indices at least r+1. Using
+∏(1+x_i)⁻¹≥1−Σx_i for x_i≥0, we obtain
+
+    H ≥ (1+y^r)(1−y^(r+1)/(1−y)) > 1,
+    H ≤ 1/(1−y³/(1−y)).
+
+The upper bound uses that every divisor e>1 is at least 3. For
+0<y≤1/64 these bounds give 1/(1+y)<V_d<1. If the core divisor for
+this group were 1, its abundancy B would be 1/V_d, since 1≤B<2 and
+A_d B is a power of two. Consequently
+
+    1+(63/64)y < (1+y)(1−y³/(1−y)) ≤ B < 1+y.
+
+Thus all its simple primes exceed 2^h. If h≡−1 mod 3 or h≡−1 mod 5,
+the composite-start upper bound gives B≤2/(2−y). In the remaining
+case h≡1 mod 5, the sharpened path bound above gives B<1+(63/64)y.
+These alternatives cover every h=2^v≥16. Hence every squarefree
+nontrivial index with an odd number of prime divisors charges.
+
+When ω(d) is even, the e=1 factor is 1+y. Bounding all the other
+factors by the same geometric sums gives
+
+    1 < (1+y)(1−y³/(1−y)) ≤ V_d ≤ 1/(1−y/(1−y)) < 4/3.
+
+If this group had core divisor 1, the next power of two above A_d
+would give B≥2/V_d>3/2. Two disjoint such groups would have product
+abundancy greater than 9/4, while the full simple support has abundancy
+less than 2. Therefore at most one of the nontrivial squarefree index
+groups can have core divisor 1. There are 2^ω(b)−1 nontrivial indices
+and at most K groups with core divisor greater than 1. This proves the
+second inequality in (10.1), including b=1.
+
+The Lean files Erdos1052DistinctFactors.lean and Erdos1052OddResidue.lean
+verify the cyclotomic allocation, the additional congruence for even v,
+the bound Ω(b)≤2K for unitary perfect numbers, and b≤L^(2K) when all
+prime divisors of b are ≤L. The estimate 2^ω(b)≤K+2 uses the written
+Möbius product argument above.
+
+11. Fixed sparse cores that are powers of a prime up to 10¹²
+
+For 4096<p≤10¹² prime, e≥2, all exponents a are ruled out except
+possibly at these two families of cores:
+
+    p=65537,     8192|e,       v₂(a)=4;
+    p=167772161,   32|e,       v₂(a)=23.
+
+In particular no sparse core p² in this entire interval has a
+unitary perfect completion. Here e itself may be arbitrarily large
+in the exclusion of every other base. The first family also has the
+additional exclusions in section 6. The second requires ν₂(e) outside
+{6,8,10,15} in addition to 32|e. Neither remaining family is known
+from this argument to contain a solution.
+
+By the sparse-core theorem, the sole repeated base p is 2 mod 3 and
+divides F_v=2^(2^v)+1, where v=v₂(a). Every prime other than 5 that is
+2 mod 3 and divides F_v must be in the core. The simple support contains
+5, and every simple prime different from 3,5 is 1 mod 3. For v=4 this
+requires p=65537; all other possibilities have v≥6.
+
+For each v from 6 through 19 at least two distinct repeated bases would
+be needed in any sparse core. There are two types of certificate. For v=9,11,12,13,15,18,19
+there are two coprime divisors of F_v which are both 2 mod 3. Each needs
+a prime divisor 2 mod 3, and 5 does not divide F_v. The exact integers
+are recorded in SPLITS in erdos1052_fermat_bases.py. Their primality is
+unnecessary; gcd and modular exponentiation suffice. For example, the
+two divisors for v=12 are 114689 and 26017793.
+
+For v=6,7,8,10,14,16,17 the certificate starts with a prime r|F_v that
+is 1 mod 3. Since p is 2 mod 3, r is simple. At each successive step a
+prime equal to 1 mod 3 divides the previous shift, so it too is simple.
+The final shift contains an odd factor d≡2 mod 3 with gcd(d,5F_v)=1.
+This forces some prime that is 2 mod 3 and is neither 5 nor p, which
+contradicts the sparse-core conditions. The full chains are in PATHS.
+For a core with several repeated bases, at least one intermediate prime
+must be repeated or a repeated prime that is 2 mod 3 must divide d.
+Either way, this prime is distinct from the required core divisor of
+F_v that is 2 mod 3. These same tests filter individual multi-prime cores.
+For example the row for v=6 is
+
+    274177 → 137089 → 13709.
+
+Here 274177|2^64+1, 137089|274178, and 13709|137090. An independent
+way to see the contradiction in that row is that, if all three primes
+are simple, both 137090 and 13710 use the single available factor 5.
+The only possible v for c=67280421310721^e would be 6 since this base
+divides F₆ and its order for the base 2 is 128. This excludes every e≥2.
+
+For larger v, ord_p(2)=2^(v+1). Hence p≡1 mod 2^(v+1). For 20≤v<40
+enumerate all integers 1+k·2^(v+1)≤10¹² that are 2 mod 3 and test
+2^(2^v)≡−1 modulo the integer. Only 167772161 at v=23 survives, even
+without a primality filter. For v≥40 the order alone exceeds the bound.
+
+For p=167772161, put j=ν₂(e). If j=0, 3|p^e+1, while 5+1 already uses
+the single available copy of 3. For j=1 the prime r=14073749003304961
+equals (p²+1)/2. It is simple, (r+1)/2=7036874501652481 is also prime
+and simple, and its shift is divisible by 911≡2 mod 3. If j=2,3,4 the
+respective forced primes 41,17,1601 are themselves 2 mod 3. This proves
+32|e. The remaining exclusions use the factors 257,26113,59393,65537
+at j=6,8,10,15; for j=8, 11 divides 26114. In all rows the initial
+divisor of p^(2^j)+1 divides p^e+1 because e/2^j is odd.
+
+FermatSearch lists candidate divisors of the Fermat numbers and
+FactorDB supplied auxiliary factors. The verifier checks each Fermat
+and shift divisibility, all required primalities by trial division or
+Lucas certificates, and the full finite progression search. Run
+python3 -B erdos1052_fermat_bases.py to reproduce the exclusions.
+https://www.fermatsearch.org/factors/faclist.php
+https://factordb.com/index.php?id=1100000000488281018
+https://factordb.com/index.php?id=1100000000204035536
+
+12. A bounded gap between Mersenne prime exponents is necessary for a free higher layer
+
+Fix h=2^v≥16. Let s=hu with u≥3 odd and take a multiplier f≥3 odd.
+If the group for A=(2^(sf)+1)/(2^s+1) uses no core prime, then there
+are two Mersenne primes 2^(s+1)−1 and 2^(s+j)−1 with 3≤j≤2h+1.
+Both belong to the group. In particular, when K=1, a putative b=ℓ²
+requires these two Mersenne primes with s=hℓ. This restriction applies
+to an individual large prime ℓ in the square case.
+
+Put Y=2^s and Q_i=1+2^i(Y−1), so Q₁=2Y−1. The neutral-size lemma
+requires Y²/(Y²−Y+1)≤B<1+1/Y for the assigned abundancy B, and all
+the group's primes exceed Y. The Mersenne-start estimate forces Q₁
+to be prime and present: if absent, every start exponent is at least
+s+3 and the entire abundancy is at most 2Y/(2Y−1). Let k=2h−1.
+Then 2^h+1 properly divides Q_k since Y≡−1 mod 2^h+1 and
+2^(2h)≡1 mod 2^h+1. Thus the path from Q₁ cannot follow the minimal
+chain Q₂,Q₃,...,Q_k all the way through.
+
+At its first departure, say at index i≤k, the path ends or its next
+prime is at least 4Q_(i−1)−1=2Q_i+1. Write w(q)=(q+1)/(q−1).
+The minimal steps telescope because (1+1/q)w(2q−1)=w(q), and
+w(2Q_i+1)/w(Q_i)=1−1/Q_i. Hence this entire path contributes at most
+
+    w(Q₁)(1−1/Q_k) < [Y/(Y−1)](1−δ),       δ=1/(2^k Y).
+
+Suppose all other starting exponents were ≥s+k+3. Their reciprocal
+losses sum to at most Σ_(j≥s+k+3)2^(1−j)=δ/2, so their path product
+is at most 1/(1−δ/2). This would give
+
+    B < [Y/(Y−1)] (1−δ)/(1−δ/2)
+      ≤ [Y/(Y−1)] (1−δ/2) < Y²/(Y²−Y+1).
+
+The last inequality is equivalent to δ/2>1/(Y²−Y+1) and follows from
+s≥3h>k+1. This is the contradiction. At K=1 the first index ℓ has
+already used the only available core prime, so the second ℓ-power
+layer must meet this obstruction. Even the first necessary exponent
+hℓ+1 must be prime. Thus the set of possible prime ℓ in the square
+case has relative density zero amongst primes, by the prime number
+theorem in arithmetic progressions. Indeed sieve hℓ+1 by any finite
+set of primes r>2 not dividing h: it rules out one of the r−1 nonzero
+residue classes of ℓ for each r, apart from finitely many exceptions.
+The resulting density bound ∏(1−1/(r−1)) tends to zero. In the
+single-prime case b=ℓ the first layer can use the core, so this last
+restriction leaves it open.

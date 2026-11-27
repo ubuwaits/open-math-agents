@@ -1,0 +1,246 @@
+Erdős 1052 — partial results on the two hypotheses of reduction R2
+
+The question asks whether the set of unitary perfect numbers is finite.
+Write n = 2^a c ∏(q∈S) q. The odd core c contains the full powers of the
+primes occurring at least twice. S consists of distinct odd primes outside c.
+Let σ*(c) = ∏(p^e || c) (p^e+1), and let o(t) be the largest odd divisor
+of t. For a > 0, put M = 2^a+1. Multiplicativity of the unitary divisor sum
+gives the exact equation
+
+    M σ*(c) ∏(q∈S)(q+1) = 2^(a+1) c ∏(q∈S)q.                       (1)
+
+When a = 0, the factor M on the left is 1. R2 asks for a uniform upper
+bound on c and a finiteness theorem for the exponents at each fixed c.
+Neither bound in that generality follows from the results below.
+
+1. A bound on primes of arbitrary size
+
+Let m be an odd divisor of M. Taking odd parts in (1) gives
+
+    m o(σ*(c)) ∏(q∈S)o(q+1)  |  c ∏(q∈S)q.                          (2)
+
+Only divisibility is needed. Start by factoring m o(σ*(c)). A requested
+prime p dividing c uses one of its available copies in c. A requested
+prime p outside c must be in S and can be used exactly once. Each time
+such a p is discovered, factor o(p+1) and include its demands. Process
+the largest pending prime first. All odd factors of p+1 are strictly
+smaller than p, so the procedure terminates. An excess demand proves
+impossibility. Otherwise let F denote the forced primes in S and D the
+unused part of c. Cancellation gives, for R = S minus F,
+
+    ∏(q∈R)o(q+1) | D ∏(q∈R)q.                                        (3)
+
+The current odd abundancy is A = (σ*(c)/c) ∏(p∈F)(1+1/p). If R is
+nonempty and q is its least element, then d = o(q+1) divides D, since
+all prime factors of d are smaller than q. Upon selecting q one replaces
+D by (D/d)q, multiplies A by 1+1/q, and examines larger primes.
+
+Suppose all the remaining primes exceed an integer x ≥ 1. Set
+w(q)=(q+1)/(q−1). Then
+
+    ∏(q∈R)(1+1/q) ≤ (1+2/x)^Ω(D) ∏(q∈R, o(q+1)=1)w(q),             (4)
+
+where Ω counts prime factors with multiplicity. One proof uses the
+completely multiplicative function G whose value at a prime p is 1+2/x
+for p≤x, and p/(p−1) otherwise. For q>x we have
+(1+1/q)G(q)=w(q). If d=o(q+1)>1, any prime p|d satisfies 2p≤q+1.
+For p≤x we get G(p)≥w(q) from q−1≥x. For p>x this follows from
+q≥2p−1. Thus G(d)≥w(q). Multiply over R, using w(q) as the extra factor
+where d=1. Equation (3) implies ∏G(d)≤G(D)∏G(q), since G takes values
+at least 1. Cancel ∏G(q), then use G(D)≤(1+2/x)^Ω(D).
+
+The last product in (4) is over Mersenne primes q=2^k−1. For k<31 the
+prime possibilities are 3, 7, 31, 127, 8191, 131071, and 524287. Composite
+k gives composite 2^k−1. The few remaining exponents are checked by
+trial division. Each factor w(q) equals 1/(1−2^(1−k)). For k≥K≥31,
+the sum of 2^(1−k) is 2^(2−K). Therefore every finite product of these
+factors is at most 1/(1−2^(2−K)), by ∏(1−t)≥1−Σt for 0≤t≤1.
+Taking K=max(31, floor(log2(x+1))+1) skips roots already below x.
+This gives a rational bound U(x,D) valid with arbitrarily large primes.
+
+To exclude a target interval [L,H), first discard a branch with A≥H.
+Find y≥x such that A U(y,D)<L. This handles every continuation whose
+least remaining prime exceeds y, including the empty continuation.
+The other branches are exactly the possible primes q in (x,y] of the
+form 2^j d−1 with j≥1 and d|D, excluding primes of c or F. Recurse with
+the updated A,D and lower endpoint q. The search has a finite ceiling
+for y. If a suitable y cannot be certified, the checker returns an
+inconclusive result. All bounds, decisions and primality tests use exact
+arithmetic. The ceiling for y never bounds the primes in a solution.
+
+2. Fixed cores up to one hundred million
+
+There are 7,857 odd powerful c≤10^8, including 1. Enumerate them without
+duplication as x²y³ with y odd and squarefree and x odd. For every a≥20,
+the required odd abundancy is in [2/(1+2^(−20)),2). The counts, in the
+order in which each core first receives a certificate, are
+
+    7,391   incompatible demands already at m=1
+       14   forced odd abundancy at least 2
+      396   excluded by the interval certificate at m=1
+       25   excluded after dividing the exponents into classes
+       31   unresolved by this check.
+
+For v=v₂(a)=0,...,5, take m=2^(2^v)+1, which divides M since a/2^v
+is odd. For 64|a, M≡2 mod 3, so some prime p|M is 2 mod 3. Every such
+p exceeds 1024. For each prime p≤1024 in this residue class one checks
+2^(64k)≠−1 mod p for 0≤k<p−1, which covers all k by Fermat's theorem.
+If such a p could divide c, the checker leaves this class unresolved.
+Otherwise p∈S. Cancel p against its occurrence in M, drop p from S,
+and use 3|o(p+1). This yields (2) with m=3 for the reduced S, even
+though 3 does not divide M. Its odd abundancy is less than 2. A
+certificate excluding [1024/513,2) now suffices because
+
+    (1024/513)(1+1/1024)(1+2^(−64)) < 2.
+
+For a≤19, exact descending cancellation for each pair (a,c) yields
+only (1,1), (2,1), (6,1), (1,9), and (18,625). Specifically, the
+largest odd prime with an outstanding valuation in (1) must belong to S
+with multiplicity one, since any shifted factor q+1 supplying it would
+come from a larger q. Remove the prime, add the demands of q+1 and
+continue downwards, finally testing the valuation at 2. Thus H2 holds
+for 7,826 specified cores in this range. The script prints the other 31.
+
+3. The core 625
+
+Since 625+1=2·313, 313+1=2·157, 157+1=2·79 and 79+1=16·5, the
+primes 313,157,79 are forced, leaving D=125 and A=128/125 at m=1.
+At m=3 the interval check proves A ∏(q∈R)(1+1/q)<1024/513. Thus
+odd a≥9 are impossible, and the smaller exponents can be checked
+directly. For v₂(a)=2,3,4,5 the Fermat divisors in section 2 give
+excess demand. For 64|a the preceding artificial m=3 argument applies,
+since 5 cannot divide M. Hence every solution has a=2k with k odd.
+
+When t|k, 2^(2t)+1 divides M. For t=7,11,13,17,19,23,29,31 this
+produces an excess demand. For t=5 the odd abundancy is strictly below
+2/(1+2^(−10)), whereas a≥10 would require at least that much. Thus k
+is coprime to the product of these nine primes.
+
+Suppose 18|a. The only case left is a=18j for odd j. The divisor
+m=2^18+1 forces F={3,7,11,13,19,37,79,109,157,313}, D=1 and
+A=2^19/(2^18+1). At j=1 these primes give the known solution
+n=146361946186458562560000. If j>1 then a≥54, and the additional
+primes must supply
+
+    (1+2^(−18))/(1+2^(−a)).
+
+In particular every additional prime q exceeds 2^18. To sharpen (4),
+choose a predecessor prime dividing o(q+1) for each q with o(q+1)>1.
+By (3) with D=1 each predecessor can be used only once. This partitions
+the primes into upward paths starting at Mersenne primes. Along an edge
+r→s, s≥2r−1. Since (1+1/r)w(2r−1)=w(r), a whole path starting at r
+contributes at most w(r).
+
+The only possible starting exponent 19≤k<31 is k=19. Write p=2^19−1
+and q=2p−1. The path from p either has no successor, has a successor
+at least 4p−1, or has successor q. In the last case its third prime,
+if present, is at least 4q−1, because 2q−1=2097145 is divisible by 5.
+Consequently an upper bound for the product of all the additional primes'
+abundancies is
+
+    max((1+1/p)w(4p−1), (1+1/p)(1+1/q)w(4q−1)) / (1−2^(−29))
+    = 1125899906842624/1125896146649095
+    < 68719476736/68719214593 = (1+2^(−18))/(1+2^(−54)).
+
+This proves uniqueness on all multiples of 18.
+
+There is also a restriction on the simple primes at this core. For a≥20,
+if 3 is absent then every simple prime is 1 mod 3, since a prime equal
+to 2 mod 3 would force 3. The interval check at m=5 excludes this case.
+Exactly one simple prime p≡2 mod 3 supplies the factor 3. Indeed, (1)
+has exactly one 3 on its right and neither M nor σ*(625) supplies it.
+Follow p upwards through the unique prime whose shifted factor supplies
+it, until reaching a seed. This path cannot end at a prime supplied by
+σ*(625), since those downward demands have already been exhausted at
+313,157,79,5. Removing the path therefore cancels its terminal prime
+against M/5. Retain the 3 from p+1. The remaining support satisfies
+(2) with m=15 because the other odd factors removed from the path can be
+discarded by divisibility. Its abundancy is less than
+367001600/185598129 = 2/((1+2^(−20))w(176)), as verified by the
+interval certificate. The removed path contributes at most w(p), so
+p<176. Removing only p's proper ancestors gives (2) with m=5p even
+if p itself was terminal. Testing divisibility at the primes p<176
+leaves 11,23,29,41,47,59,83,113,149,167. Any proper ancestors of p
+start at a prime at least 2p−1, so they contribute at most w(2p−1).
+The interval check at m=5p rules out 41,83,113,149,167 even after
+allowing this factor. Thus p belongs to {11,23,29,47,59}.
+
+4. A restriction on prime-power cores with arbitrarily large base
+
+If c=p^e for an odd prime p>65537 and e≥2, any unitary perfect
+completion must satisfy all four conditions
+
+    64 | a,    p | 2^a+1,    p ≡ 2 mod 3,    e even.                 (5)
+
+Here is the estimate that removes dependence on e. Suppose a set S of
+simple primes satisfies
+
+    m ∏(q∈S)o(q+1) | p^e ∏(q∈S)q,
+
+where every prime dividing m is less than p, and its simple abundancy
+is less than 2. For a prime r∈S draw an edge to q∈S whenever r|q+1.
+Each vertex has at most one outgoing edge by the displayed divisibility.
+Delete all q with p|q+1 and all their successors. Every deleted prime
+is at least 2p−1, so no prime of m is deleted. In the retained set G no
+shifted factor uses p or a deleted vertex. Cancelling prime by prime gives
+
+    m ∏(q∈G)o(q+1) | ∏(q∈G)q.
+
+To bound what was deleted, start a path at each q with p|q+1 and use
+the path estimate w(q) from section 3. Overlap only increases the
+upper bound. For starts with q+1=2^j p^i, j,i≥1, summing 2/(q+1)
+over all such pairs gives at most 2/(p−1). At any other start, choose
+an odd prime r≠p dividing q+1. It belongs to S and is chosen at most
+once. Then 2/(q+1)≤1/(pr). Since 1+Σ(r∈S)1/r≤∏(r∈S)(1+1/r)<2,
+these mixed starts contribute at most 1/p. Using
+w(q)=1/(1−2/(q+1)) shows the deleted abundancy is at most
+1/(1−3/(p−1)). Including σ*(p^e)/p^e gives an overall correction
+bounded by E=(1+1/65537²)/(1−3/65536).
+
+For 1≤a<20 take m=2^(2^v)+1 at v=v₂(a), and put T=2/(1+2^(−a)).
+The good set G would have abundancy in [T/E,T), where the strict upper
+endpoint follows already from σ*(p^e)/p^e>1. The interval checker
+excludes this interval in each case. R2's small-exponent classification
+also excludes a=0. For a≥20 and v₂(a)≤5 use m=3,5,17,257,65537,641
+respectively (641 divides 2^32+1). Each good set with abundancy below 2
+has abundancy below 1024/513, by the same checker. Even after applying
+E and the factor contributed by 2^a, the result is below 2.
+
+For 64|a choose a prime r|M congruent to 2 mod 3. If r≠p, remove r
+and reserve 3 as in section 2, then apply the estimate at m=3 to this
+smaller support. This is impossible because
+
+    (1024/513) E (1+1/1024)(1+2^(−20)) < 2.
+
+Hence p itself divides M and is 2 mod 3. If e were odd, 3 would
+divide p^e+1. Its factor 3 could be used directly as m=3, leading to
+the same contradiction without removing r. This establishes (5).
+More precisely, F_v=2^(2^v)+1 with v=v₂(a) divides M and is 2 mod 3.
+It therefore has a prime factor equal to 2 mod 3. Since the argument
+applied to every such prime factor of M, that prime must be p. Thus
+each v≥6 allows at most one base p>65537 for any prime-power core.
+
+There is a separate obstruction valid for general cores. If an odd
+prime r outside c satisfies r²|1+t^v for some prime power t^v || c,
+then (1) demands two copies of r while the right side supplies at most
+one. In particular, if 3 does not divide c, then v₅(c) cannot be
+6k+3. This follows from 9|5³+1 and (2k+1) being odd.
+
+Verification
+
+Run python3 -B core_bounds_1052.py beside search_1052.py. Python 3.9+
+is sufficient. Erdos1052CoreBounds.lean imports the pinned R2 module
+and proves the divisor obstruction, its infinite family, the a≡4 mod 8
+exclusion for c=625, the odd-part divisibility obtained from the balance,
+and inequality (4). The interval enumeration, Mersenne estimates and
+other case-specific results above use the mathematical arguments here
+and exact rational arithmetic in Python. The two general hypotheses
+and the full finiteness statement remain open.
+
+The original two-step reduction was accepted in pull request 5438.
+The kernel-checked additions are available in the subsequent signed
+commit on the fork. The problem desk records the results in notes
+27223 and 27289.
+
+https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/5438
+https://github.com/ubuwaits/open-math-agents/commit/66bc1cf0d7cb440b4cb4bb566409a99e7cd65d3f

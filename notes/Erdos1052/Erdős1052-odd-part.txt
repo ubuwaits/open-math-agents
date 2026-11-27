@@ -1,0 +1,244 @@
+What the fixed-core reduction bounds about the odd part of the exponent
+
+Let n be unitary perfect. Write n=2^a c ∏(q∈S)q, where the odd powerful
+core c contains the full odd prime powers with exponent at least two, and
+S consists of the other odd primes. Write a=h b, h=2^v, b odd. Let Ω count
+prime factors with multiplicity, with Ω(1)=0. All results below also apply
+to a support passing the arithmetic test in R2.H2.
+
+For a nonempty set P of prime divisors of c with Σ(p∈P)1/p<1/4096, the
+earlier result gives a finite explicit set of v and h≥16. The empty
+support P corresponds to c=1, already classified by Graham.
+
+For each permitted v define
+
+    C = oddpart(σ*(c)),   g = gcd(c,C(2^h+1)),   K = Ω(c/g).
+
+The new conclusions are
+
+    v₃(b) ≤ K,
+    Ω(b) ≤ (p−1)(K+2) + m(K+1),                                (1)
+
+where p is any prime divisor of h+1, q any prime divisor of hp+1, and
+m is the multiplicative order of p modulo q. In particular p and q
+are distinct odd primes. Since p≤h+1 and m≤q−1≤hp, an upper bound
+using only h and K is h((h+2)(K+1)+1). These conclusions use h≥16 and the unitary
+balance. Sparsity makes the set of h finite. Formula (1) gives exponent
+finiteness if the primes allowed in b belong to any specified finite set.
+When K=0, b=1 is the only possibility, without any restriction on its
+prime factors. The proof of this last assertion is at the end of section 2.
+The general size of the largest prime divisor of b remains unresolved.
+
+Sections 9–11 of Erdős1052-large-prime-branches.txt sharpen these
+bounds to Ω(b)≤2K and 2^ω(b)≤K+2. They also rule out every sparse
+prime-power core with base at most 10¹² apart from two specified
+families. The bounds below give the earlier argument.
+
+1. Splitting the odd-part balance
+
+Put d(q)=oddpart(q+1). The exact identities for a positive exponent give
+
+    C(2^a+1) ∏(q∈S)d(q) = c ∏(q∈S)q,
+    ∏(q∈S)(1+1/q) < 2.                                         (2)
+
+Take any chain s₀=h, sᵢ₊₁=sᵢ fᵢ, where every fᵢ≥3 is odd and the last
+sᵢ divides a with odd quotient. Each integer
+
+    Aᵢ=(2^(sᵢ fᵢ)+1)/(2^sᵢ+1)
+
+can be split off from C(2^a+1). The product of the Aᵢ telescopes and the
+remaining factor is divisible by C(2^h+1).
+
+Process S in decreasing order, assigning each q to a running factor
+that it divides, and replacing that factor H by (H/q)d(q). There is
+always such a factor by (2) since q divides none of the remaining d(r)
+with r≤q. Each initial factor A ends with an odd integer D and its own
+disjoint set T of assigned primes, with
+
+    A ∏(q∈T)d(q)=D ∏(q∈T)q.                                     (3)
+
+The final integers D have product c. Processing divides only by primes
+outside c, so the factor that began as a multiple of C(2^h+1) retains
+at least g. Consequently at most K of the factors Aᵢ can have D>1.
+This reasoning permits common divisors between initial factors.
+
+2. When a factor must use a prime from the core
+
+Consider A=(Y^f+1)/(Y+1), Y=2^s, with s even, s≥16 and f odd, f≥3.
+Suppose D=1 in (3). Let B=∏(q∈T)(1+1/q), and E=Σ(q∈T)v₂(q+1).
+Then AB=2^E and 1≤B<2. If L=Y^(f−1), then L/2<A<L. The only power
+of two in [A,2A) is therefore L. Thus
+
+    B=L/A=(1+1/Y)/(1+1/Y^f).                                    (4)
+
+Every q∈T exceeds Y since B<1+1/Y. If d(q)>1 choose a prime r|d(q).
+By (3), r∈T and r<q. A selected r can occur only once across all
+q because ∏(q∈T)q is squarefree. The chosen edges split T into paths
+starting at primes with d(q)=1, so each starting prime is 2^j−1.
+Along an edge r→q, q≥2r−1. With w(r)=(r+1)/(r−1), one has
+(1+1/r)w(2r−1)=w(r), so the product along each path is at most w(r).
+
+If 2^(s+1)−1 is composite, no path starts at exponent s+1. Exponent
+s+2 is even and exceeds 2, so it cannot give a prime either. Thus
+j≥s+3 for every start. There is at most one start per exponent, and
+Σ(j≥s+3)2^(1−j)=1/(2Y). The elementary bound ∏(1−u)≥1−Σu gives
+
+    B ≤ ∏(starts j)(1−2^(1−j))⁻¹ ≤ 2Y/(2Y−1).
+
+But (4) gives B≥Y²/(Y²−Y+1)>2Y/(2Y−1) for Y>2. This proves that
+2^(s+1)−1 composite forces D>1, for every odd multiplier f≥3.
+In particular this holds whenever s+1 is composite.
+
+At the *first* step, where s=h=2^v≥16, the same conclusion D>1
+holds for every odd f≥3 even when r=2Y−1 is prime. Here is the extra
+estimate. If v is odd, then 3 properly divides h+1. If v is 2 mod 4,
+then 5 properly divides h+1. Thus in the remaining case 4|v, so
+h≡6 mod 10. Now 2r−1=2^(h+2)−3 is divisible by 11 because
+2^8≡3 mod 11. The integer 4r−1 is divisible by 3 since r≡1 mod 3.
+A successor equal to 6r−1 would put 3 into d(6r−1), impossible as
+all primes of T exceed Y. Therefore every successor on the path
+starting at r is at least 8r−1. Its entire path contributes at most
+(1+1/r)w(8r−1). This also bounds its contribution if the path is absent.
+
+All other starting exponents are odd and at least h+3. Their total
+weight loss Σ 2^(1−j) is at most the geometric sum 1/(3Y), so (4)
+would imply
+
+    Y²/(Y²−Y+1) ≤ B ≤ (8Y/(8Y−5))(3Y/(3Y−1)).
+
+The right endpoint is strictly below the left one for Y>19, as is seen
+by multiplying out. This contradiction proves the first-step claim.
+In particular, if c divides C(2^h+1), every available core prime has
+already been used and b=1. The same conclusion holds if the forced
+prime factors of C(2^h+1) and their successive demands exhaust c.
+
+3. The stronger result for a multiplier of three
+
+For f=3, D>1 for every s≥16 under consideration, including those with
+2^(s+1)−1 prime. Indeed A=Y²−Y+1. The least prime of T must be a path
+start, so it is at least 2Y−1. Every divisor of ∏(q∈T)q strictly between
+1 and (2Y−1)² must itself be a prime in T. Apply this first to A, using
+(3), then downward to Qᵢ=1+2^i(Y−1), starting at Q_s=A. For i≥2,
+d(Qᵢ)=Qᵢ₋₁, which again divides ∏(q∈T)q by (3). Thus Q₁,...,Q_s
+would all be prime.
+
+Write s=u d with u a power of two and d odd. If d≥3, 2^u+1 properly
+divides Q_(2u−1), since Y≡−1 and 2^(2u)≡1 modulo 2^u+1. The index
+lies in [1,s]. If d=1 write s=2^j. For odd j, s≡2 mod 3 and 7 properly
+divides Q₁=2^(s+1)−1. For even j, s≡4 mod 12 and 2^s≡3 mod 13,
+so 13 properly divides Q₅. All the indicated divisors are proper
+since s≥16. Hence (3) cannot hold with D=1. Taking the chain with
+v₃(b) consecutive multipliers of three proves the first bound in (1).
+
+4. Bounding the total number of odd prime factors
+
+Remove the copies of p from the multiset of prime factors of b. Any
+p−1 remaining entries contain a nonempty subproduct equal to 1 modulo
+p. Indeed their p partial products, including the empty product, take
+only p−1 nonzero residue values. Two coincide. Repeatedly extract such
+blocks, each of size at most p−1.
+
+If there were (p−1)(K+2) entries or more, we could take K+2 blocks.
+Use their products as successive odd multipliers. After the first block
+each prefix exponent s satisfies s≡h≡−1 mod p and s+1>p, so s+1 is
+composite. The following K+1 blocks all require D>1 by section 2,
+contradicting section 1. Therefore Ω(b/p^v_p(b))≤(p−1)(K+2)−1.
+
+For the copies of p use the separate chain with prefix exponents hp^i,
+0≤i<v_p(b), and next multiplier p. At i=1+jm for j≥1, hp^i+1
+is divisible by q since p^m≡1 mod q. It exceeds q. Each such index
+requires D>1. If v_p(b)≥2+(K+1)m then j=1,...,K+1 all occur.
+Hence v_p(b)≤1+(K+1)m. Adding these two estimates proves (1).
+
+5. Why the earlier residue restriction alone cannot bound b
+
+Take c=65537², h=16 and b=3^t for any t≥0. The only prime equal to
+2 mod 3 dividing 2^(16·3^t)+1 is 65537, with multiplicity one. Indeed
+2^16+1=65537, and each successive quotient Y²−Y+1 has Y≡1 mod 3.
+It is coprime to Y+1 since their gcd divides 3 and 3∤Y+1. For every
+prime r dividing the quotient, Y has order exactly 6 modulo r, so
+r≡1 mod 3. These exponents meet the earlier residue and core-parity
+conditions for arbitrarily large t. They are not examples of unitary
+perfect numbers. In fact, 65537²+1 is divisible by 5; using the
+previous sparse-core bound with seed 5 excludes this particular core.
+The stronger bound on v₃(b) uses the unitary balance, not just residues.
+For comparison, c=65537^128 has the same seed and also satisfies the
+earlier order and parity restrictions. At h=16 the formulas give K=127
+and Ω(b)≤2320 using p=17, q=3, m=2. Thus among candidates a=16·3^t
+only 0≤t≤127 survive this particular estimate. Section 6 of
+Erdős1052-large-prime-branches.txt subsequently excludes this core for
+every exponent, by using a divisor of 65537^128+1.
+
+6. Another restriction on the core
+
+At a nonempty sparse core none of 3,5,17,257 divides σ*(c). To see this,
+if any such prime m divides σ*(c), it divides its odd part and supplies
+the seed m in the previous sparse-core argument. All four primes are
+below 4096 and survive the deletion in that argument. The exact core-1
+gap at m gives retained abundancy <1024/513. Multiplying by the
+correction E=1/((1−1/4096²)(1−3/4095)) and the factor 1+2^(−a)
+still gives less than 2 because a≥16.
+
+The same calculation also forces 3, 5 and 7 into the simple support.
+Apply the deletion argument with seed 1. If one of these primes were
+absent, it would be absent from the retained support as well. With the
+one indicated prime forbidden, the exact gap test at 1024/513 succeeds
+in 1, 25 and 3 nodes, respectively, and the largest cutoffs are 3, 398
+and 14. In particular 5+1 supplies the sole available copy of 3.
+Every other simple prime different from 3 is therefore 1 modulo 3.
+This also forces every prime equal to 2 modulo 3 dividing σ*(c) into
+the repeated core, since 5 itself cannot divide σ*(c).
+
+In particular, if 65537∈P and e=v₆₅₅₃₇(c), then 16|e. Indeed 65537
+is 2 modulo each of F₀=3, F₁=5, F₂=17, F₃=257. If v₂(e)=j<4 then
+Fⱼ divides 2^e+1 and hence divides 65537^e+1, a factor of σ*(c).
+Consequently the earlier exceptional case v₂(a)=4 requires 65537^16|c.
+
+There are further exclusions at this base. The following prime divisors
+are verified by trial division and modular exponentiation:
+
+       j          r          65537^(2^j) modulo r
+       4       4365089                −1
+       5          1409                −1
+       6           641                −1
+
+If v₂(e)=j then r|65537^e+1. At j=4, if r were simple then
+9|4365090 would require two copies of 3 in n, contrary to 3∉P.
+Thus 4365089 must be a second repeated prime. At j=5, the forced
+simple prime 1409 has 3·5|1410. The forced simple prime 5 contributes
+another 3 from 5+1, which is impossible. At j=6, 641 forces the
+simple prime 107 from 642, and 9|108 gives the same contradiction.
+All these forcing steps follow directly from (2).
+
+In particular the fixed core c=65537^e has no admissible exponent
+whenever 128∤e. This includes c=65537^16, even though its reciprocal
+condition and the original restriction on v₂(a) allow v₂(a)=4.
+The first numerical divisor was located in FactorDB's factored entry
+for (65537^16+1)/2 and independently verified.
+https://factordb.com/index.php?id=1100000000212021432
+
+7. Consequences and the missing bound
+
+For fixed c take the maximum of the right side of (1) over its finite
+list of permissible v. Call it H. If every prime factor of b is ≤L,
+then b≤L^H. Thus in any hypothetical infinite sequence at a fixed
+sparse core, the largest prime divisor of b must be unbounded. In
+particular b restricted to powers of three gives at most K+1 exponents
+for each v. If K=0 for every permitted v, the entire set of admissible
+exponents is contained in the finite set of permitted values of 2^v.
+
+For a prime multiplier ℓ, section 2 requires the quotient
+(2^(hℓ)+1)/(2^h+1) to use at least one prime from c. The lower bound
+of one is independent of ℓ. When a core factor is still available, the
+argument supplies no upper bound for ℓ. Finiteness for every fixed
+sparse core and a uniform bound on c both remain open in this argument.
+
+The function in erdos1052_odd_part.py computes the bounds for a
+specified factored core and checks the arithmetic in section 6. The
+single-file Lean proof verifies both bounds in (1), the smooth-exponent
+finiteness theorem, and the exclusion when e=16(2k+1). The final
+first-step estimate in section 2 uses the written proof. All seven
+audited Lean declarations use only propext, Classical.choice and
+Quot.sound when checked together with the accepted reduction R2.
+The H2 desk records the results in notes 33924 and 34000.
+https://github.com/ubuwaits/open-math-agents/blob/4df611f06d4da0012d88e8ac332b8f6613977ebc/notes/Erdos1052/OddExponent.lean
