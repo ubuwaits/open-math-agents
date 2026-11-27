@@ -2,7 +2,7 @@ import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 import Mathlib.Tactic
 
 /-!
-# Short cycles in signed affine covers of the tetrahedron
+# Short cycles in affine covers of the tetrahedron
 
 Each vertex of the tetrahedron has copies indexed by an arbitrary abelian
 group. The three edges from vertex zero preserve the index. On each remaining
@@ -12,7 +12,9 @@ the mask select negation on edges 12, 23 and 31, respectively.
 The certificate follows projected cycles starting on sheet zero. A repeated
 vertex gives an integer relation among the three shifts, which leads to a
 new case. All implications between relations use explicit integer linear
-combinations and therefore also hold in groups with torsion.
+combinations and therefore also hold in groups with torsion. The last section
+allows all nonzero scalar multipliers over a division ring and, more
+generally, affine actions with invertible differences from the identity.
 -/
 
 namespace Erdos64AffineCovers
@@ -979,5 +981,169 @@ theorem signed_matchings_short {V : Type*} (G : SimpleGraph V) (e : Color × A �
   · intro x
     rw [← uc x]
     simpa [label_apply, chord] using threeOne (frame 3 x)
+
+/-! ## Affine matchings with a fixed-point-free linear action -/
+
+private theorem hamiltonSquare {A V : Type*} (G : SimpleGraph V) (e : Color × A ↪ V)
+    (i j k : Color) (colors : Injective (![0,i,j,k] : Fin 4 → Color)) (x y : A)
+    (h₀ : G.Adj (e (0,x)) (e (i,x))) (h₁ : G.Adj (e (i,x)) (e (j,y)))
+    (h₂ : G.Adj (e (j,y)) (e (k,x))) (h₃ : G.Adj (e (k,x)) (e (0,x))) :
+    cycleGraph 4 ⊑ G := by
+  let v : Fin 4 → Color × A := ![(0,x),(i,x),(j,y),(k,x)]
+  have projection (t : Fin 4) : (v t).1 = (![0,i,j,k] : Fin 4 → Color) t := by
+    fin_cases t <;> rfl
+  refine ⟨⟨⟨fun t => e (v t), ?_⟩, ?_⟩⟩
+  · intro s t edge
+    fin_cases s <;> fin_cases t <;> first
+      | exact h₀ | exact h₁ | exact h₂ | exact h₃
+      | exact h₀.symm | exact h₁.symm | exact h₂.symm | exact h₃.symm
+      | exact absurd edge (by decide)
+  · intro s t eq
+    apply colors
+    rw [← projection, ← projection]
+    exact congrArg Prod.fst (e.injective eq)
+
+/-- A group acts additively on the sheets. If every nonidentity linear part
+has invertible difference from the identity, three arbitrary affine chords
+still force a 4-, 8-, or 16-cycle. -/
+theorem fixed_point_free_affine_short {A S V : Type*} [AddCommGroup A] [Group S]
+    [DistribMulAction S A] (G : SimpleGraph V) (e : Color × A ↪ V)
+    (regular : ∀ g : S, g ≠ 1 → Bijective (fun x : A => x - g • x))
+    (p q r : S) (a b c : A)
+    (star : ∀ i : Color, i ≠ 0 → ∀ x, G.Adj (e (0,x)) (e (i,x)))
+    (oneTwo : ∀ x, G.Adj (e (1,x)) (e (2,p • x + a)))
+    (twoThree : ∀ x, G.Adj (e (2,x)) (e (3,q • x + b)))
+    (threeOne : ∀ x, G.Adj (e (3,x)) (e (1,r • x + c))) : HasShortCycle G := by
+  have fixed (s t : S) (u v : A) (ne : t*s ≠ 1) :
+      ∃ x : A, t • (s • x + u) + v = x := by
+    obtain ⟨x,hx⟩ := (regular _ ne).surjective (t • u + v)
+    refine ⟨x,?_⟩
+    change x - (t*s) • x = t • u + v at hx
+    rw [sub_eq_iff_eq_add] at hx
+    rw [smul_add, ← mul_smul]
+    calc
+      (t*s) • x + t • u + v = t • u + v + (t*s) • x := by abel
+      _ = x := hx.symm
+  by_cases qp : q*p = 1
+  swap
+  · obtain ⟨x,h⟩ := fixed p q a b qp
+    exact Or.inl (hamiltonSquare G e 1 2 3 (by decide) x (p • x + a)
+      (star 1 (by decide) x) (oneTwo x) (by simpa only [h] using twoThree (p • x + a)) (star 3 (by decide) x).symm)
+  by_cases rq : r*q = 1
+  swap
+  · obtain ⟨x,h⟩ := fixed q r b c rq
+    exact Or.inl (hamiltonSquare G e 2 3 1 (by decide) x (q • x + b)
+      (star 2 (by decide) x) (twoThree x) (by simpa only [h] using threeOne (q • x + b)) (star 1 (by decide) x).symm)
+  by_cases pr : p*r = 1
+  swap
+  · obtain ⟨x,h⟩ := fixed r p c a pr
+    exact Or.inl (hamiltonSquare G e 3 1 2 (by decide) x (r • x + c)
+      (star 3 (by decide) x) (threeOne x) (by simpa only [h] using oneTwo (r • x + c)) (star 2 (by decide) x).symm)
+  have same : r = p := by
+    calc r = r*1 := (mul_one r).symm
+         _ = r*(q*p) := by rw [qp]
+         _ = p := by rw [← mul_assoc,rq,one_mul]
+  subst r
+  have same : q = p := mul_right_cancel (qp.trans pr.symm)
+  subst q
+  by_cases trivial : p = 1
+  · subst p
+    apply affine_subgraph_short G e false false false a b c star
+    · simpa [orient] using oneTwo
+    · simpa [orient] using twoThree
+    · simpa [orient] using threeOne
+  · have neg (x : A) : p • x = -x := by
+      have invol : p • (p • x) = x := by rw [← mul_smul,pr,one_smul]
+      have fixedSum : p • (x + p • x) = x + p • x := by rw [smul_add,invol,add_comm]
+      have equal : x + p • x = 0 := (regular p trivial).injective (by
+        rw [fixedSum,smul_zero,sub_self,sub_self])
+      exact eq_neg_of_add_eq_zero_left (by simpa only [add_comm] using equal)
+    apply affine_subgraph_short G e true true true a b c star
+    · simpa [orient,neg] using oneTwo
+    · simpa [orient,neg] using twoThree
+    · simpa [orient,neg] using threeOne
+
+/-- Change the sheet coordinates independently in the three outer fibers.
+This allows all six edge matchings to have arbitrary affine parts. -/
+theorem affine_six_matchings_short {A S V : Type*} [AddCommGroup A] [Group S]
+    [DistribMulAction S A] (G : SimpleGraph V) (e : Color × A ↪ V)
+    (regular : ∀ g : S, g ≠ 1 → Bijective (fun x : A => x - g • x))
+    (st : Color → S) (d : Color → A) (p q r : S) (a b c : A)
+    (star : ∀ i : Color, i ≠ 0 → ∀ x, G.Adj (e (0,x)) (e (i,st i • x + d i)))
+    (oneTwo : ∀ x, G.Adj (e (1,x)) (e (2,p • x + a)))
+    (twoThree : ∀ x, G.Adj (e (2,x)) (e (3,q • x + b)))
+    (threeOne : ∀ x, G.Adj (e (3,x)) (e (1,r • x + c))) : HasShortCycle G := by
+  let frame (i : Color) (x : A) := if i = 0 then x else st i • x + d i
+  let label : Color × A ↪ V := ⟨fun z => e (z.1,frame z.1 z.2), by
+    rintro ⟨i,x⟩ ⟨j,y⟩ h
+    have h' := e.injective h
+    have ij : i = j := congrArg Prod.fst h'
+    subst j
+    have eq : frame i x = frame i y := congrArg Prod.snd h'
+    apply congrArg (fun z : A => (i,z))
+    by_cases zero : i = 0
+    · simpa only [frame,if_pos zero] using eq
+    · simp only [frame,if_neg zero,add_left_inj] at eq
+      exact (MulAction.bijective (st i)).injective eq⟩
+  let linear (i j : Color) (g : S) := (st j)⁻¹ * (g * st i)
+  let bias (i j : Color) (g : S) (z : A) := (st j)⁻¹ • (g • d i + z - d j)
+  have chord (i j : Color) (hi : i ≠ 0) (hj : j ≠ 0) (g : S) (z : A)
+      (edge : ∀ x, G.Adj (e (i,x)) (e (j,g • x + z))) (x : A) :
+      G.Adj (label (i,x)) (label (j,linear i j g • x + bias i j g z)) := by
+    change G.Adj (e (i,frame i x)) (e (j,frame j _))
+    simp only [frame, if_neg hi, if_neg hj]
+    have norm : st j • (linear i j g • x + bias i j g z) + d j =
+        g • (st i • x + d i) + z := by
+      simp only [linear,bias,smul_add,mul_smul,smul_inv_smul]
+      abel
+    rw [norm]
+    exact edge _
+  apply fixed_point_free_affine_short G label regular (linear 1 2 p) (linear 2 3 q) (linear 3 1 r)
+    (bias 1 2 p a) (bias 2 3 q b) (bias 3 1 r c)
+  · intro i hi x
+    change G.Adj (e (0,frame 0 x)) (e (i,frame i x))
+    simpa only [frame,if_pos rfl,if_neg hi] using star i hi x
+  · exact chord 1 2 (by decide) (by decide) p a oneTwo
+  · exact chord 2 3 (by decide) (by decide) q b twoThree
+  · exact chord 3 1 (by decide) (by decide) r c threeOne
+
+/-- On finite sheets it suffices that every nonidentity element fixes only zero. -/
+theorem finite_frobenius_short {A S V : Type*} [AddCommGroup A] [Finite A] [Group S]
+    [DistribMulAction S A] (G : SimpleGraph V) (e : Color × A ↪ V)
+    (free : ∀ g : S, g ≠ 1 → ∀ x : A, g • x = x → x = 0)
+    (st : Color → S) (d : Color → A) (p q r : S) (a b c : A)
+    (star : ∀ i : Color, i ≠ 0 → ∀ x, G.Adj (e (0,x)) (e (i,st i • x + d i)))
+    (oneTwo : ∀ x, G.Adj (e (1,x)) (e (2,p • x + a)))
+    (twoThree : ∀ x, G.Adj (e (2,x)) (e (3,q • x + b)))
+    (threeOne : ∀ x, G.Adj (e (3,x)) (e (1,r • x + c))) : HasShortCycle G := by
+  apply affine_six_matchings_short G e _ st d p q r a b c star oneTwo twoThree threeOne
+  intro g ng
+  apply Finite.injective_iff_bijective.mp
+  intro x y equal
+  change x - g • x = y - g • y at equal
+  apply sub_eq_zero.mp
+  apply free g ng
+  rw [smul_sub]
+  calc g • x - g • y = (x-y) - ((x-g • x)-(y-g • y)) := by abel
+       _ = x-y := by rw [equal,sub_self,sub_zero]
+
+/-- Scalar affine matchings of an arbitrary vector space over a division
+ring satisfy the same short-cycle bound as signed translations. -/
+theorem scalar_affine_short {K A V : Type*} [DivisionRing K] [AddCommGroup A]
+    [Module K A] (G : SimpleGraph V) (e : Color × A ↪ V)
+    (st : Color → Kˣ) (d : Color → A) (p q r : Kˣ) (a b c : A)
+    (star : ∀ i : Color, i ≠ 0 → ∀ x, G.Adj (e (0,x)) (e (i,(st i:K) • x + d i)))
+    (oneTwo : ∀ x, G.Adj (e (1,x)) (e (2,(p:K) • x + a)))
+    (twoThree : ∀ x, G.Adj (e (2,x)) (e (3,(q:K) • x + b)))
+    (threeOne : ∀ x, G.Adj (e (3,x)) (e (1,(r:K) • x + c))) : HasShortCycle G := by
+  apply affine_six_matchings_short G e (S := Kˣ) _ st d p q r a b c star oneTwo twoThree threeOne
+  intro g ne
+  have nonzero : (1:K) - (g:K) ≠ 0 := sub_ne_zero.mpr <| fun h => ne (Units.ext h.symm)
+  let u := Units.mk0 ((1:K)-(g:K)) nonzero
+  have action (x : A) : u • x = x - g • x := by
+    change ((1:K)-(g:K)) • x = x - (g:K) • x
+    rw [sub_smul,one_smul]
+  rw [← funext action]
+  exact MulAction.bijective u
 
 end Erdos64AffineCovers
