@@ -288,4 +288,127 @@ theorem subcubic_eight_iff {V : Type*} [Fintype V] (G : SimpleGraph V) [Decidabl
     omega
   tauto
 
+open Fin.NatCast
+
+private theorem fromSteps {V : Type*} (G : SimpleGraph V) {n : ℕ} [NeZero n] (hn : 3 ≤ n)
+    (v : Fin n → V) (inj : Injective v) (step : ∀ i, G.Adj (v i) (v (i+1))) :
+    cycleGraph n ⊑ G := by
+  refine ⟨⟨⟨v, ?_⟩, inj⟩⟩
+  intro i j h
+  have h' : i-j = 1 ∨ j-i = 1 := by
+    simpa only [Fin.ext_iff, Fin.val_one', Nat.mod_eq_of_lt (show 1 < n by omega)]
+      using cycleGraph_adj'.mp h
+  rcases h' with h' | h'
+  · have eq : i = j+1 := by simpa [add_comm] using sub_eq_iff_eq_add.mp h'
+    simpa only [eq] using (step j).symm
+  · have eq : j = i+1 := by simpa [add_comm] using sub_eq_iff_eq_add.mp h'
+    simpa only [eq] using step i
+
+/-- For any length, an upstairs simple cycle either projects injectively or
+contains in its projection a simple odd cycle of at most half that length. -/
+theorem cycle_or_short_odd {V : Type*} (G : SimpleGraph V) {n : ℕ} (hn : 3 ≤ n)
+    (up : cycleGraph n ⊑ G.bipartiteDoubleCover) :
+    cycleGraph n ⊑ G ∨ ∃ d : ℕ, Odd d ∧ 3 ≤ d ∧ 2*d ≤ n ∧ cycleGraph d ⊑ G := by
+  classical
+  let : NeZero n := ⟨by omega⟩
+  obtain ⟨c⟩ := up
+  let base (t : Fin n) := project (c t)
+  by_cases simple : Injective base
+  · exact Or.inl ⟨⟨⟨base, fun h => (projected_edge (c.toHom.map_rel' h)).1⟩, simple⟩⟩
+  right
+  let word (i : ℕ) := base (i : Fin n)
+  let sheet (i : ℕ) := (c (i : Fin n)).isLeft
+  have adj (i : ℕ) : G.Adj (word i) (word (i+1)) ∧ sheet i ≠ sheet (i+1) := by
+    have e : (cycleGraph n).Adj (i : Fin n) ((i : Fin n)+1) := by
+      apply cycleGraph_adj'.mpr
+      right
+      simp [Nat.mod_eq_of_lt (show 1 < n by omega)]
+    simp only [word, base, sheet, Nat.cast_add, Nat.cast_one]
+    exact projected_edge (c.toHom.map_rel' e)
+  have twoSteps (i : ℕ) : sheet (i+2) = sheet i := by
+    have b := (adj i).2
+    have b' := (adj (i+1)).2
+    cases hi : sheet i <;> cases hj : sheet (i+1) <;> cases hk : sheet (i+2) <;>
+      simp_all
+  have sameSheet (i m : ℕ) : sheet (i+(m+m)) = sheet i := by
+    induction m with
+    | zero => simp
+    | succ m ih =>
+      rw [show i+(m+1+(m+1)) = (i+(m+m))+2 by omega, twoSteps, ih]
+  have period (i : ℕ) : word (i+n) = word i := by simp [word]
+  let returns (d : ℕ) := 0 < d ∧ ∃ i, word i = word (i+d)
+  obtain ⟨i,j,eq,ne⟩ := Function.not_injective_iff.mp simple
+  have pair : ∃ a b : ℕ, a < b ∧ b < n ∧ word a = word b := by
+    rcases lt_or_gt_of_ne ne with lt | gt
+    · exact ⟨i.val,j.val,lt,j.isLt,by simpa [word] using eq⟩
+    · exact ⟨j.val,i.val,gt,i.isLt,by simpa [word] using eq.symm⟩
+  obtain ⟨a,b,ab,bn,matched⟩ := pair
+  have first : returns (b-a) := ⟨by omega,a,by rwa [show a+(b-a)=b by omega]⟩
+  have second : returns (n-(b-a)) := ⟨by omega,b,by
+    rw [show b+(n-(b-a))=a+n by omega, period]; exact matched.symm⟩
+  have existsReturn : ∃ d, returns d := ⟨_,first⟩
+  let d := Nat.find existsReturn
+  have least {j : ℕ} (h : returns j) : d ≤ j := Nat.find_min' existsReturn h
+  obtain ⟨positive,start,closed⟩ : returns d := Nat.find_spec existsReturn
+  have half : 2*d ≤ n := by have := least first; have := least second; omega
+  have odd : Odd d := by
+    rcases Nat.even_or_odd d with even | odd
+    · obtain ⟨m,hm⟩ := even
+      have ss : sheet start = sheet (start+d) := by rw [hm, sameSheet]
+      have ix : (start : Fin n) = ((start+d : ℕ) : Fin n) :=
+        c.injective (project_ext ss closed)
+      have hz : ((d : ℕ) : Fin n) = 0 := by
+        rw [Nat.cast_add] at ix
+        exact add_left_cancel (b := (d : Fin n)) (c := 0) (ix.symm.trans (add_zero _).symm)
+      have div := Nat.le_of_dvd positive (Fin.natCast_eq_zero.mp hz)
+      omega
+    · exact odd
+  have large : 3 ≤ d := by
+    have one : d ≠ 1 := fun h => (adj start).1.ne (h ▸ closed)
+    obtain ⟨m,hm⟩ := odd
+    omega
+  let : NeZero d := ⟨by omega⟩
+  let label (i : Fin d) := word (start+i.val)
+  have distinct {i j : Fin d} (ij : i.val < j.val) : label i ≠ label j := by
+    intro equal
+    have h : returns (j.val-i.val) := ⟨by omega,start+i.val,by
+      rw [show start+i.val+(j.val-i.val)=start+j.val by omega]; exact equal⟩
+    have := least h
+    have := j.isLt
+    omega
+  have inj : Injective label := by
+    intro i j heq
+    rcases lt_trichotomy i.val j.val with lt | eq | gt
+    · exact (distinct lt heq).elim
+    · exact Fin.ext eq
+    · exact (distinct gt heq.symm).elim
+  have step (i : Fin d) : G.Adj (label i) (label (i+1)) := by
+    have val : (i+1 : Fin d).val = (i.val+1)%d := by
+      rw [Fin.val_add, Fin.val_one', Nat.mod_eq_of_lt (show 1 < d by omega)]
+    change G.Adj (word (start+i.val)) (word (start+(i+1 : Fin d).val))
+    rw [val]
+    have edge := (adj (start+i.val)).1
+    by_cases h : i.val+1 < d
+    · simpa only [Nat.mod_eq_of_lt h, Nat.add_assoc] using edge
+    · have last : i.val+1 = d := by have := i.isLt; omega
+      rw [last, Nat.mod_self, Nat.add_zero, closed]
+      simpa only [Nat.add_assoc, last] using edge
+  exact ⟨d,odd,large,half,fromSteps G large label inj step⟩
+
+/-- For a dyadic length at least four the half-length is even, so the
+alternative odd cycle is strictly shorter than half of the upstairs cycle. -/
+theorem power_cycle_or_short_odd {V : Type*} (G : SimpleGraph V) (k : ℕ)
+    (up : cycleGraph (2^(k+2)) ⊑ G.bipartiteDoubleCover) :
+    cycleGraph (2^(k+2)) ⊑ G ∨
+      ∃ d : ℕ, Odd d ∧ 3 ≤ d ∧ d < 2^(k+1) ∧ cycleGraph d ⊑ G := by
+  have four : 4 ≤ 2^(k+2) := Nat.pow_le_pow_right (by decide : 0 < 2) (by omega : 2 ≤ k+2)
+  rcases cycle_or_short_odd G (by omega) up with h | ⟨d,odd,large,half,cyc⟩
+  · exact Or.inl h
+  · have smaller : d < 2^(k+1) := by
+      obtain ⟨m,hm⟩ := odd
+      rw [pow_succ, pow_succ] at half
+      rw [pow_succ]
+      omega
+    exact Or.inr ⟨d,odd,large,smaller,cyc⟩
+
 end Erdos64DoubleCover
