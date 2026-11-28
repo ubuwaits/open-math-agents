@@ -7,6 +7,9 @@ import Mathlib
 A counterexample to Erdős 101 would contain a positive-density subset
 generated in one round of intersections from O(√n) anchors. The last
 theorem proves the converse reduction to the precise conjecture.
+A further extraction gives anchors that each support many high-degree points
+and are reconstructible individually from the others in three rounds.
+Theorems essential_iff and ordinary_rich_joins give the final restriction.
 Independently, n points with algebraically independent horizontal coordinates
 determine at most 55n lines containing at least three points.
 -/
@@ -146,6 +149,11 @@ theorem unique_line {S : Finset ℝ²} {L : Line} (hL : L∈determined S) {p q :
   obtain ⟨_,_,_,_,_,rfl⟩ := mem_determined.mp hL
   exact affineSpan_pair_eq_of_mem_of_mem_of_ne hp hq ne
 
+theorem mult_two {S : Finset ℝ²} {L : Line} (hL : L∈determined S) : 2 ≤ mult S L := by
+  obtain ⟨a,ha,b,hb,ne,rfl⟩ := mem_determined.mp hL
+  exact Finset.one_lt_card.mpr ⟨a,Finset.mem_filter.mpr ⟨ha,left_mem_affineSpan_pair ..⟩,
+    b,Finset.mem_filter.mpr ⟨hb,right_mem_affineSpan_pair ..⟩,ne⟩
+
 private theorem through_insert {I S : Finset ℝ²} {p : ℝ²} (sub : I⊆S) (ps : p∈S) (new : p∉I) :
     (determined S).filter (fun L => p∈L ∧ (incident I L).Nonempty) = pencil p I := by
   ext L
@@ -184,6 +192,17 @@ theorem count_eq (S : Finset ℝ²) (k : ℕ) : count S k=(linesWithPointsFor k 
       mult,← Set.ncard_coe_finset,coe]
     simp [exists_prop]
   rw [← eq,Set.ncard_coe_finset,count]
+
+theorem capped {S : Finset ℝ²} (hcap : NonCollinearFor 5 (S : Set ℝ²)) {a b : ℝ²} :
+    mult S (line[ℝ,a,b]) ≤ 4 := by
+  by_contra! h
+  obtain ⟨U,sub,size⟩ := Finset.exists_subset_card_eq (show 5 ≤ (incident S (line[ℝ,a,b])).card from h)
+  apply hcap (U : Set ℝ²) (Finset.coe_subset.mpr (sub.trans (Finset.filter_subset ..))) U.finite_toSet (by simpa using size)
+  apply (collinear_iff_exists_forall_eq_smul_vadd _).mpr
+  refine ⟨a,b -ᵥ a,?_⟩
+  intro p hp
+  obtain ⟨t,ht⟩ := mem_affineSpan_pair_iff_exists_lineMap_eq.mp (Finset.mem_filter.mp (sub hp)).2
+  exact ⟨t,ht.symm⟩
 
 end Erdos101AnchorGeometry
 
@@ -934,3 +953,928 @@ theorem anchored_iff : (type_of% @Erdos101.erdos_101) ↔ OMA.R_Erdos101_erdos_1
   omega
 
 end Erdos101AnchorCore
+
+/- Conditions forced on the anchors in the one-step reduction. -/
+
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open scoped Classical
+
+def definedOver (K : IntermediateField ℚ ℝ) (p : ℝ²) := ∀ i, p i ∈ K
+
+def constrained (B : Finset ℝ²) (a : ℝ²) := ∃ u v : ℝ²,
+  definedOver (field (B.erase a)) u ∧ definedOver (field (B.erase a)) v ∧ u ≠ v ∧ a ∈ line[ℝ,u,v]
+
+def generic (B : Finset ℝ²) := AlgebraicIndependent ℚ (fun z : B × Fin 2 => z.1.val z.2)
+
+theorem generated_field_le {K : IntermediateField ℚ ℝ} {A : Finset ℝ²}
+    (h : ∀ a ∈ A, definedOver K a) : field A ≤ K := by
+  apply IntermediateField.adjoin_le_iff.mpr
+  intro x hx
+  rcases Finset.mem_union.mp hx with hh|hh
+  · obtain ⟨a,ha,rfl⟩ := Finset.mem_image.mp hh
+    exact h a ha 0
+  · obtain ⟨a,ha,rfl⟩ := Finset.mem_image.mp hh
+    exact h a ha 1
+
+theorem meet_over {K : IntermediateField ℚ ℝ} {u v w z p : ℝ²}
+    (hu : definedOver K u) (hv : definedOver K v) (hw : definedOver K w) (hz : definedOver K z)
+    (uv : u≠v) (wz : w≠z) (diff : line[ℝ,u,v]≠line[ℝ,w,z])
+    (on1 : p∈line[ℝ,u,v]) (on2 : p∈line[ℝ,w,z]) : definedOver K p := by
+  let A : Finset ℝ² := {u,v,w,z}
+  have sub := generated_field_le (A:=A) (K:=K) (by
+    intro a ha
+    simp only [A,Finset.mem_insert,Finset.mem_singleton] at ha
+    rcases ha with rfl|rfl|rfl|rfl <;> assumption)
+  have point : determinedBy A p := ⟨u,by simp [A],v,by simp [A],w,by simp [A],z,by simp [A],uv,wz,diff,on1,on2⟩
+  exact fun i => sub (intersection_field point i)
+
+theorem independent_at {B : Finset ℝ²} (gi : generic B) (a : B) :
+    AlgebraicIndependent (field (B.erase a.val)) (fun i : Fin 2 => a.val i) := by
+  let f (z : B × Fin 2) : ℝ := z.1.val z.2
+  let S : Set (B × Fin 2) := {z | z.1 ≠ a}
+  let T : Set (B × Fin 2) := {z | z.1 = a}
+  have dis : Disjoint S T := Set.disjoint_left.mpr (fun _ h k => h k)
+  have im : f '' S = (coords (B.erase a.val) : Set ℝ) := by
+    ext v
+    constructor
+    · rintro ⟨⟨p,i⟩,hp,rfl⟩
+      have ne : p.val ≠ a.val := fun e => hp (Subtype.ext e)
+      have es := Finset.mem_erase.mpr ⟨ne,p.property⟩
+      fin_cases i
+      · exact Finset.mem_union_left _ (Finset.mem_image_of_mem _ es)
+      · exact Finset.mem_union_right _ (Finset.mem_image_of_mem _ es)
+    · intro h
+      rcases Finset.mem_union.mp h with hh|hh
+      · obtain ⟨p,hp,rfl⟩ := Finset.mem_image.mp hh
+        obtain ⟨ne,pb⟩ := Finset.mem_erase.mp hp
+        exact ⟨(⟨p,pb⟩,0),fun e => ne (congrArg Subtype.val e),rfl⟩
+      · obtain ⟨p,hp,rfl⟩ := Finset.mem_image.mp hh
+        obtain ⟨ne,pb⟩ := Finset.mem_erase.mp hp
+        exact ⟨(⟨p,pb⟩,1),fun e => ne (congrArg Subtype.val e),rfl⟩
+  have ga : AlgebraicIndependent (Algebra.adjoin ℚ (f '' S)) (fun i : T => f i.val) :=
+    gi.adjoin_of_disjoint dis
+  let inc (i : Fin 2) : T := ⟨(a,i),rfl⟩
+  have inj : Function.Injective inc := fun i j e => congrArg (fun q : T => q.val.2) e
+  have result := ga.comp inc inj
+  rw [im] at result
+  exact IntermediateField.algebraicIndependent_adjoin_iff.mpr result
+
+theorem generic_free {B : Finset ℝ²} (gi : generic B) {a : ℝ²} (ab : a∈B) : ¬constrained B a := by
+  rintro ⟨u,v,hu,hv,ne,on⟩
+  let K := field (B.erase a)
+  let A : K := ⟨u 0*v 1-v 0*u 1,K.sub_mem (K.mul_mem (hu 0) (hv 1)) (K.mul_mem (hv 0) (hu 1))⟩
+  let D : K := ⟨u 1-v 1,K.sub_mem (hu 1) (hv 1)⟩
+  let E : K := ⟨v 0-u 0,K.sub_mem (hv 0) (hu 0)⟩
+  let F : MvPolynomial (Fin 2) K := MvPolynomial.C A+MvPolynomial.C D*MvPolynomial.X 0+MvPolynomial.C E*MvPolynomial.X 1
+  have geom := (on_line ne).mpr on
+  change u 0*v 1-v 0*u 1+a 0*(u 1-v 1)+a 1*(v 0-u 0)=0 at geom
+  have zero : MvPolynomial.aeval (fun i : Fin 2 => a i) F = 0 := by
+    simp only [F,map_add,map_mul,MvPolynomial.aeval_C,MvPolynomial.aeval_X]
+    change u 0*v 1-v 0*u 1+(u 1-v 1)*a 0+(v 0-u 0)*a 1=0
+    linarith only [geom]
+  have z := (independent_at gi ⟨a,ab⟩).eq_zero_of_aeval_eq_zero F zero
+  have at0 := congrArg (MvPolynomial.eval (fun _ : Fin 2 => (0 : K))) z
+  have atX := congrArg (MvPolynomial.eval (![1,0] : Fin 2 → K)) z
+  have atY := congrArg (MvPolynomial.eval (![0,1] : Fin 2 → K)) z
+  simp [F] at at0 atX atY
+  have dx : E=0 := by simpa [at0] using atY
+  have dy : D=0 := by simpa [at0] using atX
+  have vx := congrArg Subtype.val dx
+  have vy := congrArg Subtype.val dy
+  apply ne
+  ext i; fin_cases i
+  · exact (sub_eq_zero.mp (show v 0-u 0=0 from vx)).symm
+  · exact sub_eq_zero.mp (show u 1-v 1=0 from vy)
+
+end Erdos101AnchorGeneric
+
+/- A four-point line avoiding all anchors forces a dependence on an anchor
+unless another of its points lies on a join through that same anchor. -/
+
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+def fan (T B : Finset ℝ²) (a : ℝ²) := B.biUnion (fun b => incident T (line[ℝ,a,b]))
+
+theorem fan_card {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²)) (a : ℝ²) :
+    (fan T B a).card ≤ B.card*4 := by
+  apply (Finset.card_biUnion_le ..).trans
+  exact (Finset.sum_le_sum (fun b _ => capped (a:=a) (b:=b) cap)).trans_eq (by simp)
+
+private theorem in_fan {T B : Finset ℝ²} {p a b : ℝ²} (pt : p∈T) (bb : b∈B) (on : p∈line[ℝ,a,b]) :
+    p∈fan T B a := Finset.mem_biUnion.mpr ⟨b,bb,Finset.mem_filter.mpr ⟨pt,on⟩⟩
+
+/-- Successive straightedge constructions, counting each intersection of two
+joins as one round. The initial level consists of the specified anchor points. -/
+def levels (B : Finset ℝ²) : ℕ → Set ℝ²
+  | 0 => (B : Set ℝ²)
+  | k+1 => levels B k ∪ {p | ∃ u∈levels B k, ∃ v∈levels B k, ∃ w∈levels B k, ∃ z∈levels B k,
+      u≠v ∧ w≠z ∧ line[ℝ,u,v]≠line[ℝ,w,z] ∧ p∈line[ℝ,u,v] ∧ p∈line[ℝ,w,z]}
+
+theorem initial_level {B : Finset ℝ²} {p : ℝ²} (hp : p∈B) (k : ℕ) : p∈levels B k := by
+  induction k with
+  | zero => exact hp
+  | succ k ih => exact Or.inl ih
+
+theorem level_field {B : Finset ℝ²} (k : ℕ) {p : ℝ²} (hp : p∈levels B k) : definedOver (field B) p := by
+  induction k generalizing p with
+  | zero => exact point_coords hp
+  | succ k ih =>
+    rcases hp with h|⟨u,hu,v,hv,w,hw,z,hz,uv,wz,ne,h1,h2⟩
+    · exact ih h
+    · exact meet_over (ih hu) (ih hv) (ih hw) (ih hz) uv wz ne h1 h2
+
+private theorem other_generated {T B : Finset ℝ²} {a q : ℝ²} (ab : a∈B) (qt : q∈T)
+    (off : q∉fan T B a) (gen : q∈B ∨ determinedBy B q) : q∈levels (B.erase a) 1 := by
+  rcases gen with qb|⟨b,hb,c,hc,d,hd,e,he,bc,de,ne,one,two⟩
+  · have qa : q≠a := by rintro rfl; exact off (in_fan qt ab (left_mem_affineSpan_pair ..))
+    exact Or.inl (Finset.mem_erase.mpr ⟨qa,qb⟩)
+  · have diff {x y : ℝ²} (yb : y∈B) (pl : q∈line[ℝ,x,y]) : x≠a := by
+      rintro rfl; exact off (in_fan qt yb pl)
+    have one' : q∈line[ℝ,c,b] := by rwa [Set.pair_comm]
+    have two' : q∈line[ℝ,e,d] := by rwa [Set.pair_comm]
+    exact Or.inr ⟨b,Finset.mem_erase.mpr ⟨diff hc one,hb⟩,
+      c,Finset.mem_erase.mpr ⟨diff hb one',hc⟩,d,Finset.mem_erase.mpr ⟨diff he two,hd⟩,
+      e,Finset.mem_erase.mpr ⟨diff hd two',he⟩,bc,de,ne,one,two⟩
+
+/-- A point on a four-point line that avoids the other points of an anchor
+fan can be reconstructed in two rounds after that anchor is removed. -/
+theorem recover_without {T B : Finset ℝ²} {p a b c d : ℝ²} {L : Line}
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) (pt : p∈T) (pb : p∉B)
+    (ab : a∈B) (_bb : b∈B) (cb : c∈B) (db : d∈B) (ne1 : a≠b) (ne2 : c≠d)
+    (diff : line[ℝ,a,b]≠line[ℝ,c,d]) (one : p∈line[ℝ,a,b]) (two : p∈line[ℝ,c,d])
+    (lf : L∈fourFamily T) (pl : p∈L) (miss : ∀x∈B,x∉L)
+    (only : ∀q∈incident T L,q≠p → q∉fan T B a) : p∈levels (B.erase a) 2 := by
+  have pa : p≠a := fun e => pb (e ▸ ab)
+  have off : a∉line[ℝ,c,d] := by
+    intro on
+    exact diff ((affineSpan_pair_eq_of_mem_of_mem_of_ne one (left_mem_affineSpan_pair ..) pa).symm.trans
+      (affineSpan_pair_eq_of_mem_of_mem_of_ne two on pa))
+  have cc : c≠a := by rintro rfl; exact off (left_mem_affineSpan_pair ..)
+  have dc : d≠a := by rintro rfl; exact off (right_mem_affineSpan_pair ..)
+  have ck := initial_level (Finset.mem_erase.mpr ⟨cc,cb⟩) 1
+  have dk := initial_level (Finset.mem_erase.mpr ⟨dc,db⟩) 1
+  obtain ⟨proper,count⟩ := Finset.mem_filter.mp lf
+  have rich : 1 < ((incident T L).erase p).card := by
+    rw [Finset.card_erase_of_mem (s:=incident T L) (Finset.mem_filter.mpr ⟨pt,pl⟩)]
+    change 1 < mult T L-1
+    rw [count]; decide
+  obtain ⟨u,hu,v,hv,uv⟩ := Finset.one_lt_card.mp rich
+  obtain ⟨up,iu⟩ := Finset.mem_erase.mp hu
+  obtain ⟨vp,iv⟩ := Finset.mem_erase.mp hv
+  obtain ⟨ut,ul⟩ := Finset.mem_filter.mp iu
+  obtain ⟨vt,vl⟩ := Finset.mem_filter.mp iv
+  have vu : line[ℝ,u,v]=L := unique_line proper ul vl uv
+  have uk := other_generated ab ut (only u iu up) (gen u ut)
+  have vk := other_generated ab vt (only v iv vp) (gen v vt)
+  have lines : line[ℝ,u,v] ≠ line[ℝ,c,d] := by
+    intro eq
+    apply miss c cb
+    rw [← vu,eq]
+    exact left_mem_affineSpan_pair ..
+  exact Or.inr ⟨u,uk,v,vk,c,ck,d,dk,uv,ne2,lines,vu ▸ pl,two⟩
+
+theorem constrains {T B : Finset ℝ²} {p a b c d : ℝ²} {L : Line}
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) (pt : p∈T) (pb : p∉B)
+    (ab : a∈B) (bb : b∈B) (cb : c∈B) (db : d∈B) (ne1 : a≠b) (ne2 : c≠d)
+    (diff : line[ℝ,a,b]≠line[ℝ,c,d]) (one : p∈line[ℝ,a,b]) (two : p∈line[ℝ,c,d])
+    (lf : L∈fourFamily T) (pl : p∈L) (miss : ∀x∈B,x∉L)
+    (only : ∀q∈incident T L,q≠p → q∉fan T B a) : constrained B a := by
+  have pk := level_field 2 (recover_without gen pt pb ab bb cb db ne1 ne2 diff one two lf pl miss only)
+  have bk := point_coords (Finset.mem_erase.mpr ⟨ne1.symm,bb⟩)
+  have nb : p≠b := fun e => pb (e ▸ bb)
+  refine ⟨p,b,pk,bk,nb,?_⟩
+  rw [affineSpan_pair_eq_of_mem_of_mem_of_ne one (right_mem_affineSpan_pair ..) nb]
+  exact left_mem_affineSpan_pair ..
+
+def cleanLines (T B : Finset ℝ²) := (fourFamily T).filter (fun L => ∀a∈B,a∉L)
+
+theorem low_unless_recovered {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) {p a b c d : ℝ²} (pt : p∈T) (pb : p∉B)
+    (ab : a∈B) (bb : b∈B) (cb : c∈B) (db : d∈B) (ne1 : a≠b) (ne2 : c≠d)
+    (diff : line[ℝ,a,b]≠line[ℝ,c,d]) (one : p∈line[ℝ,a,b]) (two : p∈line[ℝ,c,d])
+    (free : p∉levels (B.erase a) 2) : (star (cleanLines T B) p).card ≤ B.card*4 := by
+  have sub : star (cleanLines T B) p ⊆ (fan T B a).image (fun q => line[ℝ,p,q]) := by
+    intro L hl
+    obtain ⟨good,pl⟩ := Finset.mem_filter.mp hl
+    obtain ⟨lf,miss⟩ := Finset.mem_filter.mp good
+    have exists_q : ∃ q∈incident T L, q≠p ∧ q∈fan T B a := by
+      by_contra! no
+      exact free (recover_without gen pt pb ab bb cb db ne1 ne2 diff one two lf pl miss no)
+    obtain ⟨q,hq,qp,qf⟩ := exists_q
+    exact Finset.mem_image.mpr ⟨q,qf,unique_line (Finset.mem_filter.mp lf).1 pl (Finset.mem_filter.mp hq).2 qp.symm⟩
+  exact (Finset.card_le_card sub).trans (Finset.card_image_le.trans (fan_card cap a))
+
+theorem clean_degree {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) {p a b c d : ℝ²} (pt : p∈T) (pb : p∉B)
+    (ab : a∈B) (bb : b∈B) (cb : c∈B) (db : d∈B) (ne1 : a≠b) (ne2 : c≠d)
+    (diff : line[ℝ,a,b]≠line[ℝ,c,d]) (one : p∈line[ℝ,a,b]) (two : p∈line[ℝ,c,d])
+    (free : ¬constrained B a) : (star (cleanLines T B) p).card ≤ B.card*4 := by
+  apply low_unless_recovered cap gen pt pb ab bb cb db ne1 ne2 diff one two
+  intro recovered
+  apply free
+  have nb : p≠b := fun e => pb (e ▸ bb)
+  refine ⟨p,b,level_field 2 recovered,point_coords (Finset.mem_erase.mpr ⟨ne1.symm,bb⟩),nb,?_⟩
+  rw [affineSpan_pair_eq_of_mem_of_mem_of_ne one (right_mem_affineSpan_pair ..) nb]
+  exact left_mem_affineSpan_pair ..
+
+end Erdos101AnchorGeneric
+
+/- A density bound in terms of how many anchors lie on a line over the
+field generated by the other anchors. -/
+
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+def dependentAnchors (B : Finset ℝ²) := B.filter (constrained B)
+def dependentJoins (T B : Finset ℝ²) := (dependentAnchors B).biUnion (fan T (dependentAnchors B))
+
+theorem joins_card {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²)) :
+    (dependentJoins T B).card ≤ 4*(dependentAnchors B).card^2 := by
+  apply (Finset.card_biUnion_le ..).trans
+  exact (Finset.sum_le_sum (fun a _ => fan_card (B:=dependentAnchors B) cap a)).trans_eq (by simp; ring)
+
+private theorem few_through {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) {p : ℝ²} (pt : p∈T) (off : p∉dependentJoins T B) :
+    (star (cleanLines T B) p).card ≤ B.card*4 := by
+  by_cases pb : p∈B
+  · have eq : star (cleanLines T B) p=∅ := by
+      apply Finset.eq_empty_iff_forall_notMem.mpr
+      intro L hl
+      obtain ⟨h,pl⟩ := Finset.mem_filter.mp hl
+      exact (Finset.mem_filter.mp h).2 p pb pl
+    rw [eq]; simp
+  obtain ⟨a,ha,b,hb,c,hc,d,hd,ab,cd,diff,one,two⟩ := (gen p pt).resolve_left pb
+  by_cases ac : constrained B a
+  · have bc : ¬constrained B b := by
+      intro h
+      exact off (Finset.mem_biUnion.mpr ⟨a,Finset.mem_filter.mpr ⟨ha,ac⟩,
+        Finset.mem_biUnion.mpr ⟨b,Finset.mem_filter.mpr ⟨hb,h⟩,Finset.mem_filter.mpr ⟨pt,one⟩⟩⟩)
+    have flip : line[ℝ,b,a]=line[ℝ,a,b] := by rw [Set.pair_comm b a]
+    exact clean_degree cap gen pt pb hb ha hc hd ab.symm cd (flip ▸ diff) (flip ▸ one) two bc
+  · exact clean_degree cap gen pt pb ha hb hc hd ab cd diff one two ac
+
+theorem pencil_size {T : Finset ℝ²} {p : ℝ²} (pt : p∈T) :
+    (star (fourFamily T) p).card ≤ T.card := by
+  have sub : star (fourFamily T) p ⊆ (determined T).filter (fun L => p∈L) :=
+    Finset.filter_subset_filter _ (Finset.filter_subset ..)
+  rw [← full_pencil pt] at sub
+  exact (Finset.card_le_card sub).trans (Finset.card_image_le.trans (Finset.card_le_card (Finset.erase_subset ..)))
+
+/-- Count lines from a local degree bound away from an exceptional point set
+and a set that may contain entire four-point lines. -/
+theorem local_to_global {T B W E : Finset ℝ²} (bt : B ⊆ T) (et : E ⊆ T)
+    (degree : ∀p∈T,p∉W → p∉E → (star (cleanLines T B) p).card ≤ B.card*4) :
+    (linesWithPointsFor 4 (T : Set ℝ²)).ncard ≤ (5*B.card+E.card)*T.card+W.card^2 := by
+  let F := fourFamily T
+  let H := (B∪E).biUnion (star F)
+  let J := (T\(W∪E)).biUnion (star (cleanLines T B))
+  have cover : F ⊆ (H ∪ J) ∪ determined W := by
+    intro L hl
+    by_cases b : ∃a∈B∪E,a∈L
+    · obtain ⟨a,ab,al⟩ := b
+      exact Finset.mem_union_left _ (Finset.mem_union_left _ (Finset.mem_biUnion.mpr
+        ⟨a,ab,Finset.mem_filter.mpr ⟨hl,al⟩⟩))
+    push Not at b
+    have clean : L∈cleanLines T B := Finset.mem_filter.mpr ⟨hl,fun p hp => b p (Finset.mem_union_left _ hp)⟩
+    by_cases hits : ∃p∈T\(W∪E),p∈L
+    · obtain ⟨p,hp,pl⟩ := hits
+      exact Finset.mem_union_left _ (Finset.mem_union_right _ (Finset.mem_biUnion.mpr
+        ⟨p,hp,Finset.mem_filter.mpr ⟨clean,pl⟩⟩))
+    push Not at hits
+    have sub : incident T L ⊆ incident W L := by
+      intro p hp
+      obtain ⟨pt,pl⟩ := Finset.mem_filter.mp hp
+      have pe : p∉E := fun h => b p (Finset.mem_union_right _ h) pl
+      refine Finset.mem_filter.mpr ⟨?_,pl⟩
+      by_contra pw
+      exact hits p (Finset.mem_sdiff.mpr ⟨pt,fun he => (Finset.mem_union.mp he).elim pw pe⟩) pl
+    obtain ⟨proper,card⟩ := Finset.mem_filter.mp hl
+    have two : 2 ≤ mult W L := (show 2 ≤ mult T L by rw [card]; decide).trans (Finset.card_le_card sub)
+    exact Finset.mem_union_right _ (determined_of_two proper two)
+  have hh : H.card ≤ (B.card+E.card)*T.card := by
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ B∪E, T.card := Finset.sum_le_sum (fun p hp => pencil_size ((Finset.union_subset bt et) hp))
+         _ = (B∪E).card*T.card := by simp
+         _ ≤ _ := Nat.mul_le_mul_right _ (Finset.card_union_le ..)
+  have jj : J.card ≤ T.card*(B.card*4) := by
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ T\(W∪E), B.card*4 := Finset.sum_le_sum (fun p hp => degree p (Finset.mem_sdiff.mp hp).1
+            (fun h => (Finset.mem_sdiff.mp hp).2 (Finset.mem_union_left _ h))
+            (fun h => (Finset.mem_sdiff.mp hp).2 (Finset.mem_union_right _ h)))
+         _ = (T\(W∪E)).card*(B.card*4) := by simp
+         _ ≤ _ := Nat.mul_le_mul_right _ (Finset.card_le_card Finset.sdiff_subset)
+  have det : (determined W).card ≤ W.card^2 := calc
+    _ ≤ W.offDiag.card := Finset.card_image_le
+    _ ≤ _ := by rw [Finset.offDiag_card,pow_two]; omega
+  rw [← fourFamily_eq]
+  calc F.card ≤ ((H ∪ J) ∪ determined W).card := Finset.card_le_card cover
+       _ ≤ H.card+J.card+(determined W).card := (Finset.card_union_le ..).trans (Nat.add_le_add_right (Finset.card_union_le ..) _)
+       _ ≤ (B.card+E.card)*T.card+T.card*(B.card*4)+W.card^2 := Nat.add_le_add (Nat.add_le_add hh jj) det
+       _ = _ := by ring
+
+/-- If b anchors generate n points in one step and d of those anchors lie on
+a line through two points defined over the other anchors, there are at most
+5bn + 16d⁴ four-point lines. -/
+theorem defect_bound {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²)) (bt : B⊆T)
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) :
+    (linesWithPointsFor 4 (T : Set ℝ²)).ncard ≤ 5*B.card*T.card+16*(dependentAnchors B).card^4 := by
+  have bound := local_to_global (W:=dependentJoins T B) (E:=∅) bt (Finset.empty_subset _)
+    (fun p hp off _ => few_through cap gen hp off)
+  simp only [Finset.card_empty,Nat.add_zero] at bound
+  apply bound.trans
+  apply Nat.add_le_add_left
+  exact (Nat.pow_le_pow_left (joins_card (B:=B) cap) 2).trans_eq (by ring)
+
+theorem generic_bound {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²)) (bt : B⊆T)
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) (gi : generic B) :
+    (linesWithPointsFor 4 (T : Set ℝ²)).ncard ≤ 5*B.card*T.card := by
+  have empty : dependentAnchors B=∅ := Finset.filter_false_of_mem (fun _ h => generic_free gi h)
+  simpa [empty] using defect_bound cap bt gen
+
+end Erdos101AnchorGeneric
+
+/- For a point on many four-point lines, a generating anchor can be erased
+from its construction. Two such points on different joins reconstruct the
+anchor itself in three rounds. -/
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+def uses (B : Finset ℝ²) (a p : ℝ²) := ∃ b∈B, ∃ c∈B, ∃ d∈B,
+  a≠b ∧ c≠d ∧ line[ℝ,a,b]≠line[ℝ,c,d] ∧ p∈line[ℝ,a,b] ∧ p∈line[ℝ,c,d]
+
+def demanding (T B : Finset ℝ²) (a : ℝ²) := T.filter (fun p =>
+  p∉B ∧ uses B a p ∧ B.card*4 < (star (cleanLines T B) p).card)
+
+def recoverable (B : Finset ℝ²) := B.filter (fun a => a∈levels (B.erase a) 3)
+
+private theorem switch {p a b c d : ℝ²} (ha : a≠b) (hc : c≠d) (diff : line[ℝ,a,b]≠line[ℝ,c,d])
+    (on1 : p∈line[ℝ,a,b]) (on2 : p∈line[ℝ,c,d]) :
+    b≠a ∧ c≠d ∧ line[ℝ,b,a]≠line[ℝ,c,d] ∧ p∈line[ℝ,b,a] ∧ p∈line[ℝ,c,d] := by
+  rw [Set.pair_comm b a]; exact ⟨ha.symm,hc,diff,on1,on2⟩
+
+theorem uses_if_lost {B : Finset ℝ²} {p a : ℝ²} (h : determinedBy B p)
+    (lost : p∉levels (B.erase a) 1) : uses B a p := by
+  obtain ⟨b,hb,c,hc,d,hd,e,he,bc,de,ne,h1,h2⟩ := h
+  by_cases ba : b=a
+  · subst b; exact ⟨c,hc,d,hd,e,he,bc,de,ne,h1,h2⟩
+  by_cases ca : c=a
+  · subst c; exact ⟨b,hb,d,hd,e,he,switch bc de ne h1 h2⟩
+  by_cases da : d=a
+  · subst d; exact ⟨e,he,b,hb,c,hc,de,bc,ne.symm,h2,h1⟩
+  by_cases ea : e=a
+  · subst e; exact ⟨d,hd,b,hb,c,hc,switch de bc ne.symm h2 h1⟩
+  exact False.elim (lost (Or.inr ⟨b,Finset.mem_erase.mpr ⟨ba,hb⟩,c,Finset.mem_erase.mpr ⟨ca,hc⟩,
+    d,Finset.mem_erase.mpr ⟨da,hd⟩,e,Finset.mem_erase.mpr ⟨ea,he⟩,bc,de,ne,h1,h2⟩))
+
+private theorem data_of_demanding {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) {p a : ℝ²} (ab : a∈B) (hp : p∈demanding T B a) :
+    ∃ b∈B.erase a, p≠b ∧ p∈levels (B.erase a) 2 ∧ line[ℝ,p,b]=line[ℝ,a,b] := by
+  obtain ⟨pt,pb,ex,high⟩ := Finset.mem_filter.mp hp
+  obtain ⟨b,hb,c,hc,d,hd,ab',cd,ne,h1,h2⟩ := ex
+  have nb : p≠b := fun e => pb (e ▸ hb)
+  have eq := affineSpan_pair_eq_of_mem_of_mem_of_ne h1 (right_mem_affineSpan_pair ..) nb
+  refine ⟨b,Finset.mem_erase.mpr ⟨ab'.symm,hb⟩,nb,?_,eq⟩
+  by_contra notRec
+  exact high.not_ge (low_unless_recovered cap gen pt pb ab hb hc hd ab' cd ne h1 h2 notRec)
+
+/-- If an anchor cannot be reconstructed from the others in three rounds,
+all its high-degree users lie on at most one line. -/
+theorem demanding_card {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) {a : ℝ²} (ab : a∈B) (nr : a∉levels (B.erase a) 3) :
+    (demanding T B a).card ≤ 4 := by
+  rcases (demanding T B a).eq_empty_or_nonempty with h|⟨p,hp⟩
+  · simp [h]
+  obtain ⟨b,hb,pb,pr,eqp⟩ := data_of_demanding cap gen ab hp
+  have sub : demanding T B a ⊆ incident T (line[ℝ,p,b]) := by
+    intro q hq
+    obtain ⟨c,hc,qc,qr,eqq⟩ := data_of_demanding cap gen ab hq
+    have la : a∈line[ℝ,p,b] := eqp ▸ left_mem_affineSpan_pair ..
+    have lb : a∈line[ℝ,q,c] := eqq ▸ left_mem_affineSpan_pair ..
+    have same : line[ℝ,p,b]=line[ℝ,q,c] := by
+      by_contra diff
+      exact nr (Or.inr ⟨p,pr,b,initial_level hb 2,q,qr,c,initial_level hc 2,pb,qc,diff,la,lb⟩)
+    exact Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hq).1,same ▸ left_mem_affineSpan_pair ..⟩
+  exact (Finset.card_le_card sub).trans (capped cap)
+
+theorem recoverable_bound {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²)) (bt : B⊆T)
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) :
+    (linesWithPointsFor 4 (T : Set ℝ²)).ncard ≤ 9*B.card*T.card+16*(recoverable B).card^4 := by
+  let R := recoverable B
+  let W := R.biUnion (fan T R)
+  let E := (B\R).biUnion (demanding T B)
+  have es : E⊆T := by
+    intro p hp
+    obtain ⟨_,_,h⟩ := Finset.mem_biUnion.mp hp
+    exact (Finset.mem_filter.mp h).1
+  have ee : E.card ≤ B.card*4 := by
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ B\R, 4 := Finset.sum_le_sum (fun a ha => demanding_card cap gen (Finset.mem_sdiff.mp ha).1
+            (fun h => (Finset.mem_sdiff.mp ha).2 (Finset.mem_filter.mpr ⟨(Finset.mem_sdiff.mp ha).1,h⟩)))
+         _ = (B\R).card*4 := by simp
+         _ ≤ _ := Nat.mul_le_mul_right _ (Finset.card_le_card Finset.sdiff_subset)
+  have ww : W.card ≤ 4*R.card^2 := by
+    apply (Finset.card_biUnion_le ..).trans
+    exact (Finset.sum_le_sum (fun a _ => fan_card (B:=R) cap a)).trans_eq (by simp; ring)
+  have deg (p) (pt : p∈T) (off : p∉W) (pe : p∉E) : (star (cleanLines T B) p).card ≤ B.card*4 := by
+    by_contra! high
+    have pb : p∉B := by
+      intro h
+      obtain ⟨L,hl⟩ := Finset.card_pos.mp (lt_of_le_of_lt (Nat.zero_le _) high)
+      obtain ⟨hl,pl⟩ := Finset.mem_filter.mp hl
+      exact (Finset.mem_filter.mp hl).2 p h pl
+    obtain ⟨a,ha,b,hb,c,hc,d,hd,ab,cd,diff,one,two⟩ := (gen p pt).resolve_left pb
+    have necessary {v : ℝ²} (vb : v∈B) (use : uses B v p) : v∈R := by
+      by_contra vr
+      exact pe (Finset.mem_biUnion.mpr ⟨v,Finset.mem_sdiff.mpr ⟨vb,vr⟩,Finset.mem_filter.mpr ⟨pt,pb,use,high⟩⟩)
+    have ar := necessary ha ⟨b,hb,c,hc,d,hd,ab,cd,diff,one,two⟩
+    have br := necessary hb ⟨a,ha,c,hc,d,hd,switch ab cd diff one two⟩
+    exact off (Finset.mem_biUnion.mpr ⟨a,ar,Finset.mem_biUnion.mpr ⟨b,br,Finset.mem_filter.mpr ⟨pt,one⟩⟩⟩)
+  apply (local_to_global bt es deg).trans
+  apply Nat.add_le_add
+  · exact Nat.mul_le_mul_right _ ((Nat.add_le_add_left ee (5*B.card)).trans_eq (by ring))
+  · exact (Nat.pow_le_pow_left ww 2).trans_eq (by dsimp only [R]; ring)
+
+end Erdos101AnchorGeneric
+
+/- Erase an anchor that cannot be reconstructed from the others. Its
+low-degree users lie in a small pencil and its high-degree users lie on
+one line. Iteration leaves a self-reconstructing set of anchors. -/
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+/-- Points whose first-round reconstruction requires this particular anchor
+and whose number of incident four-point lines avoiding all anchors exceeds q. -/
+def essentialAt (T B : Finset ℝ²) (q : ℕ) (a : ℝ²) :=
+  T.filter (fun p => p∉B ∧ p∉levels (B.erase a) 1 ∧ q < (star (cleanLines T B) p).card)
+
+theorem essential_sub {T B : Finset ℝ²} {q : ℕ}
+    (gen : ∀p∈T,p∈B ∨ determinedBy B p) (deg : B.card*4 ≤ q) (a : ℝ²) :
+    essentialAt T B q a ⊆ demanding T B a := by
+  intro p hp
+  obtain ⟨pt,pb,lost,high⟩ := Finset.mem_filter.mp hp
+  exact Finset.mem_filter.mpr ⟨pt,pb,uses_if_lost ((gen p pt).resolve_left pb) lost,deg.trans_lt high⟩
+
+theorem erase_one (q h : ℕ) {T B : Finset ℝ²} {A : Finset Line} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (bt : B⊆T) (gen : ∀q∈T,q∈B ∨ determinedBy B q) (clean : A⊆cleanLines T B) {a : ℝ²}
+    (_ab : a∈B) (few : (essentialAt T B q a).card ≤ h) :
+    ∃ V⊆T, B.erase a ⊆ V ∧ (∀q∈V,q∈B.erase a ∨ determinedBy (B.erase a) q) ∧
+      ∃ F⊆A, F⊆cleanLines V (B.erase a) ∧ A.card ≤ F.card+(4*B.card*q+h*T.card) := by
+  let K := B.erase a
+  let V := T.filter (fun p => p∈levels K 1)
+  let F := A.filter (fun L => incident T L ⊆ V)
+  have vt : V⊆T := Finset.filter_subset ..
+  have kv : K⊆V := fun q h => Finset.mem_filter.mpr ⟨bt (Finset.mem_of_mem_erase h),Or.inl h⟩
+  have fa : F⊆A := Finset.filter_subset ..
+  have keep : F⊆cleanLines V K := by
+    intro L hl
+    obtain ⟨al,sub⟩ := Finset.mem_filter.mp hl
+    obtain ⟨lf,miss⟩ := Finset.mem_filter.mp (clean al)
+    obtain ⟨proper,card⟩ := Finset.mem_filter.mp lf
+    have eq : incident V L=incident T L := Finset.Subset.antisymm (incident_mono vt L)
+      (fun p hp => Finset.mem_filter.mpr ⟨sub hp,(Finset.mem_filter.mp hp).2⟩)
+    have four : mult V L=4 := (congrArg Finset.card eq).trans card
+    exact Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨determined_of_two proper (by omega),four⟩,
+      fun q qk => miss q (Finset.mem_of_mem_erase qk)⟩
+  let lo := (fan T B a).filter (fun p => (star (cleanLines T B) p).card ≤ q)
+  let hi := essentialAt T B q a
+  let lowLines := lo.biUnion (star (cleanLines T B))
+  let highLines := hi.biUnion (star (fourFamily T))
+  have cover : A\F ⊆ lowLines∪highLines := by
+    intro L hl
+    obtain ⟨al,nf⟩ := Finset.mem_sdiff.mp hl
+    have notSub : ¬incident T L ⊆ V := fun h => nf (Finset.mem_filter.mpr ⟨al,h⟩)
+    obtain ⟨p,hit,out⟩ := Finset.not_subset.mp notSub
+    obtain ⟨pt,pl⟩ := Finset.mem_filter.mp hit
+    obtain ⟨lf,miss⟩ := Finset.mem_filter.mp (clean al)
+    have pb : p∉B := fun h => miss p h pl
+    have lost : p∉levels K 1 := fun h => out (Finset.mem_filter.mpr ⟨pt,h⟩)
+    have use := uses_if_lost ((gen p pt).resolve_left pb) lost
+    by_cases small : (star (cleanLines T B) p).card ≤ q
+    · obtain ⟨b,hb,_,_,_,_,_,_,_,one,_⟩ := use
+      have pf : p∈fan T B a := Finset.mem_biUnion.mpr ⟨b,hb,Finset.mem_filter.mpr ⟨pt,one⟩⟩
+      exact Finset.mem_union_left _ (Finset.mem_biUnion.mpr ⟨p,Finset.mem_filter.mpr ⟨pf,small⟩,
+        Finset.mem_filter.mpr ⟨clean al,pl⟩⟩)
+    · exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨p,Finset.mem_filter.mpr ⟨pt,pb,lost,Nat.lt_of_not_ge small⟩,
+        Finset.mem_filter.mpr ⟨lf,pl⟩⟩)
+  have lowSize : lowLines.card ≤ 4*B.card*q := by
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ lo,q := Finset.sum_le_sum (fun _ hp => (Finset.mem_filter.mp hp).2)
+         _ = lo.card*q := by simp
+         _ ≤ (B.card*4)*q := Nat.mul_le_mul_right _ ((Finset.card_filter_le ..).trans (fan_card cap a))
+         _ = _ := by ring
+  have highSize : highLines.card ≤ h*T.card := by
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ hi,T.card := Finset.sum_le_sum (fun _ hp => pencil_size (Finset.mem_filter.mp hp).1)
+         _ = hi.card*T.card := by simp
+         _ ≤ _ := Nat.mul_le_mul_right _ few
+  have covered := (Finset.card_le_card cover).trans ((Finset.card_union_le ..).trans (Nat.add_le_add lowSize highSize))
+  have sum := Finset.card_sdiff_add_card_eq_card fa
+  exact ⟨V,vt,kv,fun _ h => (Finset.mem_filter.mp h).2,F,fa,keep,by omega⟩
+
+/-- Keep removing anchors with at most h essential high-degree users.
+The loss bound is uniform over the order of deletions. -/
+theorem strip (q h : ℕ) {T B : Finset ℝ²} {A : Finset Line} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (bt : B⊆T) (gen : ∀q∈T,q∈B ∨ determinedBy B q) (clean : A⊆cleanLines T B) :
+    ∃ V⊆T, ∃ K⊆B, K⊆V ∧ (∀q∈V,q∈K ∨ determinedBy K q) ∧ (∀a∈K,h < (essentialAt V K q a).card) ∧
+      ∃ H⊆A, H⊆cleanLines V K ∧ A.card ≤ H.card+B.card*(4*B.card*q+h*T.card) := by
+  induction B using Finset.strongInductionOn generalizing T A with
+  | _ B ih =>
+    by_cases all : ∀a∈B,h < (essentialAt T B q a).card
+    · exact ⟨T,Finset.Subset.rfl,B,Finset.Subset.rfl,bt,gen,all,A,Finset.Subset.rfl,clean,Nat.le_add_right ..⟩
+    push Not at all
+    obtain ⟨a,ab,nr⟩ := all
+    obtain ⟨V,vt,kv,vg,F,fa,fc,loss⟩ := erase_one q h cap bt gen clean ab nr
+    have vc := NonCollinearFor.subset (Finset.coe_subset.mpr vt) cap
+    obtain ⟨U,uv,K,ke,ku,ug,rec,H,hf,hc,remain⟩ := ih (B.erase a) (Finset.erase_ssubset ab) vc kv vg fc
+    have scale : 4*(B.erase a).card*q+h*V.card ≤ 4*B.card*q+h*T.card := Nat.add_le_add
+      (Nat.mul_le_mul_right q (Nat.mul_le_mul_left 4 (Finset.card_le_card (Finset.erase_subset ..))))
+      (Nat.mul_le_mul_left _ (Finset.card_le_card vt))
+    have sz := Finset.card_erase_add_one ab
+    refine ⟨U,uv.trans vt,K,ke.trans (Finset.erase_subset ..),ku,ug,rec,H,hf.trans fa,hc,?_⟩
+    calc A.card ≤ F.card+(4*B.card*q+h*T.card) := loss
+         _ ≤ (H.card+(B.erase a).card*(4*B.card*q+h*T.card))+(4*B.card*q+h*T.card) :=
+           Nat.add_le_add_right (remain.trans (Nat.add_le_add_left (Nat.mul_le_mul_left _ scale) _)) _
+         _ = H.card+((B.erase a).card+1)*(4*B.card*q+h*T.card) := by ring
+         _ = _ := by rw [sz]
+
+theorem populated_core (q h : ℕ) {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (bt : B⊆T) (gen : ∀q∈T,q∈B ∨ determinedBy B q) :
+    ∃ V⊆T, ∃ K⊆B, K⊆V ∧ (∀q∈V,q∈K ∨ determinedBy K q) ∧ (∀a∈K,h < (essentialAt V K q a).card) ∧
+      (fourFamily T).card ≤ (fourFamily V).card+B.card*(4*B.card*q+h*T.card)+B.card*T.card := by
+  let A := cleanLines T B
+  obtain ⟨V,vt,K,kb,kv,vg,rec,H,_,ha,loss⟩ := strip q h (A:=A) cap bt gen Finset.Subset.rfl
+  let D := B.biUnion (star (fourFamily T))
+  have cover : fourFamily T ⊆ A∪D := by
+    intro L hl
+    by_cases good : ∀a∈B,a∉L
+    · exact Finset.mem_union_left _ (Finset.mem_filter.mpr ⟨hl,good⟩)
+    push Not at good
+    obtain ⟨a,ab,al⟩ := good
+    exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨a,ab,Finset.mem_filter.mpr ⟨hl,al⟩⟩)
+  have dc : D.card≤B.card*T.card := (Finset.card_biUnion_le ..).trans
+    ((Finset.sum_le_sum (fun a h => pencil_size (bt h))).trans_eq (by simp))
+  have size : H.card ≤ (fourFamily V).card := Finset.card_le_card (ha.trans (Finset.filter_subset ..))
+  refine ⟨V,vt,K,kb,kv,vg,rec,?_⟩
+  calc (fourFamily T).card ≤ A.card+D.card := (Finset.card_le_card cover).trans (Finset.card_union_le ..)
+       _ ≤ ((fourFamily V).card+B.card*(4*B.card*q+h*T.card))+B.card*T.card :=
+         Nat.add_le_add (loss.trans (Nat.add_le_add_right size _)) dc
+
+theorem closed_core {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (bt : B⊆T) (gen : ∀q∈T,q∈B ∨ determinedBy B q) :
+    ∃ V⊆T, ∃ K⊆B, K⊆V ∧ (∀q∈V,q∈K ∨ determinedBy K q) ∧ (∀a∈K,a∈levels (K.erase a) 3) ∧
+      (fourFamily T).card ≤ (fourFamily V).card+16*B.card^3+5*B.card*T.card := by
+  obtain ⟨V,vt,K,kb,kv,vg,rich,size⟩ := populated_core (B.card*4) 4 cap bt gen
+  refine ⟨V,vt,K,kb,kv,vg,?_,size.trans_eq (by ring)⟩
+  intro a ak
+  by_contra nr
+  have vc := NonCollinearFor.subset (Finset.coe_subset.mpr vt) cap
+  have sub := essential_sub vg (Nat.mul_le_mul_right 4 (Finset.card_le_card kb)) a
+  exact (rich a ak).not_ge ((Finset.card_le_card sub).trans (demanding_card vc vg ak nr))
+
+end Erdos101AnchorGeneric
+
+/- The full Erdős problem is equivalent to its restriction to sets
+generated by square-root many anchors, each individually reconstructible
+from the remaining anchors in three rounds of joins and intersections. -/
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore
+open scoped Classical
+
+def closedGap : Prop :=
+  ∀ s C : ℕ, 0 < s → ∃ N : ℕ, ∀ T B : Finset ℝ², N ≤ T.card →
+    NonCollinearFor 5 (T : Set ℝ²) → B ⊆ T → B.card^2 ≤ C*T.card →
+    (∀p∈T,p∈B ∨ determinedBy B p) → (∀a∈B,a∈levels (B.erase a) 3) →
+    s*(fourFamily T).card < T.card^2
+
+theorem restricted_iff : OMA.R_Erdos101_erdos_101_R3.H2 ↔ closedGap := by
+  constructor
+  · intro gap s C sp
+    obtain ⟨N,test⟩ := gap s C sp
+    refine ⟨N,fun T B size cap bt cheap gen _ => ?_⟩
+    rw [fourFamily_eq]
+    exact test T B size cap bt cheap gen
+  · intro gap s C sp
+    let D := 16*C+5
+    obtain ⟨M,test⟩ := gap (2*s) (2*s*C) (by positivity)
+    refine ⟨max 1 (max ((2*s*D)^2*C) (2*s*M)),?_⟩
+    intro T B size cap bt cheap gen
+    rw [← fourFamily_eq]
+    by_contra! dense
+    have pos : 0 < T.card := (le_max_left ..).trans size
+    have large : (2*s*D)^2*C ≤ T.card := (le_max_left ..).trans ((le_max_right ..).trans size)
+    have minimum : 2*s*M ≤ T.card := (le_max_right ..).trans ((le_max_right ..).trans size)
+    have anchorSize : 2*s*D*B.card ≤ T.card := by
+      apply (Nat.pow_le_pow_iff_left (by decide : 2≠0)).mp
+      calc (2*s*D*B.card)^2 = (2*s*D)^2*B.card^2 := mul_pow .. 
+           _ ≤ (2*s*D)^2*(C*T.card) := Nat.mul_le_mul_left _ cheap
+           _ = ((2*s*D)^2*C)*T.card := by ring
+           _ ≤ T.card*T.card := Nat.mul_le_mul_right _ large
+           _ = _ := (pow_two _).symm
+    obtain ⟨V,vt,K,kb,kv,vg,rec,remain⟩ := closed_core cap bt gen
+    let loss := 16*B.card^3+5*B.card*T.card
+    have lossBound : loss ≤ D*B.card*T.card := calc
+      loss = B.card*(16*B.card^2+5*T.card) := by dsimp [loss]; ring
+      _ ≤ B.card*(16*(C*T.card)+5*T.card) :=
+        Nat.mul_le_mul_left _ (Nat.add_le_add_right (Nat.mul_le_mul_left _ cheap) _)
+      _ = D*B.card*T.card := by dsimp [D]; ring
+    have twice : 2*(s*loss) ≤ T.card^2 := calc
+      2*(s*loss) ≤ 2*(s*(D*B.card*T.card)) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ lossBound)
+      _ = (2*s*D*B.card)*T.card := by ring
+      _ ≤ T.card*T.card := Nat.mul_le_mul_right _ anchorSize
+      _ = _ := (pow_two _).symm
+    have both : T.card^2 ≤ s*(fourFamily V).card+s*loss := calc
+      T.card^2 ≤ s*(fourFamily T).card := dense
+      _ ≤ s*((fourFamily V).card+loss) := Nat.mul_le_mul_left _ (by simpa only [loss,Nat.add_assoc] using remain)
+      _ = _ := Nat.mul_add .. 
+    have keep : T.card^2 ≤ 2*s*(fourFamily V).card := by rw [Nat.mul_assoc]; omega
+    have vc := Finset.card_le_card vt
+    have ratio : T.card ≤ 2*s*V.card := by
+      apply Nat.le_of_mul_le_mul_right _ pos
+      rw [← pow_two]
+      calc T.card^2 ≤ 2*s*(fourFamily V).card := keep
+           _ ≤ 2*s*V.card^2 := Nat.mul_le_mul_left _ (fourFamily_le_square _)
+           _ = (2*s*V.card)*V.card := by ring
+           _ ≤ (2*s*V.card)*T.card := Nat.mul_le_mul_left _ vc
+    have vcap := NonCollinearFor.subset (Finset.coe_subset.mpr vt) cap
+    have enough := Nat.le_of_mul_le_mul_left (minimum.trans ratio) (show 0<2*s by positivity)
+    have kcost : K.card^2 ≤ (2*s*C)*V.card := calc
+      K.card^2 ≤ B.card^2 := Nat.pow_le_pow_left (Finset.card_le_card kb) 2
+      _ ≤ C*T.card := cheap
+      _ ≤ C*(2*s*V.card) := Nat.mul_le_mul_left _ ratio
+      _ = _ := by ring
+    exact (test V K enough vcap kv kcost vg rec).not_ge ((Nat.pow_le_pow_left vc 2).trans keep)
+
+theorem closed_iff : (type_of% @Erdos101.erdos_101) ↔ closedGap := anchored_iff.trans restricted_iff
+
+end Erdos101AnchorGeneric
+
+/- In the remaining case each anchor is indispensable, in the first
+intersection round, to a positive proportion of the anchor count in points.
+Each such point is incident with a positive proportion of the point count
+in four-point lines that avoid all anchors. -/
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+/-- At most two new nonanchors can lie on a join of two distinct anchors
+under the no-five condition. The cruder count below is enough to identify
+square-root order for the number of anchors. -/
+theorem capacity {T B : Finset ℝ²} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀p∈T,p∈B ∨ determinedBy B p) : T.card ≤ B.card+4*B.card^2 := by
+  let W := B.biUnion (fan T B)
+  have sub : T⊆B∪W := by
+    intro p pt
+    rcases gen p pt with h|⟨a,ha,b,hb,_,_,_,_,_,_,_,on,_⟩
+    · exact Finset.mem_union_left _ h
+    · exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨a,ha,Finset.mem_biUnion.mpr
+        ⟨b,hb,Finset.mem_filter.mpr ⟨pt,on⟩⟩⟩)
+  have w : W.card ≤ 4*B.card^2 := (Finset.card_biUnion_le ..).trans
+    ((Finset.sum_le_sum (fun a _ => fan_card (B:=B) cap a)).trans_eq (by simp; ring))
+  exact (Finset.card_le_card sub).trans ((Finset.card_union_le ..).trans (Nat.add_le_add_left w _))
+
+private theorem loss_budget (s C b n : ℕ) (sp : 0<s) (cheap : b^2 ≤ C*n)
+    (big : (4*s*(16*C+5))^2*C ≤ n) :
+    let L := 20*s*(C+1)
+    2*(s*(b*(4*b*(4*b+n/L)+(4+b/L)*n)+b*n)) ≤ n^2 := by
+  let D := 16*C+5
+  let L := 20*s*(C+1)
+  let base := 16*b^3+5*b*n
+  let extra := 4*b^2*(n/L)+b*(b/L)*n
+  have lp : 0<L := by dsimp [L]; positivity
+  have small : 4*s*D*b ≤ n := by
+    apply (Nat.pow_le_pow_iff_left (by decide : 2≠0)).mp
+    calc (4*s*D*b)^2 = (4*s*D)^2*b^2 := mul_pow ..
+         _ ≤ (4*s*D)^2*(C*n) := Nat.mul_le_mul_left _ cheap
+         _ = ((4*s*D)^2*C)*n := by ring
+         _ ≤ n*n := Nat.mul_le_mul_right _ big
+         _ = _ := (pow_two _).symm
+  have baseBound : base ≤ D*b*n := calc
+    base = b*(16*b^2+5*n) := by dsimp [base]; ring
+    _ ≤ b*(16*(C*n)+5*n) := Nat.mul_le_mul_left _ (Nat.add_le_add_right (Nat.mul_le_mul_left _ cheap) _)
+    _ = D*b*n := by dsimp [D]; ring
+  have first : 4*(s*base) ≤ n^2 := calc
+    _ ≤ 4*(s*(D*b*n)) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ baseBound)
+    _ = (4*s*D*b)*n := by ring
+    _ ≤ n*n := Nat.mul_le_mul_right _ small
+    _ = _ := (pow_two _).symm
+  have approx : L*extra ≤ 5*C*n^2 := calc
+    L*extra = 4*b^2*((n/L)*L)+b*((b/L)*L)*n := by dsimp [extra]; ring
+    _ ≤ 4*b^2*n+b*b*n := Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.div_mul_le_self ..))
+      (Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ (Nat.div_mul_le_self ..)))
+    _ = 5*b^2*n := by ring
+    _ ≤ 5*(C*n)*n := Nat.mul_le_mul_right _ (Nat.mul_le_mul_left _ cheap)
+    _ = _ := by ring
+  have second : 4*(s*extra) ≤ n^2 := by
+    apply Nat.le_of_mul_le_mul_left (c:=L) _ lp
+    calc L*(4*(s*extra)) = 4*s*(L*extra) := by ring
+         _ ≤ 4*s*(5*C*n^2) := Nat.mul_le_mul_left _ approx
+         _ = (20*s*C)*n^2 := by ring
+         _ ≤ L*n^2 := Nat.mul_le_mul_right _ (Nat.mul_le_mul_left (20*s) (Nat.le_succ C))
+  have total : b*(4*b*(4*b+n/L)+(4+b/L)*n)+b*n = base+extra := by dsimp [base,extra]; ring
+  change 2*(s*(b*(4*b*(4*b+n/L)+(4+b/L)*n)+b*n)) ≤ n^2
+  rw [total,Nat.mul_add]
+  omega
+
+def heavilyUsed (T B : Finset ℝ²) (L : ℕ) := ∀a∈B, a∈levels (B.erase a) 3 ∧
+  B.card ≤ L*(essentialAt T B (T.card/L) a).card
+
+theorem essential_core (s C : ℕ) (sp : 0<s) {T B : Finset ℝ²}
+    (cap : NonCollinearFor 5 (T : Set ℝ²)) (bt : B⊆T) (cheap : B.card^2 ≤ C*T.card)
+    (gen : ∀q∈T,q∈B ∨ determinedBy B q) (big : (4*s*(16*C+5))^2*C ≤ T.card) (positive : 0<T.card)
+    (dense : T.card^2 ≤ s*(fourFamily T).card) :
+    ∃ V⊆T, ∃ K⊆B, K⊆V ∧ (∀p∈V,p∈K ∨ determinedBy K p) ∧ heavilyUsed V K (20*s*(C+1)) ∧
+      T.card ≤ 2*s*V.card ∧ K.card^2 ≤ 2*s*C*V.card ∧ T.card^2 ≤ 2*s*(fourFamily V).card := by
+  let L := 20*s*(C+1)
+  let q := 4*B.card+T.card/L
+  let h := 4+B.card/L
+  have lp : 0<L := by dsimp [L]; positivity
+  obtain ⟨V,vt,K,kb,kv,vg,rich,remain⟩ := populated_core q h cap bt gen
+  have vc := Finset.card_le_card vt
+  have kc := Finset.card_le_card kb
+  have vcap := NonCollinearFor.subset (Finset.coe_subset.mpr vt) cap
+  let loss := B.card*(4*B.card*q+h*T.card)+B.card*T.card
+  have twice : 2*(s*loss) ≤ T.card^2 := loss_budget s C B.card T.card sp cheap big
+  have both : T.card^2 ≤ s*(fourFamily V).card+s*loss := calc
+    _ ≤ s*(fourFamily T).card := dense
+    _ ≤ s*((fourFamily V).card+loss) := Nat.mul_le_mul_left _ (by simpa only [loss,Nat.add_assoc] using remain)
+    _ = _ := Nat.mul_add ..
+  have keep : T.card^2 ≤ 2*s*(fourFamily V).card := by rw [Nat.mul_assoc]; omega
+  have ratio : T.card ≤ 2*s*V.card := by
+    apply Nat.le_of_mul_le_mul_right _ positive
+    rw [← pow_two]
+    calc T.card^2 ≤ 2*s*(fourFamily V).card := keep
+         _ ≤ 2*s*V.card^2 := Nat.mul_le_mul_left _ (fourFamily_le_square _)
+         _ = 2*s*V.card*V.card := by ring
+         _ ≤ 2*s*V.card*T.card := Nat.mul_le_mul_left _ vc
+  have ksize := (Nat.pow_le_pow_left kc 2).trans (cheap.trans (Nat.mul_le_mul_left C ratio))
+  refine ⟨V,vt,K,kb,kv,vg,?_,ratio,ksize.trans_eq (by ring),keep⟩
+  intro a ak
+  change a∈levels (K.erase a) 3 ∧ K.card ≤ L*(essentialAt V K (V.card/L) a).card
+  have x : 4+B.card/L < (essentialAt V K q a).card := rich a ak
+  have small : V.card/L ≤ q := (Nat.div_le_div_right vc).trans (Nat.le_add_left ..)
+  have sub : essentialAt V K q a ⊆ essentialAt V K (V.card/L) a := by
+    intro z hz
+    obtain ⟨zv,zk,loss,star⟩ := Finset.mem_filter.mp hz
+    exact Finset.mem_filter.mpr ⟨zv,zk,loss,small.trans_lt star⟩
+  have highDegree : K.card*4 ≤ q := calc
+    K.card*4 ≤ B.card*4 := Nat.mul_le_mul_right 4 kc
+    _ = 4*B.card := Nat.mul_comm ..
+    _ ≤ q := Nat.le_add_right ..
+  refine ⟨?_,?_⟩
+  · by_contra nr
+    have card := (Finset.card_le_card (essential_sub vg highDegree a)).trans (demanding_card vcap vg ak nr)
+    exact (not_lt_of_ge card) ((Nat.le_add_right 4 (B.card/L)).trans_lt x)
+  · have quot : B.card/L < (essentialAt V K (V.card/L) a).card :=
+      ((Nat.le_add_left (B.card/L) 4).trans_lt x).trans_le (Finset.card_le_card sub)
+    apply kc.trans
+    rw [Nat.mul_comm L ((essentialAt V K (V.card/L) a).card)]
+    exact ((Nat.div_lt_iff_lt_mul lp).mp quot).le
+
+def essentialGap : Prop :=
+  ∀s C L : ℕ, 0<s → 0<L → ∃ N : ℕ, ∀ T B : Finset ℝ², N ≤ T.card →
+    NonCollinearFor 5 (T : Set ℝ²) → B⊆T → B.card^2 ≤ C*T.card →
+    (∀p∈T,p∈B ∨ determinedBy B p) → heavilyUsed T B L →
+    s*(fourFamily T).card < T.card^2
+
+theorem essential_iff : (type_of% @Erdos101.erdos_101) ↔ essentialGap := by
+  rw [anchored_iff]
+  constructor
+  · intro gap s C L sp _lp
+    obtain ⟨N,test⟩ := gap s C sp
+    refine ⟨N,fun T B size cap bt cheap gen _ => ?_⟩
+    rw [fourFamily_eq]
+    exact test T B size cap bt cheap gen
+  · intro gap s C sp
+    obtain ⟨M,test⟩ := gap (2*s) (2*s*C) (20*s*(C+1)) (by positivity) (by positivity)
+    refine ⟨max 1 (max ((4*s*(16*C+5))^2*C) (2*s*M)),?_⟩
+    intro T B large cap bt cheap gen
+    rw [← fourFamily_eq]
+    by_contra! dense
+    obtain ⟨V,vt,K,_,kv,vg,used,scale,kcost,count⟩ := essential_core s C sp cap bt cheap gen
+      ((le_max_left ..).trans ((le_max_right ..).trans large)) ((le_max_left ..).trans large) dense
+    have minSize : 2*s*M ≤ T.card := (le_max_right ..).trans ((le_max_right ..).trans large)
+    have enough := Nat.le_of_mul_le_mul_left (minSize.trans scale) (show 0<2*s by positivity)
+    have vcap := NonCollinearFor.subset (Finset.coe_subset.mpr vt) cap
+    exact (test V K enough vcap kv kcost vg used).not_ge ((Nat.pow_le_pow_left (Finset.card_le_card vt) 2).trans count)
+
+end Erdos101AnchorGeneric
+
+/- An indispensable anchor lies on an ordinary anchor line through its
+user. The user is the intersection of exactly two anchor lines. -/
+noncomputable section
+namespace Erdos101AnchorGeneric
+open EuclideanGeometry Finset Erdos101AnchorGeometry Erdos101AnchorField
+open Erdos101AnchorCore Erdos101AnchorJoins
+open scoped Classical
+
+def joinsAt (B : Finset ℝ²) (p : ℝ²) := (determined B).filter (fun L => p∈L)
+
+theorem joins_iff {B : Finset ℝ²} {p : ℝ²} : determinedBy B p ↔ 2 ≤ (joinsAt B p).card := by
+  constructor
+  · rintro ⟨a,ha,b,hb,c,hc,d,hd,ab,cd,diff,h1,h2⟩
+    exact Finset.one_lt_card.mpr ⟨_,Finset.mem_filter.mpr ⟨mem_determined.mpr ⟨a,ha,b,hb,ab,rfl⟩,h1⟩,
+      _,Finset.mem_filter.mpr ⟨mem_determined.mpr ⟨c,hc,d,hd,cd,rfl⟩,h2⟩,diff⟩
+  · intro h
+    obtain ⟨U,hu,V,hv,ne⟩ := Finset.one_lt_card.mp h
+    obtain ⟨ud,up⟩ := Finset.mem_filter.mp hu
+    obtain ⟨vd,vp⟩ := Finset.mem_filter.mp hv
+    obtain ⟨a,ha,b,hb,ab,rfl⟩ := mem_determined.mp ud
+    obtain ⟨c,hc,d,hd,cd,rfl⟩ := mem_determined.mp vd
+    exact ⟨a,ha,b,hb,c,hc,d,hd,ab,cd,ne,up,vp⟩
+
+/-- The anchor line through p and a has exactly two anchors on it. Erasing
+a leaves just one of the two anchor lines at p. -/
+theorem ordinary_at_essential {B : Finset ℝ²} {p a : ℝ²} (ab : a∈B) (pb : p∉B)
+    (gen : determinedBy B p) (lost : p∉levels (B.erase a) 1) :
+    (joinsAt B p).card=2 ∧ (joinsAt (B.erase a) p).card=1 ∧ mult B (line[ℝ,p,a])=2 := by
+  let K := B.erase a
+  let L := line[ℝ,p,a]
+  change (joinsAt B p).card=2 ∧ (joinsAt K p).card=1 ∧ mult B L=2
+  have pa : p≠a := fun e => pb (e ▸ ab)
+  have lower := joins_iff.mp gen
+  have upper : (joinsAt K p).card ≤ 1 := by
+    by_contra! m
+    exact lost (Or.inr (joins_iff.mpr m))
+  have only : joinsAt B p ⊆ insert L (joinsAt K p) := by
+    intro M h
+    obtain ⟨md,mp⟩ := Finset.mem_filter.mp h
+    by_cases ma : a∈M
+    · exact Finset.mem_insert.mpr (Or.inl (unique_line md mp ma pa).symm)
+    obtain ⟨b,hb,c,hc,bc,rfl⟩ := mem_determined.mp md
+    have ba : b≠a := by rintro rfl; exact ma (left_mem_affineSpan_pair ..)
+    have ca : c≠a := by rintro rfl; exact ma (right_mem_affineSpan_pair ..)
+    exact Finset.mem_insert.mpr (Or.inr (Finset.mem_filter.mpr ⟨mem_determined.mpr
+      ⟨b,Finset.mem_erase.mpr ⟨ba,hb⟩,c,Finset.mem_erase.mpr ⟨ca,hc⟩,bc,rfl⟩,mp⟩))
+  have sum := (Finset.card_le_card only).trans (Finset.card_insert_le ..)
+  have use := uses_if_lost gen lost
+  obtain ⟨b,hb,_,_,_,_,ba,_,_,pon,_⟩ := use
+  have eq : L=line[ℝ,a,b] := affineSpan_pair_eq_of_mem_of_mem_of_ne pon (left_mem_affineSpan_pair ..) pa
+  have proper : L∈determined B := mem_determined.mpr ⟨a,ab,b,hb,ba,eq.symm⟩
+  have two := mult_two proper
+  refine ⟨by omega,by omega,le_antisymm ?_ two⟩
+  by_contra! many
+  have diff : incident K L=(incident B L).erase a := by
+    ext z
+    simp [K,incident,Finset.mem_filter,Finset.mem_erase,and_assoc]
+  have erase : mult K L=mult B L-1 := by
+    change (incident K L).card=(incident B L).card-1
+    rw [diff,Finset.card_erase_of_mem (s:=incident B L) (Finset.mem_filter.mpr ⟨ab,right_mem_affineSpan_pair ..⟩)]
+  have k2 : 2 ≤ mult K L := by rw [erase]; omega
+  have inK : L∈joinsAt K p := Finset.mem_filter.mpr ⟨determined_of_two proper k2,left_mem_affineSpan_pair ..⟩
+  rw [Finset.insert_eq_of_mem inK] at only
+  have le := (Finset.card_le_card only).trans upper
+  omega
+
+/-- At each remaining anchor a, at least b/(4L) distinct ordinary anchor
+lines through a carry a nonanchor incident to more than n/L four-point lines
+avoiding all anchors. -/
+theorem ordinary_rich_joins {T B : Finset ℝ²} {L : ℕ} (cap : NonCollinearFor 5 (T : Set ℝ²))
+    (gen : ∀p∈T,p∈B ∨ determinedBy B p) (heavy : heavilyUsed T B L) {a : ℝ²} (ab : a∈B) :
+    ∃ J : Finset Line, B.card ≤ 4*L*J.card ∧ ∀H∈J, H∈determined B ∧ a∈H ∧ mult B H=2 ∧
+      ∃p∈T,p∉B ∧ p∈H ∧ (joinsAt B p).card=2 ∧ T.card/L < (star (cleanLines T B) p).card := by
+  let U := essentialAt T B (T.card/L) a
+  let J := U.image (fun p => line[ℝ,p,a])
+  have data {p : ℝ²} (hp : p∈U) := ordinary_at_essential ab (Finset.mem_filter.mp hp).2.1
+    ((gen p (Finset.mem_filter.mp hp).1).resolve_left (Finset.mem_filter.mp hp).2.1) (Finset.mem_filter.mp hp).2.2.1
+  have info (H) (h : H∈J) : H∈determined B ∧ a∈H ∧ mult B H=2 ∧
+      ∃p∈T,p∉B ∧ p∈H ∧ (joinsAt B p).card=2 ∧ T.card/L < (star (cleanLines T B) p).card := by
+    obtain ⟨p,hp,rfl⟩ := Finset.mem_image.mp h
+    obtain ⟨pt,pb,lost,rich⟩ := Finset.mem_filter.mp hp
+    have dd := data hp
+    have proper : line[ℝ,p,a]∈determined (insert p B) := mem_determined.mpr
+      ⟨p,Finset.mem_insert_self ..,a,Finset.mem_insert_of_mem ab,fun e => pb (e ▸ ab),rfl⟩
+    exact ⟨determined_of_two proper dd.2.2.ge,right_mem_affineSpan_pair ..,dd.2.2,p,pt,pb,
+      left_mem_affineSpan_pair ..,dd.1,rich⟩
+  have cover : U⊆J.biUnion (incident T) := by
+    intro p hp
+    exact Finset.mem_biUnion.mpr ⟨_,Finset.mem_image_of_mem _ hp,
+      Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hp).1,left_mem_affineSpan_pair ..⟩⟩
+  have small : U.card ≤ J.card*4 := by
+    apply (Finset.card_le_card cover).trans
+    apply (Finset.card_biUnion_le ..).trans
+    calc _ ≤ ∑ _ ∈ J, 4 := Finset.sum_le_sum (fun H h => by
+            obtain ⟨p,_,rfl⟩ := Finset.mem_image.mp h
+            exact capped (a:=p) (b:=a) cap)
+         _ = _ := by simp
+  refine ⟨J,(heavy a ab).2.trans ((Nat.mul_le_mul_left L small).trans_eq (by ring)),info⟩
+
+end Erdos101AnchorGeneric
