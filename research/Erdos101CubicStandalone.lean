@@ -2,7 +2,8 @@ import FormalConjectures.ErdosProblems.«101»
 import Mathlib
 
 /-! Four-point lines using three configuration points on y = x³. The final
-theorem is Erdos101CubicLines.sparse_cubic_lines. The absolute bound holds
+theorems are Erdos101CubicLines.sparse_cubic_lines and its quantitative
+strengthening Erdos101CubicLines.power_cubic_lines. Their bounds hold
 uniformly over all other real points. Adam McKenna's graph BSG proof and its
 Apache license are retained below. Formalization of the cubic case: @ubuwaits. -/
 
@@ -1896,9 +1897,11 @@ theorem keep_rows (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1)
     _ ≤ ∑ a ∈ U, ((row a).card : ℝ) := Finset.sum_le_sum rich
     _ = _ := by exact_mod_cast Finset.sum_card_fiberwise_eq_card_filter E U Prod.fst
 
-/-- The two coordinate restrictions select the same original records. -/
-theorem keep_both (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1) :
-    ∃ η K : ℝ, 0 < η ∧ 0 < K ∧ ∀ (A : Finset G), A.Nonempty → ∀ E : Finset (G × G),
+/-- Two extractions retain at least δ^36/2^105 of the original records and
+keep both sumsets within 2^87/δ^30 times the original side length. -/
+theorem keep_both_bounds (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1) :
+    ∃ η K : ℝ, 0 < η ∧ 0 < K ∧ δ^36/2^105 ≤ η ∧ K ≤ 2^87/δ^30 ∧
+    ∀ (A : Finset G), A.Nonempty → ∀ E : Finset (G × G),
       E ⊆ A ×ˢ A → δ*(A.card : ℝ)^2 ≤ E.card → (E.image (fun p => p.1+p.2)).card ≤ A.card →
       ∃ U ⊆ A, ∃ V ⊆ A, ∃ X ⊆ A, ∃ Y ⊆ A,
         η*(A.card : ℝ) ≤ X.card ∧ η*(A.card : ℝ) ≤ Y.card ∧
@@ -1919,7 +1922,21 @@ theorem keep_both (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1) :
   have ht' : 0 < t' := by dsimp [t']; positivity
   let η := min c (min c' (c'*t'))
   let K := max (1/t) (1/t')
-  refine ⟨η,K,lt_min hc (lt_min hc' (mul_pos hc' ht')),(one_div_pos.mpr ht).trans_le (le_max_left ..),?_⟩
+  have tle : t ≤ 1 := by dsimp [t]; rw [one_pow] at hδ₅; linarith
+  have dδ : d ≤ δ := calc
+    d ≤ c*1 := mul_le_mul_of_nonneg_left tle hc.le
+    _ ≤ δ := by dsimp [c]; linarith
+  have c'c : c' ≤ c := by dsimp [c',c]; linarith only [dδ]
+  have t't : t' ≤ t := by
+    dsimp [t',t]; exact div_le_div_of_nonneg_right (pow_le_pow_left₀ hd.le dδ 5) (by positivity)
+  have t'one : t' ≤ 1 := t't.trans tle
+  have mass_eq : δ^36/2^105 = c'*t' := by dsimp [c',t',d,c,t]; ring
+  have recip_eq : 1/t' = 2^87/δ^30 := by dsimp [t',d,c,t]; field_simp; ring
+  have mass_le : δ^36/2^105 ≤ η := by
+    rw [mass_eq]; apply le_min _ (le_min _ le_rfl) <;> nlinarith only [mul_le_mul_of_nonneg_left t'one hc'.le,c'c]
+  have K_le : K ≤ 2^87/δ^30 := by
+    rw [← recip_eq]; exact max_le (one_div_le_one_div_of_le ht' t't) le_rfl
+  refine ⟨η,K,lt_min hc (lt_min hc' (mul_pos hc' ht')),(one_div_pos.mpr ht).trans_le (le_max_left ..),mass_le,K_le,?_⟩
   intro A hn E sub size few
   obtain ⟨U,su,X,sx,xsize,ux,rows⟩ := keep_rows δ hδ unit A hn E sub size few
   let R := E.filter (fun p => p.1 ∈ U)
@@ -1960,6 +1977,17 @@ theorem keep_both (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1) :
   · calc
       _ ≤ (1/t')*(A.card : ℝ) := by rw [one_div,mul_comm,← div_eq_mul_inv]; exact vy
       _ ≤ _ := mul_le_mul_of_nonneg_right (le_max_right ..) nonneg
+
+/-- The two coordinate restrictions select the same original records. -/
+theorem keep_both (δ : ℝ) (hδ : 0 < δ) (unit : δ ≤ 1) :
+    ∃ η K : ℝ, 0 < η ∧ 0 < K ∧ ∀ (A : Finset G), A.Nonempty → ∀ E : Finset (G × G),
+      E ⊆ A ×ˢ A → δ*(A.card : ℝ)^2 ≤ E.card → (E.image (fun p => p.1+p.2)).card ≤ A.card →
+      ∃ U ⊆ A, ∃ V ⊆ A, ∃ X ⊆ A, ∃ Y ⊆ A,
+        η*(A.card : ℝ) ≤ X.card ∧ η*(A.card : ℝ) ≤ Y.card ∧
+        ((U+X).card : ℝ) ≤ K*A.card ∧ ((V+Y).card : ℝ) ≤ K*A.card ∧
+        η*(A.card : ℝ)^2 ≤ (E.filter (fun p => p.1 ∈ U ∧ p.2 ∈ V)).card := by
+  obtain ⟨η,K,hη,hK,_,_,extract⟩ := keep_both_bounds (G := G) δ hδ unit
+  exact ⟨η,K,hη,hK,extract⟩
 
 end Erdos101CubicSumsets
 
@@ -2242,34 +2270,61 @@ namespace Erdos101CubicCompletion
 open Erdos101CubicBranches Erdos101CubicTranslations Erdos101CubicSumsets
 open scoped Classical Pointwise
 
+/-- Any positive density contains a positive reciprocal integer density. -/
+theorem inverse_density {ε : ℝ} (hε : 0 < ε) : ∃ k : ℕ, 0 < k ∧ 1/(k : ℝ) ≤ ε := by
+  obtain ⟨k,gt⟩ := exists_nat_gt (1/ε)
+  have pos := (one_div_pos.mpr hε).trans gt
+  refine ⟨k,Nat.cast_pos.mp pos,(div_le_iff₀ pos).mpr ?_⟩
+  simpa only [mul_comm] using ((div_lt_iff₀ hε).mp gt).le
+
+set_option exponentiation.threshold 2400 in
 /-- In an additive graph with at most n edge sums, a nonzero product from
 a prescribed fourth point cannot be realized on a dense set of edges. -/
-theorem sparse_products (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset ℝ, N ≤ A.card →
+theorem sparse_products_at (k : ℕ) (hk : 0 < k) : ∀ A : Finset ℝ, 2^1717*k^564 < A.card →
     ∀ Q E : Finset Pt, Q.card ≤ A.card → E ⊆ A ×ˢ A → (E.image (fun p => p.1+p.2)).card ≤ A.card →
     ∀ f : Pt → Pt, (∀ p ∈ E, f p ∈ Q ∧ (f p).2-(f p).1^3 ≠ 0 ∧
       product (f p).1 p = (f p).2-(f p).1^3 ∧ gy (f p).1 p ≠ 0) →
-    (E.card : ℝ) < ε*(A.card : ℝ)^2 := by
+    (E.card : ℝ) < (1/(k : ℝ))*(A.card : ℝ)^2 := by
   classical
-  let δ := min ε 1
-  have hδ : 0 < δ := lt_min hε zero_lt_one
-  obtain ⟨η,K,hη,hK,extract⟩ := keep_both (G := ℝ) δ hδ (min_le_right ..)
-  let H := ⌈2*K⌉₊+1
-  have hH : 2*K ≤ (H : ℝ) := (Nat.le_ceil _).trans (by exact_mod_cast Nat.le_succ _)
-  have hHn : 1 ≤ H := by dsimp [H]; omega
-  obtain ⟨t,ht⟩ := exists_nat_gt (32*(H : ℝ)/η)
-  have htR : 32*(H : ℝ) < t*η := (div_lt_iff₀ hη).mp ht
-  have htpos : 0 < t := Nat.cast_pos.mp ((div_nonneg (by positivity) hη.le).trans_lt ht)
-  let M := 8*t*(32*t)^6
-  obtain ⟨N,hN⟩ := exists_nat_gt ((M : ℝ)*H/η^2)
-  refine ⟨max N (32*t),?_⟩
   intro A hn Q E cq sub sums f hits
   by_contra! dense
   let n := A.card
-  have hn1 : 32*t ≤ n := (le_max_right ..).trans hn
+  -- Inverse retained density and the resulting side length of the translated grid.
+  let denom := 2^105*k^36
+  let H := 2^88*k^30
+  let t := 32*H*denom
+  let M := 8*t*(32*t)^6
+  have kpos : (0 : ℝ) < k := Nat.cast_pos.mpr hk
+  have ku : (1 : ℝ) ≤ k := by exact_mod_cast hk
+  have hB : 0 < denom := by dsimp [denom]; positivity
+  have hHn : 1 ≤ H := by change 0 < 2^88*k^30; positivity
+  have htpos : 0 < t := by dsimp [t]; positivity
+  have identity : M*H*denom^2 = 2^1717*k^564 := by dsimp [M,t,H,denom]; ring
+  have cutoff : 32*t ≤ M*H*denom^2 := calc
+    32*t ≤ 8*t*(32*t)^6 := by
+      have hh := Nat.le_self_pow (by decide : 6 ≠ 0) (32*t)
+      have hh' := Nat.le_mul_of_pos_left ((32*t)^6) (by omega : 0 < 8*t)
+      omega
+    _ ≤ M*H*denom^2 := by
+      exact (Nat.le_mul_of_pos_right M (by omega)).trans (Nat.le_mul_of_pos_right _ (Nat.pow_pos hB))
+  have hn1 : 32*t ≤ n := (cutoff.trans identity.le).trans hn.le
   have hn0 : 0 < n := by omega
   have hnR : (0 : ℝ) < n := Nat.cast_pos.mpr hn0
-  obtain ⟨U,_,V,_,X,_,Y,_,xsize,ysize,ux,vy,retained⟩ := extract A (Finset.card_pos.mp hn0) E sub
-    ((mul_le_mul_of_nonneg_right (min_le_left ..) (sq_nonneg _)).trans dense) sums
+  obtain ⟨η,K,hη,_,ηlower,Kupper,extract⟩ := keep_both_bounds (G := ℝ) (1/(k : ℝ))
+    (one_div_pos.mpr kpos) ((div_le_one kpos).mpr ku)
+  have hBR : (0 : ℝ) < denom := by exact_mod_cast hB
+  have reciprocal : 1/(denom : ℝ) ≤ η := by
+    convert ηlower using 1
+    dsimp [denom]; push_cast; field_simp; ring
+  have den : (1 : ℝ) ≤ (denom : ℝ)*η := by
+    simpa only [mul_comm] using (div_le_iff₀ hBR).mp reciprocal
+  have hH : 2*K ≤ (H : ℝ) := calc
+    _ ≤ 2*(2^87/(1/(k : ℝ))^30) := mul_le_mul_of_nonneg_left Kupper (by norm_num)
+    _ = _ := by dsimp [H]; push_cast; field_simp; ring
+  have htR : 32*(H : ℝ) ≤ (t : ℝ)*η := by
+    have mult := mul_le_mul_of_nonneg_left den (by positivity : (0 : ℝ) ≤ 32*H)
+    dsimp [t]; push_cast; nlinarith only [mult]
+  obtain ⟨U,_,V,_,X,_,Y,_,xsize,ysize,ux,vy,retained⟩ := extract A (Finset.card_pos.mp hn0) E sub dense sums
   let F := E.filter (fun p => p.1 ∈ U ∧ p.2 ∈ V)
   have fs : F ⊆ E := Finset.filter_subset ..
   have into (p) (hp : p ∈ F) : f p ∈ Q := (hits p (fs hp)).1
@@ -2303,7 +2358,7 @@ theorem sparse_products (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset 
   have density : H*n ≤ t*B.card := by
     have cols : η*(n : ℝ) ≤ 32*(B.card : ℝ) := mass.trans (by exact_mod_cast size)
     have a := mul_le_mul_of_nonneg_left cols (Nat.cast_nonneg (α := ℝ) t)
-    have b := mul_le_mul_of_nonneg_right htR.le hnR.le
+    have b := mul_le_mul_of_nonneg_right htR hnR.le
     exact_mod_cast (show (H : ℝ)*n ≤ (t : ℝ)*B.card by nlinarith only [a,b])
   have bound := translate_count B U V X Y htpos
     (hn1.trans (by simpa using Nat.mul_le_mul_right n hHn)) side density base ordered supports
@@ -2312,20 +2367,36 @@ theorem sparse_products (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset 
   have endbound : η^2*(n : ℝ) ≤ (M : ℝ)*H := by
     apply le_of_mul_le_mul_right (a := (n : ℝ)) _ hnR
     nlinarith only [lower,ub]
-  have hn' : (N : ℝ) ≤ n := Nat.cast_le.mpr ((le_max_left ..).trans hn)
-  have lo := (div_lt_iff₀ (sq_pos_of_pos hη)).mp (hN.trans_le hn')
-  nlinarith only [lo,endbound]
+  -- Each shift set has at least n/denom elements. Compare their product
+  -- against the linear bound on distinct translates.
+  have squared := mul_self_le_mul_self (by norm_num : (0 : ℝ) ≤ 1) den
+  have lowerN := mul_le_mul_of_nonneg_right squared hnR.le
+  have upperN := mul_le_mul_of_nonneg_right endbound (sq_nonneg (denom : ℝ))
+  have nb : n ≤ M*H*denom^2 := by
+    exact_mod_cast (show (n : ℝ) ≤ (M : ℝ)*H*(denom : ℝ)^2 by nlinarith only [lowerN,upperN])
+  exact (not_lt_of_ge (nb.trans identity.le)) hn
+
+/-- In an additive graph with at most n edge sums, a nonzero product from
+a prescribed fourth point cannot be realized on a dense set of edges. -/
+theorem sparse_products (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset ℝ, N ≤ A.card →
+    ∀ Q E : Finset Pt, Q.card ≤ A.card → E ⊆ A ×ˢ A → (E.image (fun p => p.1+p.2)).card ≤ A.card →
+    ∀ f : Pt → Pt, (∀ p ∈ E, f p ∈ Q ∧ (f p).2-(f p).1^3 ≠ 0 ∧
+      product (f p).1 p = (f p).2-(f p).1^3 ∧ gy (f p).1 p ≠ 0) →
+    (E.card : ℝ) < ε*(A.card : ℝ)^2 := by
+  obtain ⟨k,hk,inv⟩ := inverse_density hε
+  refine ⟨2^1717*k^564+1,?_⟩
+  intro A hn Q E cq sub sums f hits
+  exact (sparse_products_at k hk A hn Q E cq sub sums f hits).trans_le
+    (mul_le_mul_of_nonneg_right inv (sq_nonneg _))
 
 /-- The exterior points in this statement are arbitrary. Only the original
 three cubic parameters are drawn from the finite one-dimensional set. -/
-theorem sparse_completed_secants (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset ℝ, N ≤ A.card →
+theorem sparse_completed_secants_at (k : ℕ) (hk : 0 < k) : ∀ A : Finset ℝ, 2^1717*k^564 < A.card →
     ∀ Q E : Finset Pt, Q.card ≤ A.card → E ⊆ A ×ˢ A →
       (∀ p ∈ E, ∃ z ∈ A, ∃ q ∈ Q, ∃ m d : ℝ, p.1 ≠ p.2 ∧ p.2 ≠ z ∧ p.1+p.2+z=0 ∧
         p.1^3=m*p.1+d ∧ p.2^3=m*p.2+d ∧ q.2=m*q.1+d ∧ q.2 ≠ q.1^3) →
-      (E.card : ℝ) < ε*(A.card : ℝ)^2 := by
+      (E.card : ℝ) < (1/(k : ℝ))*(A.card : ℝ)^2 := by
   classical
-  obtain ⟨N,estimate⟩ := sparse_products ε hε
-  refine ⟨N,?_⟩
   intro A hn Q E cq sub marks
   have sums : E.image (fun p => p.1+p.2) ⊆ A.image Neg.neg := by
     intro w hw
@@ -2344,9 +2415,22 @@ theorem sparse_completed_secants (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A 
     have hh := (div_eq_div_iff parts.2.1 parts.2.2).mp (sub_eq_zero.mp zero : (1 : ℝ)/b q.1 p = 1/c q.1 p)
     exact yz (sub_left_inj.mp (by simpa only [one_mul,b,c,zeq] using hh.symm : p.2-q.1=z-q.1))
   let f (p : Pt) : Pt := if h : p ∈ E then (eligible p h).choose else 0
-  apply estimate A hn Q E cq sub ((Finset.card_le_card sums).trans Finset.card_image_le) f
+  apply sparse_products_at k hk A hn Q E cq sub ((Finset.card_le_card sums).trans Finset.card_image_le) f
   intro p hp
   simpa [f,hp] using (eligible p hp).choose_spec
+
+/-- The exterior points in this statement are arbitrary. Only the original
+three cubic parameters are drawn from the finite one-dimensional set. -/
+theorem sparse_completed_secants (ε : ℝ) (hε : 0 < ε) : ∃ N : ℕ, ∀ A : Finset ℝ, N ≤ A.card →
+    ∀ Q E : Finset Pt, Q.card ≤ A.card → E ⊆ A ×ˢ A →
+      (∀ p ∈ E, ∃ z ∈ A, ∃ q ∈ Q, ∃ m d : ℝ, p.1 ≠ p.2 ∧ p.2 ≠ z ∧ p.1+p.2+z=0 ∧
+        p.1^3=m*p.1+d ∧ p.2^3=m*p.2+d ∧ q.2=m*q.1+d ∧ q.2 ≠ q.1^3) →
+      (E.card : ℝ) < ε*(A.card : ℝ)^2 := by
+  obtain ⟨k,hk,inv⟩ := inverse_density hε
+  refine ⟨2^1717*k^564+1,?_⟩
+  intro A hn Q E cq sub marks
+  exact (sparse_completed_secants_at k hk A hn Q E cq sub marks).trans_le
+    (mul_le_mul_of_nonneg_right inv (sq_nonneg _))
 
 end Erdos101CubicCompletion
 
@@ -2439,16 +2523,15 @@ private theorem has_mark (S : Finset ℝ²) (L : AffineSubspace ℝ ℝ²)
   exact ⟨⟨a 0,b 0,c 0,q,from_coord ac ▸ as,from_coord bc ▸ bs,from_coord cc ▸ cs,qs,form,xy,yz,
     by linarith only [z],qline,off⟩⟩
 
-/-- Uniformly in the entire configuration, the number of four-point lines
-containing three of its points on the cuspidal cubic is little-o of n². -/
-theorem sparse_cubic_lines (ε : ℝ) (hε : 0 < ε) :
-    ∃ N : ℕ, ∀ S : Finset ℝ², N ≤ S.card → ∀ F : Finset (AffineSubspace ℝ ℝ²),
-      (∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
-        3 ≤ (S.filter (fun p => p ∈ L ∧ p 1 = (p 0)^3)).card) → (F.card : ℝ) < ε*(S.card : ℝ)^2 := by
+/-- A pair of cubic parameters identifies its line. The coordinate set can
+be padded to the size of the original configuration. -/
+private theorem secant_records (S : Finset ℝ²) (F : Finset (AffineSubspace ℝ ℝ²))
+    (lines : ∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
+      3 ≤ (S.filter (fun p => p ∈ L ∧ p 1 = (p 0)^3)).card) :
+    ∃ A : Finset ℝ, ∃ Q E : Finset Pt, A.card = S.card ∧ E.card = F.card ∧ Q.card ≤ A.card ∧ E ⊆ A ×ˢ A ∧
+      ∀ p ∈ E, ∃ z ∈ A, ∃ q ∈ Q, ∃ m d : ℝ, p.1 ≠ p.2 ∧ p.2 ≠ z ∧ p.1+p.2+z=0 ∧
+        p.1^3=m*p.1+d ∧ p.2^3=m*p.2+d ∧ q.2=m*q.1+d ∧ q.2 ≠ q.1^3 := by
   classical
-  obtain ⟨N,bound⟩ := sparse_completed_secants ε hε
-  refine ⟨N,?_⟩
-  intro S hn F lines
   let mark (L : F) := Classical.choice (has_mark S L.val (lines L L.property).1 (lines L L.property).2)
   let key (L : F) := ((mark L).x,(mark L).y)
   let E := F.attach.image key
@@ -2464,8 +2547,7 @@ theorem sparse_cubic_lines (ε : ℝ) (hε : 0 < ε) :
     intro p hp
     obtain ⟨L,_,rfl⟩ := Finset.mem_image.mp hp
     exact Finset.mem_product.mpr ⟨inc (mark L).xs,inc (mark L).ys⟩
-  rw [← size,← card]
-  apply bound A (card ▸ hn) Q E (Finset.card_image_le.trans card.ge) pairs
+  refine ⟨A,Q,E,card,size,Finset.card_image_le.trans card.ge,pairs,?_⟩
   intro p hp
   obtain ⟨L,_,rfl⟩ := Finset.mem_image.mp hp
   let m := mark L
@@ -2475,6 +2557,100 @@ theorem sparse_cubic_lines (ε : ℝ) (hε : 0 < ε) :
     dsimp [slope,intercept]; ring
   · change m.y^3 = slope m.x m.y*m.y+intercept m.x m.y
     dsimp [slope,intercept]; ring
+
+/-- A density of at least 1/k forces a polynomial upper bound on the number
+of configuration points in the cuspidal cubic case. -/
+theorem sparse_cubic_lines_at (k : ℕ) (hk : 0 < k) (S : Finset ℝ²) (hn : 2^1717*k^564 < S.card)
+    (F : Finset (AffineSubspace ℝ ℝ²))
+    (lines : ∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
+      3 ≤ (S.filter (fun p => p ∈ L ∧ p 1 = (p 0)^3)).card) :
+    (F.card : ℝ) < (1/(k : ℝ))*(S.card : ℝ)^2 := by
+  obtain ⟨A,Q,E,card,size,cq,sub,marks⟩ := secant_records S F lines
+  simpa only [card,size] using sparse_completed_secants_at k hk A (card ▸ hn) Q E cq sub marks
+
+/-- Uniformly in the entire configuration, the number of four-point lines
+containing three of its points on the cuspidal cubic is little-o of n². -/
+theorem sparse_cubic_lines (ε : ℝ) (hε : 0 < ε) :
+    ∃ N : ℕ, ∀ S : Finset ℝ², N ≤ S.card → ∀ F : Finset (AffineSubspace ℝ ℝ²),
+      (∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
+        3 ≤ (S.filter (fun p => p ∈ L ∧ p 1 = (p 0)^3)).card) → (F.card : ℝ) < ε*(S.card : ℝ)^2 := by
+  obtain ⟨k,hk,inv⟩ := inverse_density hε
+  refine ⟨2^1717*k^564+1,?_⟩
+  intro S hn F lines
+  exact (sparse_cubic_lines_at k hk S hn F lines).trans_le (mul_le_mul_of_nonneg_right inv (sq_nonneg _))
+
+set_option exponentiation.threshold 2400 in
+/-- A uniform power saving: if f four-point lines have three points on the
+cuspidal cubic in an n-point set, then f = O(n^(2 - 1/564)). The integral
+inequality also covers the empty configuration. -/
+theorem power_cubic_lines (S : Finset ℝ²) (F : Finset (AffineSubspace ℝ ℝ²))
+    (lines : ∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
+      3 ≤ (S.filter (fun p => p ∈ L ∧ p 1 = (p 0)^3)).card) :
+    F.card^564 ≤ 2^2281*S.card^1127 := by
+  let f := F.card
+  let n := S.card
+  change f^564 ≤ 2^2281*n^1127
+  obtain ⟨A,Q,E,card,size,_,sub,_⟩ := secant_records S F lines
+  have trivial : f ≤ n^2 := by
+    simpa only [size,Finset.card_product,card,pow_two,f,n] using Finset.card_le_card sub
+  by_cases hf : f=0
+  · simp [hf]
+  have fp : 0 < f := Nat.pos_of_ne_zero hf
+  have np : 0 < n := by
+    by_contra! h
+    have eq : n=0 := by omega
+    simp [eq] at trivial
+    omega
+  let k := n^2/f+1
+  have kp : 0 < k := Nat.zero_lt_succ _
+  have large : n^2 ≤ f*k := (Nat.lt_mul_div_succ _ fp).le
+  have small : f*k ≤ 2*n^2 := by
+    dsimp [k]; rw [Nat.mul_add,Nat.mul_one]
+    have div := Nat.mul_div_le (n^2) f
+    omega
+  have limited : n ≤ 2^1717*k^564 := by
+    by_contra! beyond
+    have bound := sparse_cubic_lines_at k kp S beyond F lines
+    change (f : ℝ) < (1/(k : ℝ))*(n : ℝ)^2 at bound
+    have kr : (0 : ℝ) < k := Nat.cast_pos.mpr kp
+    have scaled : (f : ℝ)*(k : ℝ) < (n : ℝ)^2 := (lt_div_iff₀ kr).mp (by
+      simpa only [one_div,div_eq_mul_inv,one_mul,mul_one,mul_comm] using bound)
+    exact (not_lt_of_ge large) (by exact_mod_cast scaled)
+  have full : n*f^564 ≤ n*(2^2281*n^1127) := calc
+    _ ≤ (2^1717*k^564)*f^564 := Nat.mul_le_mul_right _ limited
+    _ = 2^1717*(f*k)^564 := by rw [mul_pow f k,Nat.mul_assoc,Nat.mul_comm (k^564) (f^564)]
+    _ ≤ 2^1717*(2*n^2)^564 := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left small _)
+    _ = _ := by ring
+  exact Nat.le_of_mul_le_mul_left full np
+
+/-- The same estimate holds for any affine image of the cusp, with an
+absolute constant even when the affine coordinate frame varies with S. -/
+theorem affine_power_cubic_lines (e : ℝ² ≃ᵃ[ℝ] ℝ²) (S : Finset ℝ²) (F : Finset (AffineSubspace ℝ ℝ²))
+    (lines : ∀ L ∈ F, L ∈ linesWithPointsFor 4 (S : Set ℝ²) ∧
+      3 ≤ (S.filter (fun p => p ∈ L ∧ e p 1 = (e p 0)^3)).card) :
+    F.card^564 ≤ 2^2281*S.card^1127 := by
+  classical
+  let imageLine (L : AffineSubspace ℝ ℝ²) := L.map e.toAffineMap
+  have onLine (L : AffineSubspace ℝ ℝ²) (p : ℝ²) : e p ∈ imageLine L ↔ p ∈ L :=
+    AffineSubspace.mem_map_iff_mem_of_injective (f := e.toAffineMap) e.injective
+  have linj : Function.Injective imageLine := by
+    intro L M eq
+    ext p
+    rw [← onLine L p,← onLine M p,eq]
+  rw [← Finset.card_image_of_injective F linj,← Finset.card_image_of_injective S e.injective]
+  apply power_cubic_lines
+  intro T hT
+  obtain ⟨L,hL,rfl⟩ := Finset.mem_image.mp hT
+  obtain ⟨four,three⟩ := lines L hL
+  obtain ⟨⟨a,ha,b,hb,ne,eq⟩,card⟩ := four
+  refine ⟨⟨⟨e a,Finset.mem_image_of_mem _ ha,e b,Finset.mem_image_of_mem _ hb,e.injective.ne ne,?_⟩,?_⟩,?_⟩
+  · rw [← eq]; dsimp only [imageLine]; rw [AffineSubspace.map_span,Set.image_pair]; rfl
+  · change ((L.map e.toAffineMap : Set ℝ²) ∩ (S.image e : Set ℝ²)).ncard=4
+    rw [AffineSubspace.coe_map,Finset.coe_image]
+    change (e '' (L : Set ℝ²) ∩ e '' (S : Set ℝ²)).ncard=4
+    rwa [← Set.image_inter e.injective,Set.ncard_image_of_injective _ e.injective]
+  · rw [Finset.filter_image,Finset.card_image_of_injective _ e.injective]
+    simpa only [onLine] using three
 
 end Erdos101CubicLines
 
