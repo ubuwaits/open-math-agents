@@ -77,6 +77,20 @@ finiteness is equivalent to a bound on the number of simple primes
 31 modulo 32. Section 21 gives an explicit bound from this count and
 allows two jump sizes chosen separately at each completion.
 
+Theorem 14. Under Theorem 12, the reciprocal sum of core primes that
+are neither Mersenne nor in {65537,137089,274177,67280421310721}
+exceeds 2^−16. In particular a core made entirely of Mersenne and
+Fermat primes cannot have a positive dyadic Mersenne residual at a
+realized height. Section 24 uses the complement of the variable group.
+
+Theorem 15. Put P₀={8191,65537,131071,524287,2^31−1,2^61−1}.
+In any sparse completion with Σ_(p|c,p∉P₀)1/p≤2^−76, the simple
+prime 607 must occur. Either 8191 divides c, or both 65537 and 131071
+divide c. In the latter case, if 8191 is absent, c cannot contain both
+524287 and 2^31−1. This applies in particular when all core primes
+are Mersenne or Fermat, for arbitrary core exponents. For instance
+there is no completion at c=65537^u·524287^v for any u,v≥2.
+
 1. Input from the order and small-prime arguments
 
 We use the following earlier sparse-core conclusions. All sparse
@@ -1778,3 +1792,140 @@ This eliminates m=15 altogether and requires at least one of 31 and
 61 when m=14. The certificates have no size cutoff on h, the bases,
 their multiplicities or the multiplier b. Mixtures with four or more
 bases meeting all the conditions of Theorem 12 remain unresolved.
+
+24. A lower bound from the complementary primes
+
+Under the hypotheses of Theorem 12, suppose a completion exists.
+D>1 and D≤A force b>1. Thus m=14 and h≥64 by section 23. Write
+C for the product of 1+1/q over the simple primes outside the variable
+group. Put ρ=σ*(c)/c, S=2^−14 and y=2^−h. The exact balance is
+
+    CρU(1+y)=1.
+
+Since U≥1−S and ρ(1+y)>1, we have C<16384/16383. Every simple
+prime in this group is therefore above 16383. On the other hand
+U≤1/(1+S) and ρ≤1/(1−s²) with s=Σ_(p|c)1/p<1/4096. The latter
+bound follows from 1−1/ρ≤Σ_(p|c)p^(−v_p(c))≤s². Hence
+
+    1−1/C ≥ L = 1−(1+2^−64)/[(1+2^−14)(1−2^−24)].
+
+Choose one ordinary predecessor whenever one is available in this
+complement, using its own odd group balance. The paths are disjoint
+and a path starting at q costs at most 2/(q+1) in reciprocal loss.
+Every start has q+1=2^j d, with d supported on the core. If d=1,
+the Mersenne exponent is at least 31. Indeed q>16383 and the only
+candidates with exponent between 15 and 30 are 17 and 19. Both are
+already used as repeated bases in D. All such starts together cost
+at most 8/(3·2^31), summing over every odd exponent at least 31.
+
+For d>1, q≡1 modulo 3 fixes the parity of j. All d with at least two
+prime factors counted with multiplicity cost at most
+(4/3)s²/(1−s), by summing ordered products. When d=p is a single
+core prime, odd j is required for p≡1 mod 3 and even j for p≡2 mod 3.
+The respective bounds are 4/(3p) and 2/(3p).
+
+For p=8191 the choice j=1 lies below the cutoff and j=3 gives
+7 | 8p−1. For p=131071 the choices j=1 and 3 are excluded by 11 and
+13, respectively. These two singleton budgets can each be replaced by
+1/(12p), summing over odd j≥5. At p=524287 keep the full 4/(3p).
+For all higher Mersenne primes together, summing 1/(2^k−1)<2/2^k
+over the odd k≥31 gives a further budget 32/(9·2^31).
+
+Let s₁ and s₂ denote the sums of 1/p over the non-Mersenne core primes
+in the two nonzero residue classes modulo 3. Subtracting the budgets
+just obtained from L gives the strict inequality
+
+    s₁ + s₂/2 > 9/2^18.
+
+The exact rational comparison is complement_charges in MersenneMass.lean.
+The primes 65537 and 67280421310721 are 2 modulo 3. The primes 137089
+and 274177 are 1 modulo 3. Together their contribution plus 2^−16
+is strictly below 9/2^18. This proves Theorem 14 with the same
+weighting, hence also for the ordinary unweighted reciprocal sum.
+If every non-Mersenne core prime were Fermat, all those outside this
+list would be of the form 2^k+1 with k≥32; their reciprocal sum is
+less than ∑_(k≥32)2^−k=2^−31. This contradicts the lower bound.
+
+At h=64 there are at least seven distinct repeated primes in this
+situation. In addition to the four Mersenne primes from section 23,
+67280421310721 divides F and is repeated. At least one of 274177
+and 137089 must also be repeated: if both are simple, the fixed factor
+274177 | F forces 137089 through 274177+1. Next 137089+1 forces 5
+in the fixed complement, below its cutoff of 16383. Theorem 14 now
+forces another non-Mersenne base outside all three of these primes.
+
+25. Six small bases and the compulsory simple prime 607
+
+Let t=Σ_(p|c,p∉P₀)1/p≤2^−76 with P₀ as in Theorem 15. Every odd
+prime below 2^76 outside P₀, if it divides n, must occur simply.
+The sparse-core argument already gives the simple primes 3,5,7,19,223.
+In the unitary divisor sum the single copies of 3,5,7 are already
+used by 5+1,19+1,223+1. The prime 13 is impossible because 13+1
+would use 7 a second time. Every simple prime other than 3,5 is
+1 modulo 3.
+
+First a≥256. At h=64 and h=128 the respective divisors 67280421310721
+and 59649589127497217 of 2^h+1 are 2 modulo 3, below 2^76 and
+coprime to 5 times the product of P₀. Each has a prime factor
+2 modulo 3 which could be neither simple nor repeated. At h=16
+the restrictions a≥48 and gcd(b,21)=1 leave only a=80,176,208
+below 256. At 80 the prime 414721 divides 2^80+1 and its shift
+forces 11. At 176 the divisor 5304641 of 2^176+1 has the same
+obstruction as the two divisors just used. At 208, 928513 divides
+2^208+1; its shifts force the successive primes 464257,232129,167.
+Each intermediate prime is outside P₀ and below the cutoff, while
+167 is 2 modulo 3. This covers all the possible heights below 256.
+
+Whenever present, the six bases have exponents at least
+8,16,7,7,4,3 in the order displayed in Theorem 15. For 65537 the
+four valuations v₂(e)=0,1,2,3 force the respective divisors 3,5,17,257
+of 65537^e+1. The first two are already spent and the other two are
+2 modulo 3 and below 4096. For the Mersenne bases the following
+table lists a forbidden divisor for each small exponent, in order
+from e=2 up to one below the claimed minimum.
+
+    8191       41, 193, Q, 11, 41, 29
+    131071     13, 7, 2801, 11, 13
+    524287     5, 13, 89, 491, 5
+    2^31−1     5, 13
+    2^61−1     3389
+
+Here 193 would force 97 and then two copies of 7. At e=4 for 8191
+put Q=2250700503367681 and r=59228960614939. Then 8191^4+1=2Q,
+Q+1=38r and 5 | r+1. Both Q and r are primes below 2^76 outside
+P₀. Since both must be simple, r would spend 5 twice together with
+19. To verify primality of Q, factor Q−1 as
+2^14·3²·5·7·13·41·101·8101. The residue 19 has order Q−1, as
+checked by modular exponentiation at all its prime divisors. Trial
+division suffices for r. All the other single entries are excluded
+by their residue, by an already spent copy or by the exclusion of 13.
+
+Write e₀(p) for the six lower bounds. The exact rational comparison
+
+    Σ_(p∈P₀) p^(−e₀(p)) + (2^−76)² < 2^−100
+
+gives 1−1/ρ<2^−100 since all other exponents are at least two.
+Remove all simple vertices using a base outside P₀ and their
+successors. Section 17 bounds the reciprocal loss by 4t. Every
+vertex in the three compulsory block arrangements of section 8
+survives. The product of the retained simple factors is therefore
+in the interval
+
+    [ 2(1−4·2^−76)(1−2^−100)/(1+2^−256), 2 ).
+
+For each subset of P₀ allow unrestricted usage of its bases in the
+shifts. For each of the three block arrangements require every prime
+in its blocks and discard arrangements that list a retained core base
+as simple. Test the interval whenever the arrangement omits 607 or
+the subset violates either assertion of Theorem 15. All 116 intervals
+are excluded in 14,818 search nodes. six_base_gap_certificate in
+erdos1052_chain_bounds.py checks the intervals and every arithmetic
+witness above. This proves Theorem 15 with no restriction on the
+number, sizes or exponents of additional core primes satisfying the
+reciprocal-sum condition.
+
+For a core made entirely of Mersenne and Fermat primes the required t
+bound is automatic. The missing Mersenne exponents are at least 79,
+and the missing Fermat exponents at least 128, since 2^32+1 and
+2^64+1 have proper factors. The two reciprocal tails have total less
+than 2^−76 by the geometric bounds in section 17.

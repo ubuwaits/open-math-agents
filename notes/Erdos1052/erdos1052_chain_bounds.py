@@ -4,6 +4,7 @@ from fractions import Fraction
 from itertools import combinations, product
 from math import gcd, isqrt, prod
 
+from erdos1052_fermat_bases import certified_prime
 from erdos1052_spectrum import exclude_interval, passes_prime_test
 
 
@@ -324,6 +325,68 @@ def three_base_gap_certificate():
     return len(counts),sum(counts)
 
 
+def six_base_gap_certificate():
+    """Verify the small-exponent obstructions and all forbidden core/block configurations."""
+    bases = (8191, 65537, 131071, 524287, (1 << 31)-1, (1 << 61)-1)
+    min_exponents = (8, 16, 7, 7, 4, 3)
+    cases = {8191: ((2,41), (3,193), (5,11), (6,41), (7,29)),
+             131071: ((2,13), (3,7), (4,2801), (5,11), (6,13)),
+             524287: ((2,5), (3,13), (4,89), (5,491), (6,5)),
+             (1 << 31)-1: ((2,5), (3,13)),
+             (1 << 61)-1: ((2,3389),)}
+    for p, pairs in cases.items():
+        for exponent, q in pairs:
+            assert certified_prime(q) and pow(p, exponent, q) == q-1
+            assert q in (5,7,13,193) or (q < 4096 and q % 3 == 2)
+    assert (193+1) % 97 == 0 and (97+1) % 49 == 0 and certified_prime(97)
+    for j, q in enumerate((3,5,17,257)):
+        assert pow(65537, 1 << j, q) == q-1 and certified_prime(q)
+
+    # The fourth power at 8191 forces two ordinary primes, the second spending 5.
+    q, r = 2250700503367681, 59228960614939
+    factors = (2,3,5,7,13,41,101,8101)
+    assert q-1 == 2**14*3**2*5*7*13*41*101*8101
+    assert all(certified_prime(d) for d in factors)
+    assert pow(19,q-1,q) == 1 and all(pow(19,(q-1)//d,q) != 1 for d in factors)
+    assert certified_prime(r) and (8191**4+1) == 2*q and q+1 == 38*r
+    assert (r+1) % 5 == 0 and q not in bases and r not in bases and q < 1 << 76
+
+    # With no further core base below 2^76, these divisors rule out all a<256.
+    for h, divisor in ((64,67280421310721), (128,59649589127497217),
+                       (176,5304641)):
+        assert divisor < 1 << 76 and divisor % 3 == 2
+        assert pow(2,h,divisor) == divisor-1 and gcd(divisor,5*prod(bases)) == 1
+    for h, chain in ((80,(414721,11)), (208,(928513,464257,232129,167))):
+        assert pow(2,h,chain[0]) == chain[0]-1
+        assert all(certified_prime(q) and q not in bases and q < 1 << 76 for q in chain)
+        assert all((p+1) % q == 0 for p,q in zip(chain,chain[1:]))
+        assert chain[-1] % 3 == 2 and chain[-1] != 5
+
+    t = Fraction(1,1 << 76)
+    error = Fraction(1,1 << 100)
+    assert sum(Fraction(1,p**e) for p,e in zip(bases,min_exponents)) + t*t < error
+    lower = 2*(1-4*t)*(1-error)/(1+Fraction(1,1 << 256))
+    checks = nodes = 0
+    for size in range(len(bases)+1):
+        for subset in combinations(bases,size):
+            for blocks in SEED_BLOCKS:
+                required = tuple(sorted(q for block in blocks for q in block))
+                if not set(subset).isdisjoint(required):
+                    continue
+                possible_bases = (8191 in subset or {65537,131071}.issubset(subset))
+                if 8191 not in subset and {524287,(1 << 31)-1}.issubset(subset):
+                    possible_bases = False
+                if possible_bases and 607 in required:
+                    continue
+                result = exclude_interval(lower, Fraction(2), subset, required,
+                                          bit_cap=320, node_cap=30000, sharpen_tail=True)
+                if result is None:
+                    raise ArithmeticError(f"Unresolved at {subset}, {required}")
+                checks += 1
+                nodes += result[0]
+    return checks, nodes
+
+
 if __name__ == "__main__":
     assert modular_chain_certificate((3,7), (7,11,13,17,19)) == [4,18,112,221,0]
     assert modular_chain_certificate((1,9), (7,11,13,17,19,23,29,31,37)) == [
@@ -334,6 +397,7 @@ if __name__ == "__main__":
         assert len(windows) == 14 and prod(high/low for low,high in windows)**power < 2
     assert dyadic_root_bound(16,((2147639671,1),)) == 47
     assert three_base_gap_certificate() == (36,12438)
+    print("Six-base support intervals and nodes", six_base_gap_certificate(), flush=True)
     mersenne_terminal_certificates()
     for p in (5003, 65537, 13709, 114689, 167772161):
         print(p, capped_shift_exponent_bound(16, ((p,1),), None, node_cap=10000,

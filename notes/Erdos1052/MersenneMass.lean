@@ -96,4 +96,39 @@ theorem remaining_size (s : Finset ℕ) (e : ℕ → ℕ) (hk : ∀ k∈s, 31≤
       have hpow := Nat.pow_le_pow_right (by decide : 0 < 2) (hk k hh)
       exact Nat.pow_le_pow_left (by omega) _
 
+/-- The complement is small enough that every one of its simple primes exceeds 16383. -/
+theorem complement_upper {C ρ U y : ℚ} (hC : 0<C) (hρ : 1<ρ)
+    (hU : 1-1/16384≤U) (hy : 0<y) (eqn : C*ρ*U*(1+y)=1) :
+    C < 16384/16383 := by
+  have hUpos : 0<U := by linarith
+  have hless : C*U < C*ρ*U := by nlinarith [mul_pos (mul_pos hC hUpos) (sub_pos.mpr hρ)]
+  have hρpos : 0<ρ := by linarith
+  have hypos : 0<C*ρ*U*y := mul_pos (mul_pos (mul_pos hC hρpos) hUpos) hy
+  nlinarith [mul_le_mul_of_nonneg_left hU hC.le]
+
+/-- The loss needed in the complement comes from the full unitary identity. -/
+theorem complement_lower {C ρ U y : ℚ} (hC : 0<C)
+    (hcap : ρ≤1/(1-1/(2:ℚ)^24)) (hU : 0<U) (hUcap : U≤1/(1+1/16384))
+    (hy : 0<y) (hycap : y≤1/(2:ℚ)^64) (eqn : C*ρ*U*(1+y)=1) :
+    1-(1+1/(2:ℚ)^64)/((1+1/16384)*(1-1/(2:ℚ)^24)) ≤ 1-1/C := by
+  have hrec : 1/C=ρ*U*(1+y) := by
+    apply (div_eq_iff hC.ne').mpr
+    linear_combination -eqn
+  rw [hrec]
+  have hu := mul_le_mul hcap hUcap hU.le (by norm_num)
+  have hplus : 1+y≤1+1/(2:ℚ)^64 := by linarith
+  have hb := mul_le_mul hu hplus (by linarith) (by norm_num)
+  norm_num at hb ⊢
+  linarith
+
+/-- The three discarded singleton starts and the exact numerical margin. -/
+theorem complement_charges :
+    (7:ℕ) ∣ 8*8191-1 ∧ (11:ℕ) ∣ 2*131071-1 ∧ (13:ℕ) ∣ 8*131071-1 ∧
+    (9/(2:ℚ)^18)*(4/3) + 8/(3*2^31)
+       + (4/3)/2^24/(1-1/4096) + 1/(12*8191) + 1/(12*131071)
+       + 4/(3*524287) + 32/(9*2^31)
+       < 1-(1+1/(2:ℚ)^64)/((1+1/16384)*(1-1/(2:ℚ)^24)) ∧
+    1/(2*65537:ℚ) + 1/137089 + 1/274177 + 1/(2*67280421310721)
+       + 1/(2:ℚ)^16 < 9/(2:ℚ)^18 := by norm_num
+
 end Erdos1052.MersenneMass
