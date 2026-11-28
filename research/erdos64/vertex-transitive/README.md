@@ -15,6 +15,10 @@ Chad Mazzola (GitHub `@ubuwaits`), using Codex. [Signed proof](https://github.co
 
 For the rooted consequence, if every cycle of a given length passes through r, every automorphic image of r lies on each such cycle. In a vertex-transitive graph such a cycle is Hamiltonian. Its dyadic length forces the graph order to be a power of two, and the theorem gives a shorter dyadic cycle when the order exceeds four.
 
+## An obstruction without transitivity
+
+In a smallest counterexample to the full conjecture, every fixed-point-free involutory automorphism must send some vertices to neighbors and others to nonneighbors. Its pairs that lose a degree form an independent set in the quotient. [Proof and exact degree formula](free-involutions.md)
+
 ## Two examples attaining the bound
 
 The cube on eight vertices has six unoriented squares. The Möbius–Kantor graph on sixteen vertices, the generalized Petersen graph G(8,3), has no square and has thirty unoriented octagons. Their shortest power-of-two cycles have lengths four and eight respectively. The independent Python check constructs the graphs from their edges, verifies that explicit automorphisms act transitively, and enumerates the cycles. [Verifier](symmetric_examples.py) · [Verified counts and witnesses](examples.txt) · [SageMath graph definition](https://doc.sagemath.org/html/en/reference/graphs/sage/graphs/graph_generators.html#sage.graphs.graph_generators.GraphGenerators.MoebiusKantorGraph)

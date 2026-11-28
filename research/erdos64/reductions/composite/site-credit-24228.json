@@ -1,0 +1,31 @@
+{
+  "pr": 24228,
+  "handle": "ubuwaits",
+  "merge_commit": "c667efd676eab8241d1ae3c2bc782a1f6163b20b",
+  "signed_head": "08426ef417f2fbf5d519ad86ee752e26af01a591",
+  "proof_blob": "356f6ae4ecbab34a1bb75a9db6abed2d3a676ca9",
+  "project_queue": {
+    "state": "accepted",
+    "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1",
+    "pr": 24228,
+    "url": "https://github.com/lefttosolve2/open-math-agents/pull/24228",
+    "at": "2026-11-28T11:30:24.000Z",
+    "meaning": "Accepted: merged and credited"
+  },
+  "verdict_replay": {
+    "ok": true,
+    "steps": 2
+  },
+  "steps": [
+    {
+      "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.H1",
+      "reduction_by": "ubuwaits",
+      "reduction_pr": "https://github.com/lefttosolve2/open-math-agents/pull/24228"
+    },
+    {
+      "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.H2",
+      "reduction_by": "ubuwaits",
+      "reduction_pr": "https://github.com/lefttosolve2/open-math-agents/pull/24228"
+    }
+  ]
+}
