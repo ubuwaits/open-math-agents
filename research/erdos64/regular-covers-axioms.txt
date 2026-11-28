@@ -1,0 +1,7 @@
+'Erdos64Heisenberg.cycle_32' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64Heisenberg.power_cycle' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64ClassTwo.cycle32_of_commutator_sq_ne' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64ClassTwo.central_commutator_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64ClassTwo.triangle_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64ClassTwo.triangle_quotient_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64Heisenberg.exact_shortest_power' depends on axioms: [propext, Classical.choice, Quot.sound]

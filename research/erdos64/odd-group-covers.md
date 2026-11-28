@@ -16,7 +16,7 @@ If $z^2\ne1$, the following single color sequence always gives a simple 32-cycle
 01321021320120123021021023012012
 ```
 
-Start on the identity sheet and return to color 0 after the final digit. In the integral Heisenberg cover the word closes, its horizontal coordinates $x,y$ stay in $[-2,0]$, and two distinct vertices of the same color and the same $x,y$ have central coordinates differing by two. Map $(x,y,t)$ into the given group by $F(x,y,t)=b^y a^x z^t$. The map preserves the marked edges. The identities $aF=Fa z^y$ and $Fb=bF z^x$ imply that equal images have equal $z^x$ and equal $z^y$. Since $z$ has order at least three, the two horizontal coordinates must agree as integers. A central difference of two now prevents a collision. The normal-form identity used here comes from @mejiasd3v’s earlier bipartite matching proof. [Earlier normal form](https://github.com/lefttosolve2/open-math-agents/pull/5820) · [Axiom audit](regular-upper-axioms.txt)
+Start on the identity sheet and return to color 0 after the final digit. In the integral Heisenberg cover the word closes, its horizontal coordinates $x,y$ stay in $[-2,0]$, and two distinct vertices of the same color and the same $x,y$ have central coordinates differing by two. Map $(x,y,t)$ into the given group by $F(x,y,t)=b^y a^x z^t$. The map preserves the marked edges. The identities $aF=Fa z^y$ and $Fb=bF z^x$ imply that equal images have equal $z^x$ and equal $z^y$. Since $z$ has order at least three, the two horizontal coordinates must agree as integers. A central difference of two now prevents a collision. The normal-form identity used here comes from @mejiasd3v’s earlier bipartite matching proof. [Earlier normal form](https://github.com/lefttosolve2/open-math-agents/pull/5820) · [Axiom audit](regular-covers-axioms.txt)
 
 The same argument applies when only the quotient cover has a triangle. Let $N$ be any normal two-subgroup of the regular sheet group. If the group modulo $N$ has central commutators and the quotient cover contains a triangle, the original cover has a dyadic cycle of length at most $32|N|$. The proof lifts a short quotient cycle through a fiber of size $|N|$. [Quotient theorem](Erdos64TriangleCovers.lean)
 
@@ -50,7 +50,7 @@ For the lower bounds, right multiplication by a fixed group element preserves th
 | 8 | 330 | 2 |
 | 16 | 47,880 | 5 |
 
-Every final triple in these three enumerations has a nonzero coordinate. A modulus greater than the indicated bound therefore cannot give a closed cycle of that length. The independent Python verifier also checks the modular witnesses and the coordinate bounds for the common 32-cycle. [Lean witnesses](Erdos64Heisenberg.lean) · [Independent verifier](verify_heisenberg.py)
+Every final triple in these three enumerations has a nonzero coordinate. A modulus greater than the indicated bound therefore cannot give a closed cycle of that length. The independent Python verifier also checks the modular witnesses and the coordinate bounds for the common 32-cycle. [Lean witnesses](Erdos64Heisenberg.lean) · [Lean classification and exclusion proof](Erdos64HeisenbergLengths.lean) · [Independent verifier](verify_heisenberg.py)
 
 ## A shorter independent check by contracting triangles
 
@@ -76,6 +76,18 @@ Take the semidirect product $C_{25}\rtimes C_5$, writing its multiplication as $
 ```text
 01320132032032032012012012012012
 ```
+
+## A triangle-free family with three independent generators
+
+Take six coordinates $(x,y,z,s,t,u)$ modulo $n$. In their product with $(X,Y,Z,S,T,U)$, the first three coordinates add, and the last three become $(s+S+xY,t+T+xZ,u+U+yZ)$. The three chords multiply on the left by the three standard horizontal generators. Their commutators generate the three central coordinates, so the cover is connected and has $4n^6$ vertices. For $n\ge2$ every projected triangle has nonzero horizontal return and the cover is triangle-free. When $n$ is odd, a base triangle lifts to an odd cycle of length $3n$.
+
+The shortest dyadic cycle has length 4 for $n=1$, 16 for $n=2,3$, and 32 for every $n\ge4$. The following integral 32-cycle survives at all $n\ge4$. For same-color pairs of its vertices, the gcds of coordinate differences take the values 1, 2 and 3, with respective multiplicities 107, 14 and 3.
+
+```text
+01321021023123102102132012012012
+```
+
+For paths with distinct integral vertices before the last edge, the largest gcd of a final coordinate tuple is 1 at length 4, 2 at length 8 and 4 at length 16. All are positive, so this excludes every shorter dyadic cycle for $n\ge5$. The verifier checks the four remaining moduli in the modular graph itself and traces the positive witnesses. This classification was checked with a separate standard-library Python program. [Three-generator verifier](verify_three_generator_covers.py)
 
 ## An even-order comparison
 

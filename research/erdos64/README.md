@@ -15,7 +15,7 @@ The Erdős–Gyárfás conjecture asks whether every finite simple graph with mi
 
 7. **Normal subgroup orbits in finite covers.** Suppose a finite group labels the edges and acts on the sheets. Let $N$ be a solvable normal subgroup whose sheet orbits have power-of-two sizes. A simple cycle of length $2^k$ in the cover on the set of $N$-orbits lifts to a simple cycle of length between $2^k$ and $2^k$ times the size of its starting orbit. The ambient group may be nonsolvable and the sheet action may have stabilizers. In a tetrahedral cover, if the three chord permutations commute on the orbit set, some dyadic cycle has length at most $16B$, where $B$ is the largest orbit size. Taking $N=[M,M]$ gives a bound of $16|[M,M]|$ whenever the commutator subgroup is a two-group. [Lean proof](Erdos64NormalCovers.lean) · [Axiom audit](normal-covers-axioms.txt)
 
-8. **Regular covers with triangles.** A tetrahedral cover with a triangle and a finite regular sheet group of nilpotence class at most two has a simple cycle of length 4, 8, 16 or 32. In the Heisenberg covers over $\mathbb Z/n\mathbb Z$ with the two standard generators and one identity chord, the shortest such length is 4 at $n=1$, 8 at $n=2$, 16 for $3\le n\le5$, and 32 for every $n\ge6$. Thus the bound 32 is sharp. [Proof and examples](odd-group-covers.md) · [Triangle theorem](Erdos64TriangleCovers.lean) · [Integer path verifier](verify_heisenberg.py)
+8. **Regular covers with triangles.** A tetrahedral cover with a triangle and a finite regular sheet group of nilpotence class at most two has a simple cycle of length 4, 8, 16 or 32. In the Heisenberg covers over $\mathbb Z/n\mathbb Z$ with the two standard generators and one identity chord, the shortest such length is 4 at $n=1$, 8 at $n=2$, 16 for $3\le n\le5$, and 32 for every $n\ge6$. Thus the bound 32 is sharp. [Proof and examples](odd-group-covers.md) · [Triangle theorem](Erdos64TriangleCovers.lean) · [Exact-length theorem](Erdos64HeisenbergLengths.lean)
 
 ## Official submission
 
@@ -102,22 +102,23 @@ done
 
 The sign-mask search recovers the color words and the integer relations for every case. Mask 0 has 26 cases, mask 7 has 38, and each of the six mixed masks has two. The Lean proofs independently check every word and every implication between relations. [Search certificates](affine-certificates.json)
 
-## Checking the triangle bound
+## Reproducing the regular-cover proofs
 
-Use a disposable upstream checkout at commit `43083c9c80c50450b1959afd6865c0bca49d76b4` with `tools/oma.sh setup` completed. Export `proofs_dir` as the absolute path to this research directory. The commands stage and compile the research modules inside the disposable checkout. [Axiom audit](regular-upper-axioms.txt)
+Use a separate disposable checkout of the upstream repository at `43083c9c80c50450b1959afd6865c0bca49d76b4`. The following commands assume `proofs_dir` is the absolute path to this research directory and the pinned dependencies have been installed by `tools/oma.sh setup`. The project check installs the merged reduction sources. The remaining commands compile the modules in dependency order inside the disposable checkout. The exact-length file enumerates all short simple prefixes in the Lean kernel. [Proof details](odd-group-covers.md) · [Axiom audit](regular-covers-axioms.txt)
 
 ```sh
 tools/oma.sh check Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1 &&
 (
   cd .oma/formal-conjectures || exit 1
   lake build OMAReductions.R_Erdos64_erdos_64_R1_H1_R1_H1_R1_H1_R1 OMAReductions.R_Erdos64_erdos_64_R1_H1_R1_H1_R1_H2_R1 || exit 1
-  for proof in Erdos64NormalCovers Erdos64Heisenberg Erdos64ClassTwo Erdos64TriangleCovers; do
+  for proof in Erdos64NormalCovers Erdos64Heisenberg Erdos64ClassTwo Erdos64TriangleCovers Erdos64HeisenbergLengths; do
     cp "$proofs_dir/$proof.lean" . || exit 1
     lake env lean -o ".lake/build/lib/lean/$proof.olean" "$proof.lean" || exit 1
   done
-  lake env lean "$proofs_dir/RegularCoverUpperAudit.lean"
+  lake env lean "$proofs_dir/RegularCoverAudit.lean"
 )
 python3 "$proofs_dir/verify_heisenberg.py"
 python3 "$proofs_dir/matching_windows.py"
+python3 "$proofs_dir/verify_three_generator_covers.py"
 python3 "$proofs_dir/check_a4_covers.py"
 ```
