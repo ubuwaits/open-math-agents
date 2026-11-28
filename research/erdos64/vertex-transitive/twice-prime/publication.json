@@ -1,0 +1,11 @@
+{
+  "pr": "https://github.com/lefttosolve2/open-math-agents/pull/28718",
+  "head": "ff36b7b18d9e661ecc638cda828fffeb38bec073",
+  "author": "ubuwaits",
+  "run": "https://github.com/lefttosolve2/open-math-agents/actions/runs/46146378547",
+  "workflow": "check-proof",
+  "verdict": "accepted",
+  "errors": [],
+  "public_note_id": 137533,
+  "public_note_url": "https://lefttosolve.com/api/desk/board?problem=Erdos64.erdos_64&since=137532"
+}
