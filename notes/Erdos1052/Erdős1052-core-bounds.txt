@@ -478,3 +478,221 @@ proves exponent finiteness for each core passing the stated test.
 For example c=65537² has sole permitted height 16 by the order of
 2 modulo 65537. Here W(65537)=18 and W(65537²+1)=36, with
 65537²+1=2·5·8681·49477. Hence K(c)=1<f(16)=2, excluding the core.
+
+7. No odd prime divides an exponent at the repeated core 25
+
+Suppose n is unitary perfect and 5² is its only repeated odd prime
+power. Then a=v₂(n) is a power of two, a=2^v with v≥20. Moreover
+2^a+1 must be squarefree and composite. Core 25 was the smallest
+core remaining in the finite interval classification of section 2.
+The assertion bounds its odd multiplier at every height. The possible
+indices v in the last assertion have no known upper bound here.
+
+The factors 25+1=2·13, 13+1=2·7 and 7+1=8 force the simple primes
+13 and 7. Together with 25 they contribute 32/25 to the abundancy.
+After setting these aside the residual divisor is 25. Direct odd-part
+cancellation checks that no exponent from 0 through 49 works.
+
+First suppose a is odd and a≥20. Its seed 2^a+1 supplies a 3, so
+3 is simple and no shifted ordinary prime can supply another 3.
+Every simple prime other than 3 is therefore 1 modulo 3. Also 3∤a,
+since otherwise 2³+1=9 would divide 2^a+1. Choose any prime ℓ|a.
+Then ℓ≥5 and A=(2^ℓ+1)/3 divides the seed. Each prime q|A has
+ord_q(2)=2ℓ. Indeed 3∤A by the binomial expansion of (−1+3)^ℓ+1
+modulo 9, and all smaller possible orders dividing 2ℓ are excluded.
+Also −2 is a square modulo q, since the square of 2^((ℓ+1)/2) is
+−2 modulo q. Hence q is 1 or 3 modulo 8 by the supplementary laws
+of quadratic reciprocity. But A≡3 modulo 8, so at least one such q
+is 3 modulo 8. It is simple because 5 does not divide 2^a+1.
+
+For this q one has q≡1 mod 3 and v₂(q+1)=2. Therefore (q+1)/4
+is 2 modulo 3 and has a prime divisor in this residue class. Such a
+divisor in the odd balance can only be the core prime 5. Remove q
+from the simple support. It cancels against A in the seed; the seed's
+separate 3 and the factor 5 of q+1 give the remaining support the
+artificial seed 15 of section 1. Its odd abundancy, including 25,
+is below 2 and consequently below 199/100 by the interval certificate
+below. If q≥200 the full abundancy of n is strictly below
+
+    (199/100)(1+1/200)(1+2^(−20)) < 2,
+
+contradicting unitary perfection. The congruences q≡3 mod 8,
+q≡1 mod 3 and q≡4 mod 5 leave only 19 and 139 below 200. Their base-2
+orders are 18 and 138, whose halves 9 and 69 are both composite.
+Neither order can be 2ℓ. This excludes every odd a.
+
+For the interval certificate begin with 3,7,13 forced at seed 15.
+The residual divisor is 5, the current odd abundancy is 128/75,
+and 3,5,7,13 are unavailable for further simple primes. Section 1's
+exact tail and recursion exclude [199/100,2) in 13 nodes up to cutoff
+1555. The Lean theorem Core25.seed_fifteen_gap proves the interval
+using the independently implemented tail of the core-625 certificate.
+Its 13 cutoff rows use a largest cutoff of 1651. Both bounds cover
+arbitrarily large omitted primes through the respective tail lemmas.
+
+Next suppose a=2b with b odd, b≥25. Set X=2^((b−1)/2), L=2^b and
+A±=L±2X+1. These coprime odd integers have product 2^a+1. Assign the
+remaining simple primes to these two factors by decreasing cancellation.
+Their terminal divisors d₊d₋=25 and their abundancies are
+
+    B± = 2^E± d±/A±,         1≤B±<25/16.
+
+Here L/A± lies between 1−1/2048 and 1+1/2048, as in section 1 of
+Erdős1052-core-625.txt. One cannot have d₊=1, since A₊>L would
+require 2^E₊≥2L and B₊>25/16. If d₋=1, B₋=L/A₋. This is exactly
+the neutral negative group excluded in section 3 of the same note;
+its proof uses only that group and b≥25. Hence d₊=d₋=5, whence
+B±=(5/4)L/A± are both strictly between 6/5 and 4/3. Neither group
+contains 3. Exactly one A± contains 5 and uses up its terminal 5
+immediately. All upward paths of that group therefore start at
+Mersenne primes. Both 3 and the previously fixed 7 are unavailable.
+The remaining starts 31,127 and all exponents ≥13 give total abundancy
+at most (16/15)(64/63)(2048/2047)<6/5 by section 1. This contradiction
+excludes every exponent with v₂(a)=1.
+
+Finally put a=hb, h=2^v≥4, b odd and F=2^h+1. Assign separate groups
+to F and (2^a+1)/F after cancelling 25's fixed simple primes. Since
+F≡2 mod 3 and 5∤F, a simple root r≡2 mod 3 occurs in F. The factor
+3 of r+1 lies in the same group. Hence the abundancy B of the F group
+lies in [4/3,25/16). If d|25 is that group's terminal divisor, then
+
+    (1+2^(−h))B = d·2^(E−h) ∈ (5/4,2).
+
+No power of two, or five times a power of two with integer exponent,
+lies in that interval. Thus d=25 and the quotient group has terminal
+divisor 1. At h=4,8,16,32 direct forced cancellation from F already
+fails. For h≥64, the first-step result of section 2 of Erdős1052-odd-part.txt
+excludes a terminal divisor 1 for (2^(hb)+1)/F whenever b>1. Its
+hypotheses are h a power of two ≥16 and the group balance with total
+abundancy less than 2. This proves b=1.
+
+For 6≤v≤19 use the existing integer divisors in erdos1052_fermat_bases.py.
+The SPLITS rows give two coprime divisors of F each 2 modulo 3, hence
+two distinct simple roots using the sole available 3. In a PATHS row
+the simple primes starting from a 1 modulo 3 divisor of F force a
+divisor 2 modulo 3 coprime to 5F, through their shifted factors.
+Besides the original root r≡2 mod 3 this gives a second simple prime
+in the same class, again impossible. The script verifies the divisors,
+primality certificates for the intermediate primes and coprimalities.
+These two lists cover every v from 6 through 19. Thus v≥20.
+
+All prime factors of F are simple, so F is squarefree. If F itself
+were prime it would occur once. Removing it and decreasing a by one
+preserves unitary perfection because
+
+    (1+2^(−a))(1+1/(2^a+1))=1+2^(−(a−1)).
+
+The resulting number would still have repeated core 25 and its exponent
+a−1 would be odd, which has just been excluded. Hence F is composite.
+
+Run erdos1052_core25.py for the interval, congruence and Fermat divisor
+checks. Core25.lean imports the existing PrimeDouble625.lean when used
+on the fork. It additionally kernel-checks the witness orders and
+numerical comparisons. The group allocation and congruence argument
+connecting them to the full stated result are the written proof.
+
+8. A finite test using the Mersenne primes in the descent of the core
+
+Fix a permitted sparse height h and put Y=2^h. Start with the residual
+D after the fixed seeds have been processed. The following test for
+b=1 can apply even when D has prime divisors much larger than Y.
+
+For any positive integer x expand all its odd prime factors, with
+multiplicity, into the full recursion trees of section 5. Each vertex
+q has the odd prime factors of q+1, with multiplicity, as children.
+For each Mersenne prime m=2^k−1 let λ_m(x) count its leaf occurrences.
+Form D' by keeping, with full exponents, just the prime factors p of
+D for which every leaf of p's tree exceeds Y. Compute the rational sum
+
+    U = Σ_(m=2^k−1) λ_m(D')·2^(1−k).
+
+The sum is finite and its evaluation uses only D and h. If
+
+    K(c)=f(h)     and     25Y U ≤ 1,                               (13)
+
+then the only possible exponent at this height is a=h. As before,
+K(c)<f(h) excludes the height. This proves exponent finiteness for any
+fixed sparse core passing one of these tests at each permitted height.
+For example U=0 whenever the recursion of each prime dividing D reaches
+at least one prime at most Y, regardless of how large those prime
+divisors themselves are.
+
+For a proof consider a first layer A=(Y^r+1)/(Y+1), r any odd prime
+divisor of b, with its assigned terminal divisor d|D and simple group T.
+The completely additive leaf counts obey λ_m(q)=λ_m(q+1)+1_(q=m)
+for odd primes q. Applying them to the group balance gives exactly
+
+    λ_m(A) = λ_m(d) + 1_(m∈T).                                     (14)
+
+The same identity holds for the counts of every occurrence of any
+marked odd prime, recording internal vertices as well as leaves.
+AdditiveHeight.marker_group proves this latter identity in Lean.
+
+Suppose the layer has baseline height W(A)=h(r−1). The product of
+1+1/q over the entire recursion forest of A, with repeated vertices
+counted separately, is (1+1/Y)/(1+1/Y^r). Every vertex exceeds Y,
+so (14) implies d|D'. Its reciprocal loss, meaning one minus the
+reciprocal of this product, is at least y(1−y) where y=1/Y.
+Partition the forest into paths by keeping one child at each internal
+vertex. Keep one path per distinct starting Mersenne prime and consider
+the other paths separately. If h+1 is composite, all possible starting
+exponents are odd and at least h+3, so the first paths have summed
+reciprocal loss at most y/3. If h+1 is prime, write h=2^v. An odd v
+makes h+1 divisible by 3 and v≡2 mod 4 makes it divisible by 5.
+Since h≥16 we therefore have 4|v, h≡1 mod 5. The argument of section 6
+bounds the loss of the one path from 2Y−1 by 5y/8. It applies with
+repeated vertices too, since every child anywhere in this forest is
+greater than Y. The other distinct starting exponents again contribute
+at most y/3. In either case the summed loss is at most 23y/24.
+
+Each remaining path from m costs at most 2^(1−k). By (14) there
+are at most λ_m(d) such additional paths. Reciprocal loss of a product
+is bounded by the sum of the individual losses. Thus a baseline layer
+necessarily satisfies
+
+    Σ_m λ_m(d)·2^(1−k) ≥ y(1−y)−23y/24 > y/25.
+
+The strict comparison uses h≥16. Hence 25YU≤1 forces each first
+layer to exceed its baseline height. In (7) the prime indices of
+these layers are distinct and are outside E(b). It follows in fact
+that K(c)≥f(h)+E(b)+ω(b) under this mass condition, proving (13).
+More generally, if t≥1 first layers attain baseline then t<25YU,
+since their separate terminal divisors have product dividing D'.
+A value of U exceeding the bound still leaves a potentially unbounded
+prime multiplier. No universal estimate of U at every sparse core
+is proved here.
+
+9. A core-wide test for the three squarefree exponents
+
+There is also a test on c alone. For each Mersenne prime m put
+
+    δ_m = λ_m(c) − λ_m(σ*(c)).
+
+If δ_m ≤ 1_(m|c) for every m, every positive admissible exponent lies
+in {1,2,6}. Hence a nonempty sparse core passing this test has no
+completion. It suffices to check the finite list of leaves in c.
+The test holds at 1236 of the 7857 odd powerful cores through 10^8.
+
+To prove this, apply the marked-vertex count to the full unitary
+balance. It gives λ_m(2^a+1)=δ_m+1_(m∈S). Since S avoids all core
+primes, every leaf occurs at most once under the test. Repetition of
+any internal prime would repeat a leaf below it, since both copies
+expand according to the same rule. Therefore the complete recursion
+forest of M=2^a+1 consists of distinct odd primes. Write T for their
+set. Its abundancy is 2^W(M)/M by multiplying the local identities
+through the forest. The number n₀=2^a∏_(q∈T)q consequently has
+unitary abundancy 2^f(a), a power of two at least 2.
+
+Choose one child at each internal vertex. The resulting paths start
+at distinct Mersenne primes, so for a≥2 the abundancy of n₀ is at most
+
+    (5/4)·2·(4/3)·(16/15)·(64/63)·(2048/2047) < 4.
+
+The factors come from 3,7,31,127 and the tail of Mersenne exponents
+at least 13. Thus n₀ is unitary perfect with squarefree odd part.
+Graham's classification gives a∈{1,2,6}. At a=1 the conclusion holds
+directly. Conversely, for each of 1,2,6 the tree of 2^a+1 does have
+distinct leaves. This characterizes all positive exponents with that
+property independently of the core. AdditiveHeight.marker_core checks
+the marked identity; the classification uses Graham's theorem.
+https://www.fq.math.ca/Scanned/27-5/graham.pdf

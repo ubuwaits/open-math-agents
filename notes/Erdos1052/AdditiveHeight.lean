@@ -168,4 +168,87 @@ theorem neutral_loss_gap {y z : ℚ} (hy : 0 < y) (hu : y ≤ 1/32)
 
 theorem two_step_count {e J k : ℕ} (hb : (e-J)/2 ≤ k) : e ≤ J+2*k+1 := by omega
 
+/-- Count occurrences of one marked odd prime in the full prime-shift recursion. -/
+def visits (m n : ℕ) : ℕ :=
+  (n.primeFactorsList.attach.map fun p =>
+    if p.val = 2 then 0 else (if p.val = m then 1 else 0) + visits m ((p.val+1)/2)).sum
+termination_by n
+decreasing_by
+  have hle := Nat.le_of_mem_primeFactorsList p.property
+  have htwo := (Nat.prime_of_mem_primeFactorsList p.property).two_le
+  omega
+
+private def visitWeight (m p : ℕ) : ℕ :=
+  if p = 2 then 0 else (if p = m then 1 else 0) + visits m ((p+1)/2)
+
+private theorem visits_eq (m n : ℕ) : visits m n = (n.primeFactorsList.map (visitWeight m)).sum := by
+  rw [visits]
+  change (n.primeFactorsList.attach.map (fun p => visitWeight m p.val)).sum = _
+  simp
+
+theorem visits_mul (m : ℕ) {x y : ℕ} (hx : x ≠ 0) (hy : y ≠ 0) :
+    visits m (x*y) = visits m x + visits m y := by
+  simp only [visits_eq]
+  simpa using ((Nat.perm_primeFactorsList_mul hx hy).map (visitWeight m)).sum_eq
+
+@[simp] theorem visits_two (m : ℕ) : visits m 2 = 0 := by simp [visits_eq,visitWeight]
+
+theorem visits_pow_two (m b : ℕ) : visits m (2^b) = 0 := by
+  induction b with
+  | zero => simp [visits_eq]
+  | succ b ih => rw [pow_succ,visits_mul m (by positivity) (by decide),visits_two,ih]
+
+theorem visits_shift (m : ℕ) {p : ℕ} (hp : p.Prime) (hne : p ≠ 2) :
+    visits m p = visits m (p+1) + (if p = m then 1 else 0) := by
+  obtain ⟨k,hk⟩ := hp.odd_of_ne_two hne
+  have half : (p+1)/2 = k+1 := by omega
+  have eqn : p+1 = 2*(k+1) := by omega
+  have hw : visits m p = visitWeight m p := by simp [visits_eq,Nat.primeFactorsList_prime hp]
+  rw [hw,visitWeight,if_neg hne,half,eqn,visits_mul m (by decide) (by omega),visits_two]
+  omega
+
+private theorem visits_prod (m : ℕ) {ι : Type*} (s : Finset ι) (g : ι → ℕ)
+    (hg : ∀ i ∈ s, 0 < g i) : visits m (∏ i ∈ s, g i) = ∑ i ∈ s, visits m (g i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp [visits_eq]
+  | @insert a s ha ih =>
+    have hs : ∀ i ∈ s, 0 < g i := fun i hi => hg i (Finset.mem_insert_of_mem hi)
+    rw [Finset.prod_insert ha,Finset.sum_insert ha,visits_mul m
+      (hg a (Finset.mem_insert_self ..)).ne' (Finset.prod_pos hs).ne',ih hs]
+
+/-- Each distinct ordinary prime contributes exactly one possible extra occurrence. -/
+theorem marker_group (m : ℕ) {A d b : ℕ} (s : Finset ℕ) (hA : 0 < A) (hd : 0 < d)
+    (hp : ∀ q ∈ s, q.Prime ∧ q ≠ 2)
+    (bal : A * (∏ q ∈ s, (q+1)) = d * 2^b * (∏ q ∈ s, q)) :
+    visits m A = visits m d + (if m ∈ s then 1 else 0) := by
+  classical
+  have hq : ∀ q ∈ s, 0 < q := fun q h => (hp q h).1.pos
+  have hs : (∑ q ∈ s, visits m q) = (∑ q ∈ s, visits m (q+1)) + (if m ∈ s then 1 else 0) := by
+    calc (∑ q ∈ s, visits m q) = ∑ q ∈ s, (visits m (q+1) + (if q = m then 1 else 0)) :=
+           Finset.sum_congr rfl fun q h => visits_shift m (hp q h).1 (hp q h).2
+         _ = _ := by rw [Finset.sum_add_distrib]; simp
+  have h := congrArg (visits m) bal
+  rw [visits_mul m hA.ne' (Finset.prod_pos (fun _ _ => Nat.succ_pos _)).ne',
+    visits_prod m s (fun q => q+1) (fun _ _ => Nat.succ_pos _),
+    visits_mul m (by positivity) (Finset.prod_pos hq).ne',visits_mul m hd.ne' (by positivity),
+    visits_pow_two,visits_prod m s (fun q => q) hq,hs] at h
+  omega
+
+theorem marker_core (m : ℕ) {a c sigma : ℕ} (s : Finset ℕ) (hc : 0 < c) (hu : 0 < sigma)
+    (hp : ∀ q ∈ s, q.Prime ∧ q ≠ 2)
+    (bal : (2^a+1)*sigma*(∏ q ∈ s, (q+1)) = 2^(a+1)*c*(∏ q ∈ s, q)) :
+    visits m (2^a+1) + visits m sigma = visits m c + (if m ∈ s then 1 else 0) := by
+  rw [mul_comm (2^(a+1)) c] at bal
+  have h := marker_group m s (by positivity) hc hp bal
+  rwa [visits_mul m (by positivity) hu.ne'] at h
+
+theorem squarefree_abundancy_bound :
+    (5/4:ℚ)*2*(4/3)*(16/15)*(64/63)*(2048/2047) < 4 := by norm_num
+
+theorem extra_leaf_mass {y mass loss : ℚ} (hy : 0 < y) (hu : y ≤ 1/65536)
+    (hl : y*(1-y) ≤ loss) (hc : loss ≤ 23*y/24 + mass) : y/25 < mass := by
+  have := mul_le_mul_of_nonneg_left hu hy.le
+  nlinarith
+
 end Erdos1052.AdditiveHeight
