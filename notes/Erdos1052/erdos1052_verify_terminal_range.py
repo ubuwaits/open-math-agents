@@ -37,7 +37,7 @@ def possible_prime(q):
     return all(pow(b,q-1,q)==1 for b in (2,7,11))
 
 
-def verify_interval(p, low, high, required, forbidden):
+def verify_interval(p, low, high, required, forbidden, copies=1):
     nodes = 0
     def visit(previous, tokens, partial, missing):
         nonlocal nodes
@@ -67,9 +67,39 @@ def verify_interval(p, low, high, required, forbidden):
                 if not visit(q,new_tokens,partial*Fraction(q+1,q),new_missing):
                     return False
         return True
-    if not visit(1,(p,),Fraction(1),required):
+    if not visit(1,(p,)*copies,Fraction(1),required):
         raise ArithmeticError(f"Unresolved interval at {p}, {required}, {low}, {high}")
     return nodes
+
+
+def verify_mersenne_squares():
+    """Check the small residual squares for both permitted ranges of h."""
+    from erdos1052_spectrum import exclude_interval
+
+    assert all(((1 << k)-1) % r == 0 for k,r in ((23,47),(29,233),(37,223)))
+    results = {}
+    cases = [(13,16),(17,16)] + [(k,64) for k in (13,17,19,31)]
+    for k,h in cases:
+        p = (1 << k)-1
+        center = 2*Fraction(p,1 << k)**2
+        if h == 16:
+            center *= 1+Fraction(1,1 << 16)
+            low,high = center/(1+Fraction(1,1 << 48)),center
+        else:
+            low,high = center,center*(1+Fraction(1,1 << 64))
+        counts = []
+        for on,off,bottom,top in block_intervals():
+            left,right = max(bottom,low),min(top,high)
+            if left >= right:
+                continue
+            nodes = verify_interval(p,left,right,on,off,copies=2)
+            other = exclude_interval(left,right,(p,),on,forbidden=off,
+                                     multiplicities={p:2},sharpen_tail=True)
+            if other is None:
+                raise ArithmeticError(f"Unresolved squared residual at k={k}, h={h}")
+            counts.append((nodes,other[0]))
+        results[k,h] = counts
+    return results
 
 
 def verify_range():
@@ -101,6 +131,9 @@ def verify_range():
 
 
 if __name__ == "__main__":
+    squares = [row for rows in verify_mersenne_squares().values() for row in rows]
+    assert (len(squares),sum(x for x,_ in squares),sum(y for _,y in squares)) == (18,3347,832)
+    print("Verified squared residual intervals", len(squares), flush=True)
     result = verify_range()
     assert result == (34750,1081584)
     print("Verified intervals and nodes", *result)

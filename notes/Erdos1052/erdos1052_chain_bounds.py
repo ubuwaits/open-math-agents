@@ -1,7 +1,7 @@
 """Effective bounds for the variable cyclotomic factor of a sparse core."""
 
 from fractions import Fraction
-from itertools import product
+from itertools import combinations, product
 from math import gcd, isqrt, prod
 
 from erdos1052_spectrum import exclude_interval, passes_prime_test
@@ -102,6 +102,25 @@ def group_windows():
     return windows
 
 
+def normalized_residual_windows(all_scales=False):
+    """Merge the necessary intervals in one octave. Width is logarithmic."""
+    spread = 1+Fraction(1,65536) if all_scales else Fraction(1)
+    intervals = []
+    for low,high in group_windows().values():
+        low /= spread
+        if low < 1:
+            intervals.append((2*low,Fraction(2)))
+            low = Fraction(1)
+        intervals.append((low,high))
+    merged = []
+    for low,high in sorted(intervals):
+        if merged and low <= merged[-1][1]:
+            merged[-1] = (merged[-1][0],max(merged[-1][1],high))
+        else:
+            merged.append((low,high))
+    return tuple(merged)
+
+
 def seed_window_bound(h, D, fixed=None):
     """An unconditional bound on a if the residual D misses the possible windows."""
     if h < 16 or h & (h-1) or D <= 0 or D % 2 == 0:
@@ -118,6 +137,48 @@ def seed_window_bound(h, D, fixed=None):
         if R > high:
             bound = max(bound, floor_log_two(high/(R-high)))
     return bound
+
+
+def dyadic_root_bound(h, residual_factors):
+    """Bound a at a specified sparse core using only the possible path starts.
+
+    residual_factors is the prime factorization of the residual at h.
+    None means the loss inequality gives no bound.
+    """
+    if h < 16 or h & (h-1):
+        raise ValueError("Expected a power of two h >= 16.")
+    factors = tuple(residual_factors)
+    if any(p <= 4096 or p % 3 == 0 or e < 1 for p,e in factors):
+        raise ValueError("Expected the prime-power factors of a sparse residual.")
+    D = prod(p**e for p,e in factors)
+    target = ((1 << h)+1)*D
+    k = target.bit_length()-1
+    R = Fraction(target,1 << k)
+    loss = 1-1/R
+    s = floor_log_two(1/loss)
+    if s < 3:
+        return None
+
+    # The two finite divisor products count roots with even and odd jumps.
+    sums = []
+    for twisted in (False,True):
+        total = Fraction(1)
+        for p,e in factors:
+            sign = -1 if twisted and p % 3 == 2 else 1
+            x = Fraction(sign,p)
+            total *= (1-x**(e+1))/(1-x)
+        sums.append(total)
+    core_loss = sums[0]+sums[1]/3-Fraction(4,3)
+
+    # Only odd prime exponents can start a Mersenne path above the cutoff.
+    first = s+1 if s % 2 == 0 else s+2
+    stop = first+24
+    mersenne_loss = Fraction(4,3)*Fraction(2,1 << stop)
+    for j in range(first,stop,2):
+        if is_prime(j) and all(p != (1 << j)-1 for p,_ in factors):
+            mersenne_loss += Fraction(2,1 << j)
+    gap = loss-core_loss-mersenne_loss
+    return max(k, floor_log_two(1/(R*gap))) if gap > 0 else None
 
 
 def capped_shift_exponent_bound(h, residual_factors, exceptions, jumps=(1,3),
@@ -232,11 +293,47 @@ def mersenne_terminal_certificates():
     assert sorted(counts) == [18,83,90]
 
 
+def three_base_gap_certificate():
+    """Bound the reciprocal mass outside 65537, 2^31-1 and 2^61-1."""
+    p,r,s = 65537,(1 << 31)-1,(1 << 61)-1
+    t = Fraction(1,1 << 76)
+    keep = (1-4*t)*(1-t*t)
+    correction = prod(1+Fraction(1,q**e) for q,e in ((2,80),(p,16),(r,3),(s,2)))
+    width = Fraction(1,1 << 72)
+    assert 2*keep/correction > 2-width
+    counts = []
+    for m in range(4):
+        for bases in combinations((p,r,s),m):
+            targets = [Fraction(2)]
+            if r in bases:
+                targets.append(2/(1+Fraction(1,r*r)))
+            for target in targets:
+                for blocks in SEED_BLOCKS:
+                    required = sorted(q for block in blocks for q in block)
+                    result = exclude_interval(target-width,target,bases,required,
+                                              sharpen_tail=True)
+                    if result is None:
+                        raise ArithmeticError(f"Unresolved at {bases}, {target}, {required}")
+                    counts.append(result[0])
+    proper_divisors = ((23,47),(29,233),(37,223),(41,13367),(43,431),
+                       (47,2351),(53,6361),(59,179951),(67,193707721),
+                       (71,228479),(73,439))
+    assert all(1<d<(1 << k)-1 and pow(2,k,d)==1 for k,d in proper_divisors)
+    assert {k for k in range(13,79) if is_prime(k)} == (
+        {13,17,19,31,61} | {k for k,_ in proper_divisors})
+    return len(counts),sum(counts)
+
+
 if __name__ == "__main__":
     assert modular_chain_certificate((3,7), (7,11,13,17,19)) == [4,18,112,221,0]
     assert modular_chain_certificate((1,9), (7,11,13,17,19,23,29,31,37)) == [
         4,26,87,783,5445,576,576,9099,0]
     assert seed_window_bound(16,13709) == 29
+    for all_scales,power in ((False,100),(True,97)):
+        windows = normalized_residual_windows(all_scales)
+        assert len(windows) == 14 and prod(high/low for low,high in windows)**power < 2
+    assert dyadic_root_bound(16,((2147639671,1),)) == 47
+    assert three_base_gap_certificate() == (36,12438)
     mersenne_terminal_certificates()
     for p in (5003, 65537, 13709, 114689, 167772161):
         print(p, capped_shift_exponent_bound(16, ((p,1),), None, node_cap=10000,
