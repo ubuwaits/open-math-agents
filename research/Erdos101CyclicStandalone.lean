@@ -7,8 +7,9 @@ For an injective parametrization `z(t) = ∑ cⱼ exp(2πi eⱼ t / p)` with rat
 coefficients, a subset of size `n` determines at most `[5 + (1+6k²)²] n` lines
 containing exactly four of its points. The prime and frequencies can vary.
 The same little-o conclusion holds with `k⁴ = o(n)` and `o(n)` arbitrary outliers.
-The final statements are `Erdos101CyclicCount.four_bound` and
-`Erdos101CyclicNear.littleO`. -/
+For arbitrary complex coefficients there is still a uniform linear bound per fixed
+number of terms. `Erdos101CyclicNear.littleO` and `Erdos101CyclicComplex.littleO`
+give the corresponding asymptotic estimates. -/
 
 noncomputable section
 
@@ -408,15 +409,15 @@ open scoped ComplexConjugate Classical
 variable {p k : ℕ} [Fact p.Prime]
 
 def pack (a : ℝ²) : ℂ := ⟨a 0,a 1⟩
-private def pair (a b : ℝ²) := pack a*conj (pack b)
-private def orient (a b c : ℝ²) := pair a b+pair b c+pair c a-(pair b a+pair c b+pair a c)
+def pair (a b : ℝ²) := pack a*conj (pack b)
+def orient (a b c : ℝ²) := pair a b+pair b c+pair c a-(pair b a+pair c b+pair a c)
 
 private lemma real_zero (a b c : ℝ²) : (orient a b c).re=0 := by
   simp [orient,pair,pack,Complex.add_re,Complex.sub_re,Complex.mul_re]; ring
 private lemma imaginary (a b c : ℝ²) : (orient a b c).im=(-2)*ev c (normal a b) := by
   simp [orient,pair,pack,Complex.add_im,Complex.sub_im,Complex.mul_im,ev_apply,normal]; ring
 
-private lemma geometric (a b c : ℝ²) : Collinear ℝ ({c,a,b}:Set ℝ²) ↔ orient a b c=0 := by
+lemma geometric (a b c : ℝ²) : Collinear ℝ ({c,a,b}:Set ℝ²) ↔ orient a b c=0 := by
   have eq : orient a b c=0 ↔ ev c (normal a b)=0 := by
     constructor
     · intro h; have hi := imaginary a b c; rw [h,Complex.zero_im] at hi; linarith
@@ -433,7 +434,7 @@ private lemma geometric (a b c : ℝ²) : Collinear ℝ ({c,a,b}:Set ℝ²) ↔ 
 def parametrizes (f : F p → ℝ²) (c : Fin k → ℚ) (e : Fin k → F p) :=
   ∀ x,pack (f x)=∑ j,(c j : ℂ)*chi (e j*x)
 
-private lemma chi_sub (x y : F p) : chi (x-y)=chi x*conj (chi y) := by
+lemma chi_sub (x y : F p) : chi (x-y)=chi x*conj (chi y) := by
   rw [sub_eq_add_neg,show chi (x+ -y)=chi x*chi (-y) from ZMod.stdAddChar.map_add_eq_mul ..,chi_neg]
 
 private lemma product_expansion {f : F p → ℝ²} {c : Fin k → ℚ} {e : Fin k → F p}
@@ -646,12 +647,12 @@ open EuclideanGeometry Finset
 open scoped Classical
 variable {p k : ℕ} [Fact p.Prime]
 
-/-- The number of four-point lines is linear in the sample size and at most
-quartic in the number of Fourier terms. The frequencies and the prime
-order of the orbit are unrestricted. -/
-theorem four_bound {f : F p → ℝ²} (inj : Function.Injective f)
-    {c : Fin k → ℚ} {e : Fin k → F p} (rep : parametrizes f c e) (I : Finset (F p)) :
-    (linesWithPointsFor 4 (↑(I.image f) : Set ℝ²)).ncard ≤ (5+(1+6*k^2)^2)*I.card := by
+/-- Each four-point line has a representative given by the indices of three points,
+with nonzero first entry. Any bound for such triples transfers to lines. -/
+theorem from_triples {f : F p → ℝ²} (inj : Function.Injective f) (K : ℕ) (I : Finset (F p))
+    (estimate : richOrbit f → ∀B : Finset (V p),
+      (∀w∈B,Function.Injective w ∧ w 0≠0 ∧ (∀i,w i∈I) ∧ triple f w) → B.card≤K*I.card) :
+    (linesWithPointsFor 4 (↑(I.image f) : Set ℝ²)).ncard ≤ (5+K)*I.card := by
   classical
   let S := I.image f
   let A := (determined S).filter (fun L => mult S L=4)
@@ -663,7 +664,7 @@ theorem four_bound {f : F p → ℝ²} (inj : Function.Injective f)
   · calc A.card ≤ (determined S).card := Finset.card_filter_le ..
          _ ≤ S.offDiag.card := Finset.card_image_le
          _ ≤ I.card*I.card := by rw [Finset.offDiag_card,siz]; omega
-         _ ≤ (5+(1+6*k^2)^2)*I.card := Nat.mul_le_mul_right _ (small.trans (Nat.le_add_right ..))
+         _ ≤ (5+K)*I.card := Nat.mul_le_mul_right _ (small.trans (Nat.le_add_right ..))
   by_cases has : A.Nonempty
   swap
   · simp [Finset.not_nonempty_iff_eq_empty.mp has]
@@ -715,13 +716,24 @@ theorem four_bound {f : F p → ℝ²} (inj : Function.Injective f)
     rw [←eq] at l2
     exact Subtype.ext (l1.symm.trans l2)
   let B := Finset.univ.image w
-  have good (z) (hz : z∈B) : Function.Injective z ∧ z 0≠0 ∧ z 0∈I ∧ triple f z := by
+  have good (z) (hz : z∈B) : Function.Injective z ∧ z 0≠0 ∧ (∀i,z i∈I) ∧ triple f z := by
     obtain ⟨L,_,rfl⟩ := Finset.mem_image.mp hz
-    exact ⟨diff L,nonzero L,(Finset.mem_filter.mp (on L 0)).1,col L⟩
-  have result := Erdos101CyclicCuts.bound inj rich rep B I good
+    exact ⟨diff L,nonzero L,fun i => (Finset.mem_filter.mp (on L i)).1,col L⟩
+  have result := estimate rich B good
   have card : B.card=A.card := by simp [B,Finset.card_image_of_injective _ winj]
   rw [card] at result
   exact result.trans (Nat.mul_le_mul_right _ (Nat.le_add_left ..))
+
+/-- The number of four-point lines is linear in the sample size and at most
+quartic in the number of Fourier terms. The frequencies and the prime
+order of the orbit are unrestricted. -/
+theorem four_bound {f : F p → ℝ²} (inj : Function.Injective f)
+    {c : Fin k → ℚ} {e : Fin k → F p} (rep : parametrizes f c e) (I : Finset (F p)) :
+    (linesWithPointsFor 4 (↑(I.image f) : Set ℝ²)).ncard ≤ (5+(1+6*k^2)^2)*I.card := by
+  apply from_triples inj
+  intro rich B good
+  exact Erdos101CyclicCuts.bound inj rich rep B I (fun w hw =>
+    ⟨(good w hw).1,(good w hw).2.1,(good w hw).2.2.1 0,(good w hw).2.2.2⟩)
 
 end Erdos101CyclicCount
 
@@ -837,3 +849,410 @@ theorem littleO (S : ℕ → Finset ℝ²) (k b : ℕ → ℕ) (size : ∀n,(S n
     _ = _ := by ring
 
 end Erdos101CyclicNear
+
+/- An affine flat of prime-indexed collinear triples with one genuine triple
+is separated by one of the three coordinate projections. -/
+namespace Erdos101CyclicLaws
+open EuclideanGeometry Finset
+open scoped Classical
+variable {p : ℕ} [Fact p.Prime]
+
+def affineLaw (f : F p → ℝ²) (u v d : F p) :=
+  ∀ x y, Collinear ℝ ({f x,f y,f (u*x+(v*y+d))} : Set ℝ²)
+
+private lemma collapsed {f : F p → ℝ²} (inj : Function.Injective f) (rich : richOrbit f)
+    (x z : F p) (all : ∀y, Collinear ℝ ({f x,f y,f z} : Set ℝ²)) : x=z := by
+  by_contra ne
+  have lineAll (y) := (all y).mem_affineSpan_of_mem_of_ne (p₁:=f x) (p₂:=f z) (p₃:=f y)
+    (by simp) (by simp) (by simp) (inj.ne ne)
+  obtain ⟨a,b,h1,h2⟩ := rich
+  obtain ⟨i,hi,j,hj,ij⟩ := Finset.one_lt_card.mp (lt_of_lt_of_le (by decide : 1<4) h1)
+  have eq := (affineSpan_pair_eq_of_mem_of_mem_of_ne (Finset.mem_filter.mp hi).2 (Finset.mem_filter.mp hj).2 (inj.ne ij)).symm.trans
+    (affineSpan_pair_eq_of_mem_of_mem_of_ne (lineAll i) (lineAll j) (inj.ne ij))
+  obtain ⟨t,ht⟩ := Finset.card_pos.mp (lt_of_lt_of_le (by decide : 0<2) h2)
+  exact (Finset.mem_filter.mp ht).2 (eq ▸ lineAll t)
+
+theorem trivial_affine {f : F p → ℝ²} (inj : Function.Injective f) (rich : richOrbit f)
+    {u v d : F p} (h : affineLaw f u v d) : (u=1 ∧ v=0 ∧ d=0) ∨ (u=0 ∧ v=1 ∧ d=0) := by
+  by_cases v0 : v=0
+  · have eq (x : F p) : x=u*x+d := collapsed inj rich _ _ (fun y => by simpa [v0] using h x y)
+    have dz : d=0 := by simpa using (eq 0).symm
+    exact Or.inl ⟨by simpa [dz] using (eq 1).symm,v0,dz⟩
+  by_cases u0 : u=0
+  · have eq (y : F p) : y=v*y+d := collapsed inj rich _ _ (fun x => by simpa [u0,Set.insert_comm] using h x y)
+    have dz : d=0 := by simpa using (eq 0).symm
+    exact Or.inr ⟨u0,by simpa [dz] using (eq 1).symm,dz⟩
+  exfalso
+  obtain ⟨a,b,h1,h2⟩ := rich
+  let A := Finset.univ.filter (fun i => f i∈line[ℝ,a,b])
+  have closed (x) (hx : x∈A) (y) (hy : y∈A) (xy : x≠y) : u*x+(v*y+d)∈A := by
+    have m := (h x y).mem_affineSpan_of_mem_of_ne (p₁:=f x) (p₂:=f y) (p₃:=f (u*x+(v*y+d)))
+      (by simp) (by simp) (by simp) (inj.ne xy)
+    rw [affineSpan_pair_eq_of_mem_of_mem_of_ne (Finset.mem_filter.mp hx).2 (Finset.mem_filter.mp hy).2 (inj.ne xy)] at m
+    exact Finset.mem_filter.mpr ⟨Finset.mem_univ _,m⟩
+  have upper := Erdos101RestrictedSums.affine_prime_full u0 v0 closed h1
+  have sum := Finset.card_filter_add_card_filter_not (s:=Finset.univ) (fun i => f i∈line[ℝ,a,b])
+  rw [Finset.card_univ,ZMod.card] at sum
+  change p≤A.card+1 at upper
+  change A.card+_=p at sum
+  omega
+
+/-- With one genuine triple, two independent directions cannot stay in the
+collinearity locus. The two directions are put in triangular form. -/
+theorem no_plane {f : F p → ℝ²} (inj : Function.Injective f) (rich : richOrbit f)
+    {w v t : V p} (gen : Function.Injective w) {j k l : Fin 3} (jl : j≠l) (kl : k≠l)
+    (lead : v j≠0) (fixed : t j=0) (tail : t k≠0)
+    (all : ∀a b : F p,triple f (fun i => w i+a*v i+b*t i)) : False := by
+  let B := t l/t k
+  let A := (v l-B*v k)/v j
+  let D := w l-A*w j-B*w k
+  have h : affineLaw f A B D := by
+    intro x y
+    let a := (x-w j)/v j
+    let b := (y-w k-a*v k)/t k
+    let q (i) := w i+a*v i+b*t i
+    have aj : q j=x := by dsimp [q,a]; rw [fixed,mul_zero,add_zero,div_mul_cancel₀ _ lead]; ring
+    have ak : q k=y := by dsimp [q,b]; rw [div_mul_cancel₀ _ tail]; ring
+    have al : q l=A*x+(B*y+D) := by dsimp [q,a,b,A,B,D]; field_simp [lead,tail]; ring
+    apply (all a b).subset
+    rintro z (e|e|e)
+    · exact ⟨j,(congrArg f aj).trans e.symm⟩
+    · exact ⟨k,(congrArg f ak).trans e.symm⟩
+    · exact ⟨l,(congrArg f al).trans e.symm⟩
+  have base : A*w j+(B*w k+D)=w l := by dsimp [D]; ring
+  rcases trivial_affine inj rich h with ⟨h₁,h₂,h₃⟩|⟨h₁,h₂,h₃⟩
+  · simp [h₁,h₂,h₃] at base; exact jl (gen base)
+  · simp [h₁,h₂,h₃] at base; exact kl (gen base)
+
+/-- Every affine space of collinear triples containing one tuple with
+three distinct entries has a coordinate projection separating all points. -/
+theorem flat_coordinate {f : F p → ℝ²} (inj : Function.Injective f) (rich : richOrbit f)
+    {s : AffineSubspace (F p) (V p)} {w : V p} (hw : w∈s) (gen : Function.Injective w)
+    (all : ∀x∈s,triple f x) : ∃j : Fin 3, Set.InjOn (fun x : V p => x j) s := by
+  classical
+  by_cases one : ∀x∈s,x=w
+  · exact ⟨0,fun x hx y hy _ => (one x hx).trans (one y hy).symm⟩
+  push Not at one
+  obtain ⟨z,hz,zw⟩ := one
+  let v : V p := z-w
+  obtain ⟨j,dj⟩ := Function.ne_iff.mp zw
+  have vn : v j≠0 := sub_ne_zero.mpr dj
+  refine ⟨j,?_⟩
+  intro x hx y hy same
+  by_contra xy
+  let t : V p := x-y
+  obtain ⟨k,dk⟩ := Function.ne_iff.mp xy
+  have tn : t k≠0 := sub_ne_zero.mpr dk
+  have tj : t j=0 := sub_eq_zero.mpr same
+  have comp : ∃l : Fin 3,j≠l ∧ k≠l := by fin_cases j <;> fin_cases k <;> decide
+  obtain ⟨l,jl,kl⟩ := comp
+  apply no_plane inj rich gen jl kl vn tj tn
+  intro a b
+  have vd : v∈s.direction := s.vsub_mem_direction hz hw
+  have td : t∈s.direction := s.vsub_mem_direction hx hy
+  have member := s.vadd_mem_of_mem_direction (s.direction.add_mem (s.direction.smul_mem a vd) (s.direction.smul_mem b td)) hw
+  apply all
+  convert! member using 1
+  ext i; change w i+a*v i+b*t i=a*v i+b*t i+w i; ring
+
+end Erdos101CyclicLaws
+
+/- Eliminate arbitrary complex amplitudes in a finite Fourier sum on a
+prime vector space. The zero set is the simultaneous zero set of bounded
+rational sums with affine exponents. The bound is independent of the prime. -/
+namespace Erdos101CyclicElimination
+open Erdos101CyclicLaws Erdos101Cyclotomic Finset
+open scoped Classical
+variable {p : ℕ} [Fact p.Prime]
+
+abbrev Form (p : ℕ) [Fact p.Prime] := (V p →ₗ[F p] F p) × F p
+
+def value (l : Form p) (x : V p) : F p := l.1 x+l.2
+
+def plusConst (l : Form p) (b : F p) : Form p := (l.1,l.2+b)
+
+structure Packet (p : ℕ) [Fact p.Prime] (J : Type) where
+  coeff : J → ℚ
+  freq : J → Form p
+
+variable {J C : Type} [Fintype J]
+
+def total (u : Packet p J) := ∑j,u.coeff j
+
+def run (u : Packet p J) (x : V p) := ∑j,(u.coeff j:ℂ)*chi (value (u.freq j) x)
+
+def cross (u v : Packet p J) (base : V p) : Packet p (Bool × J × J) where
+  coeff t := if t.1 then u.coeff t.2.1*v.coeff t.2.2 else -(u.coeff t.2.1*v.coeff t.2.2)
+  freq t := if t.1 then plusConst (v.freq t.2.2) (value (u.freq t.2.1) base)
+    else plusConst (u.freq t.2.1) (value (v.freq t.2.2) base)
+
+lemma cross_total (u v : Packet p J) (z : V p) : total (cross u v z)=0 := by
+  simp [total,cross,Fintype.sum_prod_type,Finset.sum_neg_distrib]
+
+private lemma chi_add (x y : F p) : chi (x+y)=chi x*chi y := ZMod.stdAddChar.map_add_eq_mul ..
+
+lemma cross_run (u v : Packet p J) (z x : V p) :
+    run (cross u v z) x=run u z*run v x-run v z*run u x := by
+  have expansion (a b : V p) : run u a*run v b=
+      ∑j,∑l,(u.coeff j:ℂ)*(v.coeff l:ℂ)*(chi (value (u.freq j) a)*chi (value (v.freq l) b)) := by
+    unfold run
+    rw [Finset.sum_mul]
+    simp only [Finset.mul_sum]
+    apply Finset.sum_congr rfl; intro j _; apply Finset.sum_congr rfl; intro l _; ring
+  have shift (l : Form p) (b : F p) : value (plusConst l b) x=value l x+b := by simp [value,plusConst,add_assoc]
+  rw [mul_comm (run v z) (run u x),expansion,expansion]
+  simp [run,cross,Fintype.sum_prod_type,shift,chi_add,Finset.sum_neg_distrib,sub_eq_add_neg,mul_comm]
+
+def sizeBound : ℕ → ℕ → ℕ
+  | 0,q => q
+  | n+1,q => max q (sizeBound n (2*q^2))
+
+lemma sizeBound_ge (n q : ℕ) : q ≤ sizeBound n q := by cases n <;> simp [sizeBound]
+
+/-- A simultaneous system of rational character equations with boundedly
+many tests and terms. Each test has zero coefficient sum. -/
+def certified (X : Set (V p)) (tests width : ℕ) : Prop :=
+  ∃ (B K : Type) (_ : Fintype B) (_ : Fintype K), Fintype.card B ≤ tests ∧ Fintype.card K ≤ width ∧
+    ∃ words : B → Packet p K, (∀i,total (words i)=0) ∧ ∀x,x∈X ↔ ∀i,run (words i) x=0
+
+def weighted (S : Finset C) (a : C → ℂ) (w : C → Packet p J) (x : V p) :=
+  ∑i∈S,a i*run (w i) x
+
+private lemma elimination_step (S : Finset C) (a : C → ℂ) (w : C → Packet p J)
+    (i : C) (hi : i∈S) (z : V p) (zero : weighted S a w z=0) (x : V p) :
+    weighted (S.erase i) a (fun j => cross (w i) (w j) z) x=run (w i) z*weighted S a w x := by
+  classical
+  let r (j : C) := cross (w i) (w j) z
+  have e := Finset.sum_erase_add S (fun j => a j*run (r j) x) hi
+  have self : run (r i) x=0 := by rw [show r i=cross (w i) (w i) z from rfl,cross_run]; ring
+  rw [self,mul_zero,add_zero] at e
+  calc
+    _ = ∑j∈S,a j*run (r j) x := e
+    _ = run (w i) z*weighted S a w x-run (w i) x*weighted S a w z := by
+      simp only [weighted,r,cross_run,Finset.mul_sum,←Finset.sum_sub_distrib]
+      apply Finset.sum_congr rfl; intro j _; ring
+    _ = _ := by rw [zero,mul_zero,sub_zero]
+
+/-- Elimination uses one vanishing input as a pivot, and removes one
+complex amplitude at each step. At termination every active rational test
+vanishes on the common zero set. -/
+theorem eliminate (m n q : ℕ) (X : Set (V p)) (S : Finset C) (a : C → ℂ) (w : C → Packet p J)
+    (character : ∀x,x∈X ↔ weighted S a w x=0) (aug : ∀i∈S,total (w i)=0)
+    (height : S.card ≤ n) (length : Fintype.card J ≤ q) (num : S.card ≤ m) : certified X m (sizeBound n q) := by
+  classical
+  induction n generalizing J q S with
+  | zero =>
+    have empty : S=∅ := Finset.card_eq_zero.mp (by omega)
+    refine ⟨S,J,inferInstance,inferInstance,by simpa using num,by simpa [sizeBound] using length,
+      fun i => w i.val,fun i => aug _ i.property,?_⟩
+    intro x; rw [character]; simp [weighted,empty]
+  | succ n ih =>
+    by_cases pivot : ∃z∈X,∃i∈S,run (w i) z≠0
+    · obtain ⟨z,zx,i,hi,nz⟩ := pivot
+      let next (j : C) := cross (w i) (w j) z
+      have rep (x : V p) : x∈X ↔ weighted (S.erase i) a next x=0 := by
+        rw [character,elimination_step _ _ _ _ hi _ ((character z).mp zx),mul_eq_zero]
+        simp [nz]
+      have depth : (S.erase i).card ≤ n := by have := Finset.card_erase_add_one hi; omega
+      have width : Fintype.card (Bool × J × J) ≤ 2*q^2 := by
+        simp only [Fintype.card_prod,Fintype.card_bool,pow_two]
+        exact Nat.mul_le_mul_left _ (Nat.mul_le_mul length length)
+      have res := ih (2*q^2) (S.erase i) next rep (fun j _ => cross_total ..) depth width
+        ((Finset.card_le_card (Finset.erase_subset ..)).trans num)
+      obtain ⟨B,K,ib,ik,bs,ks,u,ut,ux⟩ := res
+      exact ⟨B,K,ib,ik,bs,ks.trans (le_max_right ..),u,ut,ux⟩
+    · push Not at pivot
+      refine ⟨S,J,inferInstance,inferInstance,by simpa using num,length.trans (sizeBound_ge ..),
+        fun i => w i.val,fun i => aug _ i.property,?_⟩
+      intro x
+      constructor
+      · exact fun hx i => pivot _ hx i.val i.property
+      · intro all; apply (character x).mpr
+        exact Finset.sum_eq_zero (fun j hj => by rw [all ⟨j,hj⟩,mul_zero])
+
+end Erdos101CyclicElimination
+
+/- Count genuine collinear triples when their indices satisfy a bounded
+system of rational character equations with affine exponents. -/
+namespace Erdos101CyclicCells
+open Erdos101CyclicLaws Erdos101CyclicElimination Erdos101Cyclotomic EuclideanGeometry Finset
+open scoped Classical
+variable {p : ℕ} [Fact p.Prime] {B J : Type} [Fintype B] [Fintype J]
+
+lemma value_affine (l : Form p) (a : F p) (x y z : V p) :
+    value l (a • (x-y)+z)=a*(value l x-value l y)+value l z := by
+  simp [value]; ring
+
+private def pattern (v : B → Packet p J) (w : V p) :=
+  Finset.univ.filter (fun t : B × J × J => value ((v t.1).freq t.2.1) w=value ((v t.1).freq t.2.2) w)
+
+private def cell (v : B → Packet p J) (w : V p) : AffineSubspace (F p) (V p) where
+  carrier := {z | ∀b i j,value ((v b).freq i) w=value ((v b).freq j) w →
+    value ((v b).freq i) z=value ((v b).freq j) z}
+  smul_vsub_vadd_mem' a x y z hx hy hz := by
+    intro b i j h
+    change value _ (a • (x-y)+z)=value _ (a • (x-y)+z)
+    rw [value_affine,value_affine,
+      hx b i j h,hy b i j h,hz b i j h]
+
+private lemma belongs {v : B → Packet p J} {w z : V p} (same : pattern v w=pattern v z) : z∈cell v w := by
+  intro b i j eq
+  have mem : (b,i,j)∈pattern v w := Finset.mem_filter.mpr ⟨Finset.mem_univ _,eq⟩
+  rw [same] at mem
+  exact (Finset.mem_filter.mp mem).2
+
+/-- A bounded certificate for collinearity, together with a line containing
+four indices and missing two, gives a linear bound for arbitrary samples. -/
+theorem count {f : F p → ℝ²} (inj : Function.Injective f) (rich : richOrbit f)
+    {tests width : ℕ} (cert : certified {x | triple f x} tests width)
+    (D : Finset (V p)) (I : Finset (F p)) (good : ∀w∈D, Function.Injective w ∧ (∀j,w j∈I) ∧ triple f w) :
+    D.card ≤ 2^(tests*width^2)*I.card := by
+  classical
+  obtain ⟨B,J,ib,ij,bs,js,words,aug,character⟩ := cert
+  let codes := D.image (pattern words)
+  have num (c) (hc : c∈codes) : (D.filter (fun x => pattern words x=c)).card≤I.card := by
+    obtain ⟨w,wd,rfl⟩ := Finset.mem_image.mp hc
+    have inside (x) (hx : x∈cell words w) : triple f x := by
+      apply (character x).mpr
+      intro b
+      exact transfer (aug b) ((character w).mp (good w wd).2.2 b) (hx b)
+    obtain ⟨j,proj⟩ := flat_coordinate inj rich (belongs (w:=w) (v:=words) rfl) (good w wd).1 inside
+    apply Finset.card_le_card_of_injOn (fun x => x j)
+    · exact fun x hx => (good x (Finset.mem_filter.mp hx).1).2.1 j
+    · intro x hx y hy eq
+      exact proj (belongs (Finset.mem_filter.mp hx).2.symm) (belongs (Finset.mem_filter.mp hy).2.symm) eq
+  have ceiling : codes.card ≤ 2^(tests*width^2) := by
+    have sub : codes ⊆ (Finset.univ : Finset (B × J × J)).powerset := fun c _ => Finset.mem_powerset.mpr (Finset.subset_univ c)
+    have le := Finset.card_le_card sub
+    simp only [Finset.card_powerset,Finset.card_univ,Fintype.card_prod] at le
+    rw [pow_two width]
+    exact le.trans (Nat.pow_le_pow_right (by decide) (Nat.mul_le_mul bs (Nat.mul_le_mul js js)))
+  calc
+    D.card = ∑c∈codes,(D.filter (fun x => pattern words x=c)).card := Finset.card_eq_sum_card_image ..
+    _ ≤ ∑_∈codes,I.card := Finset.sum_le_sum num
+    _ = codes.card*I.card := by simp
+    _ ≤ _ := Nat.mul_le_mul_right _ ceiling
+
+end Erdos101CyclicCells
+
+/- A uniform four-point line bound on every subset of an injective prime
+Fourier orbit with arbitrary complex amplitudes. -/
+namespace Erdos101CyclicComplex
+open Erdos101CyclicLaws Erdos101Cyclotomic Erdos101CyclicFourier Erdos101CyclicCuts
+open Erdos101CyclicElimination EuclideanGeometry Finset Asymptotics Filter
+open scoped ComplexConjugate Classical Topology
+variable {p k : ℕ} [Fact p.Prime]
+
+def represents (f : F p → ℝ²) (c : Fin k → ℂ) (e : Fin k → F p) :=
+  ∀ x,pack (f x)=∑ j,c j*chi (e j*x)
+
+private lemma pair_sum {f : F p → ℝ²} {c : Fin k → ℂ} {e : Fin k → F p}
+    (rep : represents f c e) (x y : F p) :
+    pair (f x) (f y)=∑ j,∑ l,(c j*conj (c l))*chi (e j*x-e l*y) := by
+  unfold pair
+  rw [rep x,rep y,map_sum,Finset.sum_mul]
+  simp only [map_mul,Finset.mul_sum,chi_sub]
+  apply Finset.sum_congr rfl; intro j _; apply Finset.sum_congr rfl; intro l _; ring
+
+private def coefficient (c : Fin k → ℂ) (t : Term k) :=
+  if t.1 then c t.2.2.1*conj (c t.2.2.2) else -(c t.2.2.1*conj (c t.2.2.2))
+
+private lemma coefficient_zero (c : Fin k → ℂ) : ∑t,coefficient c t=0 := by
+  simp [coefficient,Fintype.sum_prod_type,Finset.sum_neg_distrib]
+
+private lemma char_eq {f : F p → ℝ²} {c : Fin k → ℂ} {e : Fin k → F p}
+    (rep : represents f c e) (w : V p) :
+    triple f w ↔ ∑t,coefficient c t*chi (exponent e w t)=0 := by
+  have range : Set.range (fun i => f (w i))=({f (w 2),f (w 0),f (w 1)} : Set ℝ²) := by
+    ext a; constructor
+    · rintro ⟨i,rfl⟩; fin_cases i <;> simp
+    · rintro (h|h|h)
+      · exact ⟨2,h.symm⟩
+      · exact ⟨0,h.symm⟩
+      · exact ⟨1,h.symm⟩
+  rw [triple,range,geometric]
+  suffices eq : orient (f (w 0)) (f (w 1)) (f (w 2))=∑t,coefficient c t*chi (exponent e w t) by rw [eq]
+  simp [orient,pair_sum rep,coefficient,exponent,Fintype.sum_prod_type,Fin.sum_univ_three,
+    Finset.sum_neg_distrib,show (0+1:Fin 3)=1 by decide,show (1+1:Fin 3)=2 by decide,show (2+1:Fin 3)=0 by decide]
+  abel
+
+private def initial (e : Fin k → F p) (t : Term k) : Packet p Bool where
+  coeff b := if b then 1 else -1
+  freq b := if b then (form e t,0) else (0,0)
+
+private lemma initial_total (e : Fin k → F p) (t : Term k) : total (initial e t)=0 := by
+  simp [total,initial]
+
+private lemma initial_run (e : Fin k → F p) (t : Term k) (x : V p) :
+    run (initial e t) x=chi (exponent e x t)-1 := by
+  simp [run,initial,value,form,chi,sub_eq_add_neg]
+
+theorem certificate {f : F p → ℝ²} {c : Fin k → ℂ} {e : Fin k → F p} (rep : represents f c e) :
+    certified {x | triple f x} (6*k^2) (sizeBound (6*k^2) 2) := by
+  have card : Fintype.card (Term k)=6*k^2 := by simp [Term,pow_two]; ring
+  apply eliminate (S:=Finset.univ) (a:=coefficient c) (w:=initial e)
+  · intro x
+    change triple f x ↔ _
+    rw [char_eq rep]
+    simp only [weighted,initial_run,mul_sub,mul_one,Finset.sum_sub_distrib,coefficient_zero,sub_zero]
+  · exact fun i _ => initial_total ..
+  · simp [card]
+  · simp
+  · simp [card]
+
+def constant (k : ℕ) := 5+2^((6*k^2)*(sizeBound (6*k^2) 2)^2)
+
+/-- A single constant works for every prime, sampling density, choice of
+frequencies and complex amplitudes for this fixed number of Fourier terms. -/
+theorem four_bound {f : F p → ℝ²} (inj : Function.Injective f) {c : Fin k → ℂ}
+    {e : Fin k → F p} (rep : represents f c e) (I : Finset (F p)) :
+    (linesWithPointsFor 4 (↑(I.image f) : Set ℝ²)).ncard ≤ constant k*I.card := by
+  apply Erdos101CyclicCount.from_triples inj
+  intro rich D good
+  exact Erdos101CyclicCells.count inj rich (certificate rep) D I (fun w hw =>
+    ⟨(good w hw).1,(good w hw).2.2.1,(good w hw).2.2.2⟩)
+
+/-- The prime, frequencies, complex amplitudes and indices may all change
+from one configuration to the next. -/
+def covered (S : Finset ℝ²) (k b : ℕ) := ∃ (p : ℕ) (hp : p.Prime),
+  letI : Fact p.Prime := ⟨hp⟩
+  ∃ (f : F p → ℝ²) (c : Fin k → ℂ) (e : Fin k → F p) (I : Finset (F p)),
+    Function.Injective f ∧ represents f c e ∧ I.image f⊆S ∧ (S\I.image f).card≤b
+
+theorem near_bound {S : Finset ℝ²} {k b : ℕ} (h : covered S k b) :
+    (linesWithPointsFor 4 (S : Set ℝ²)).ncard ≤ (constant k+b)*S.card := by
+  obtain ⟨p,hp,rest⟩ := h
+  let _ : Fact p.Prime := ⟨hp⟩
+  obtain ⟨f,c,e,I,inj,rep,sub,num⟩ := rest
+  have inside := four_bound inj rep I
+  rw [←Erdos101Melchior.count_eq] at inside ⊢
+  have size : I.card≤S.card := (Finset.card_image_of_injective I inj) ▸ Finset.card_le_card sub
+  exact (Erdos101CyclicNear.delete_points sub).trans (by
+    rw [Nat.add_mul]; exact Nat.add_le_add (inside.trans (Nat.mul_le_mul_left _ size)) (Nat.mul_le_mul_right _ num))
+
+/-- For a fixed term count, the little-o conclusion survives arbitrary
+changes in coefficients and a sublinear number of exceptional points. -/
+theorem littleO (k : ℕ) (S : ℕ → Finset ℝ²) (b : ℕ → ℕ) (size : ∀n,(S n).card≤n)
+    (cover : ∀n,covered (S n) k (b n))
+    (outliers : (fun n => (b n:ℝ)) =o[atTop] (fun n => (n:ℝ))) :
+    (fun n => ((linesWithPointsFor 4 (S n : Set ℝ²)).ncard : ℝ)) =o[atTop] (fun n => (n:ℝ)^2) := by
+  apply IsLittleO.of_bound
+  intro ε ep
+  let r := ε/2
+  have rp : 0<r := by dsimp [r]; positivity
+  obtain ⟨N,hN⟩ := exists_nat_gt ((constant k:ℝ)/r)
+  filter_upwards [eventually_ge_atTop N,outliers.bound rp] with n hn hb
+  have castN : (N:ℝ)≤n := by exact_mod_cast hn
+  have coeff : (constant k:ℝ)≤r*(n:ℝ) := ((div_lt_iff₀ rp).mp hN).le.trans
+    ((mul_le_mul_of_nonneg_right castN rp.le).trans_eq (mul_comm ..))
+  change ‖(b n:ℝ)‖≤r*‖(n:ℝ)‖ at hb
+  rw [Real.norm_of_nonneg (Nat.cast_nonneg _),Real.norm_of_nonneg (Nat.cast_nonneg _)] at hb
+  rw [Real.norm_of_nonneg (Nat.cast_nonneg _),Real.norm_of_nonneg (sq_nonneg _)]
+  have h := (near_bound (cover n)).trans (Nat.mul_le_mul_left _ (size n))
+  have lin : (constant k:ℝ)+b n≤ε*n := by dsimp [r] at hb coeff; linarith
+  calc
+    _ ≤ ((constant k:ℝ)+b n)*n := by exact_mod_cast h
+    _ ≤ (ε*n)*n := mul_le_mul_of_nonneg_right lin (Nat.cast_nonneg _)
+    _ = _ := by ring
+
+end Erdos101CyclicComplex
