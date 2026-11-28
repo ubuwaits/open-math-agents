@@ -889,5 +889,10 @@ the choices 11 and 13 require ℓ≡1 modulo 15 or a split within
 eleven steps. At v≥16 the three choices 11,13,19 require ℓ≡1
 modulo 45 or a split within seventeen steps. The short residue
 cycles are kernel-checked in FixedCoreGaps.short_shift_moduli.
-A split is permissible in a completion, so the congruences alone
-give no bound on the size of ℓ.
+The theorem order_of_unbranched_roots also checks the implication from
+all the prime chains to the divisibility of ℓ−1 in the Lean kernel.
+If ℓ>c, the first split contains at least two distinct prime factors.
+Indeed the odd part at that split exceeds 2ℓ, whereas a power of just
+one repeated base in the odd-part balance is at most c and an ordinary
+prime can occur only once. A split is permissible in a completion,
+so the congruences alone give no bound on the size of ℓ.

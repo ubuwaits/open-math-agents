@@ -407,6 +407,15 @@ def large_fermat_mersenne_pairs():
                                   bit_cap=320, node_cap=16000, sharpen_tail=True)
         assert result is not None, bases
         results.append(result)
+    # Here the weaker outside mass bound from Theorem 15 already suffices.
+    lower = 2*(1-Fraction(4,1 << 76))*(1-Fraction(1,1 << 100))/(1+Fraction(1,1 << 256))
+    for size in range(3):
+        for extra in combinations(((1 << 31)-1, m), size):
+            bases = (8191,131071,524287)+extra
+            result = exclude_interval(lower, Fraction(2), bases, required,
+                                      bit_cap=320, node_cap=16000, sharpen_tail=True)
+            assert result is not None, bases
+            results.append(result)
     # These Fermat-base shifts force other repeated primes at the indicated valuations.
     witnesses = {4:4365089, 5:1409, 6:641, 9:70657, 10:341114881,
                  11:730882049, 12:4513793, 15:3604481, 17:786433,

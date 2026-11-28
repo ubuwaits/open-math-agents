@@ -2249,6 +2249,13 @@ for the base 2 is 32. Hence h=16. Theorem 15 leaves precisely
 the two asserted possibilities for its partner. Existence at either
 pair remains open.
 
+If 8191,131071,524287 are all repeated, 65537 must also be repeated
+under the weaker assumption t≤2^−76 of Theorem 15. Otherwise the only
+other permitted members of P₀ are 2^31−1 and 2^61−1. The required
+simple primes remain the same since 8191 is repeated. For each of
+the four choices, the interval from section 25 is excluded in 48
+nodes, allowing arbitrary powers of every retained base.
+
 There is a further restriction on f, the exponent of 65537, throughout
 the sparse case. In the following table the prime q divides
 65537^(2^v)+1, so q must occur whenever v₂(f)=v.

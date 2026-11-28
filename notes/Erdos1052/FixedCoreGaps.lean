@@ -107,4 +107,52 @@ theorem short_shift_moduli :
     coversBinaryShifts 11 ∧ coversBinaryShifts 13 ∧ coversBinaryShifts 19 := by
   decide +kernel
 
+/-- A nonzero residue breaks the descending prime chain in its first s-2 shifts. -/
+theorem divisor_of_prime_shifts {s u : ℕ} (hs : 1 < s) (hu : s < 1+u)
+    (hc : coversBinaryShifts s = true)
+    (hp : ∀ j < s-1, (1+2^j*u).Prime) : s ∣ u := by
+  by_contra hn
+  have hr : u%s ≠ 0 := by
+    intro hz
+    exact hn (Nat.dvd_of_mod_eq_zero hz)
+  have hmod := Nat.mod_lt u (show 0 < s by omega)
+  have hmem : u%s ∈ List.range' 1 (s-1) := by rw [List.mem_range'_1]; omega
+  obtain ⟨j,hj,hz⟩ := List.any_eq_true.mp (List.all_eq_true.mp hc (u%s) hmem)
+  have hz' : (1+2^j*(u%s))%s = 0 := beq_iff_eq.mp hz
+  have hcongr : (1+2^j*u)%s = (1+2^j*(u%s))%s := by
+    simp [Nat.add_mod, Nat.mul_mod]
+  have hd := Nat.dvd_of_mod_eq_zero (hcongr.trans hz')
+  have hle : u ≤ 2^j*u := Nat.le_mul_of_pos_left u (by positivity)
+  rcases (Nat.dvd_prime (hp j (List.mem_range.mp hj))).mp hd with h | h <;> omega
+
+/-- If every root is one modulo s, its product A is one there. The seed
+identity then forces the multiplicative order of Y to divide ℓ-1. -/
+theorem seed_order_dvd {s : ℕ} [Fact s.Prime] {Y A : ZMod s} {ℓ : ℕ}
+    (hY : Y ≠ 0) (hℓ : 0 < ℓ) (hA : A = 1)
+    (hseed : A*(Y+1) = Y^ℓ+1) : orderOf Y ∣ ℓ-1 := by
+  obtain ⟨k,rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : ℓ ≠ 0)
+  rw [hA,one_mul,pow_succ] at hseed
+  have hm : Y^k*Y = 1*Y := by linear_combination -hseed
+  simpa using orderOf_dvd_of_pow_eq_one (mul_right_cancel₀ hY hm)
+
+/-- All short prime chains from a product of roots impose the same order condition,
+independently of the number of roots. -/
+theorem order_of_unbranched_roots {s ℓ : ℕ} [Fact s.Prime] {Y : ZMod s}
+    (hs : 1 < s) (hY : Y ≠ 0) (hℓ : 0 < ℓ) (hc : coversBinaryShifts s = true)
+    (roots : List ℕ)
+    (hseed : (roots.prod : ZMod s)*(Y+1) = Y^ℓ+1)
+    (hchains : ∀ r ∈ roots, ∃ u : ℕ, r=1+2^(s-2)*u ∧ s<1+u ∧
+      ∀ j < s-1, (1+2^j*u).Prime) : orderOf Y ∣ ℓ-1 := by
+  apply seed_order_dvd hY hℓ _ hseed
+  have root_one (r : ℕ) (hr : r ∈ roots) : (r : ZMod s) = 1 := by
+    obtain ⟨u,rfl,hu,hp⟩ := hchains r hr
+    have hzero := (ZMod.natCast_eq_zero_iff u s).2 (divisor_of_prime_shifts hs hu hc hp)
+    simp [hzero]
+  clear hseed hchains
+  induction roots with
+  | nil => simp
+  | cons r rs ih =>
+    rw [List.prod_cons,Nat.cast_mul,root_one r (by simp),one_mul]
+    exact ih (fun q hq => root_one q (by simp [hq]))
+
 end Erdos1052.FixedCoreGaps
