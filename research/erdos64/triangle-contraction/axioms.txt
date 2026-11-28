@@ -1,0 +1,8 @@
+'Erdos64TriangleExpansion.triangle_lengths' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TriangleExpansion.double_of_half' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TriangleExpansion.vertex_cover_doubles' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TriangleExpansion.single_vertex_lengths' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64CubicTriangle.triangle_exits' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64CubicTriangle.bridges_project' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64CubicTriangle.contract_triangle' depends on axioms: [propext, Classical.choice, Quot.sound]
+'OMA.R_Erdos64_erdos_64_R1_H1_R1_H1_R2.main' depends on axioms: [propext, Classical.choice, Quot.sound]
