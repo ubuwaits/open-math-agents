@@ -131,4 +131,97 @@ theorem complement_charges :
     1/(2*65537:ℚ) + 1/137089 + 1/274177 + 1/(2*67280421310721)
        + 1/(2:ℚ)^16 < 9/(2:ℚ)^18 := by norm_num
 
+/-- A Mersenne start with two available copies has at most two distinct singleton jumps. -/
+theorem cubefree_start_costs {x : ℚ} (hx : 0 ≤ x) (hm : x ≤ 1/65536) :
+    (5/4)*x/(1-x)+x/100 ≤ (13/10)*x ∧
+    x/(16*(1-x))+x/100 ≤ (3/40)*x := by
+  have hsq := mul_le_mul_of_nonneg_right hm hx
+  constructor
+  · rw [← le_sub_iff_add_le, div_le_iff₀ (by linarith : 0 < 1-x)]
+    nlinarith
+  · rw [← le_sub_iff_add_le, div_le_iff₀ (by linarith : 0 < 16*(1-x))]
+    nlinarith
+
+/-- A bound for the necessary group loss, allowing any finite collection of bases. -/
+theorem cubefree_required_loss {y S U z : ℚ} (hy : 0 < y) (hs : y ≤ 1/65536)
+    (hm : S ≤ (37/48)*y) (hu : 1-S ≤ U) (hU : U ≤ 1)
+    (hz : 0 ≤ z) (hz' : z ≤ y^2) :
+    1+z < (1+y)*U ∧ y-S-3*y^2 ≤ 1-(1+z)/((1+y)*U) := by
+  let w := (1+y)*U-1
+  have hyS : y*S ≤ y^2 := by
+    nlinarith [mul_le_mul_of_nonneg_left (show S ≤ y by linarith) hy.le]
+  have hlow : y-S-y^2 ≤ w := by
+    dsimp [w]
+    nlinarith [mul_le_mul_of_nonneg_left hu (show 0 ≤ 1+y by linarith)]
+  have hhigh : w ≤ y := by
+    dsimp [w]
+    nlinarith [mul_le_mul_of_nonneg_left hU (show 0 ≤ 1+y by linarith)]
+  have hzw : z < w := by nlinarith [mul_le_mul_of_nonneg_right hs hy.le]
+  have hw : 0 ≤ w := by linarith
+  have he : (1+y)*U = 1+w := by dsimp [w]; ring
+  rw [he]
+  constructor
+  · linarith
+  · have hw2 : w^2 ≤ y^2 := by nlinarith [mul_self_le_mul_self hw hhigh]
+    calc
+      y-S-3*y^2 ≤ w-w^2-z := by linarith
+      _ ≤ 1-(1+z)/(1+w) := by
+        rw [le_sub_comm, div_le_iff₀ (by linarith : 0 < 1+w)]
+        nlinarith [mul_nonneg (sq_nonneg w) hw, mul_nonneg hz hw]
+
+/-- The upper and lower coefficients in the five small-mass cases are disjoint. -/
+theorem cubefree_loss_gaps {y : ℚ} (hy : 0 < y) (hs : y ≤ 1/65536) :
+    (2275/3072)*y < (1-1/12)*y-3*y^2 ∧
+    y/3 < (1-1/3)*y-3*y^2 ∧
+    (17/32+1/48+13/80)*y < (1-13/48)*y-3*y^2 ∧
+    (1/3+3/80)*y < (1-25/48)*y-3*y^2 ∧
+    (1/48+3/80+13/80)*y < (1-37/48)*y-3*y^2 := by
+  have hy2 := mul_le_mul_of_nonneg_right hs hy.le
+  refine ⟨?_,?_,?_,?_,?_⟩ <;> nlinarith
+
+/-- Count disjoint layers requiring one full charge at some prime.
+For the Mersenne bound a charge has size three at a Mersenne prime and one elsewhere. -/
+theorem count_charged_layers {ι α : Type*} (layers : Finset ι) (primes : Finset α)
+    (used : ι → α → ℕ) (stock cost : α → ℕ)
+    (positive : ∀ p ∈ primes, 0 < cost p)
+    (budget : ∀ p ∈ primes, ∑ i ∈ layers, used i p ≤ stock p)
+    (charge : ∀ i ∈ layers, ∃ p ∈ primes, cost p ≤ used i p) :
+    layers.card ≤ ∑ p ∈ primes, stock p / cost p := by
+  calc
+    layers.card = ∑ _i ∈ layers, 1 := by simp
+    _ ≤ ∑ i ∈ layers, ∑ p ∈ primes, used i p / cost p := by
+      apply Finset.sum_le_sum
+      intro i hi
+      obtain ⟨p,hp,h⟩ := charge i hi
+      have hone : 1 ≤ used i p / cost p := by
+        apply (Nat.le_div_iff_mul_le (positive p hp)).mpr
+        simpa using h
+      exact hone.trans (Finset.single_le_sum (f := fun q => used i q / cost q)
+        (fun _ _ => Nat.zero_le _) hp)
+    _ = ∑ p ∈ primes, ∑ i ∈ layers, used i p / cost p := Finset.sum_comm
+    _ ≤ ∑ p ∈ primes, stock p / cost p := by
+      apply Finset.sum_le_sum
+      intro p hp
+      apply (Nat.le_div_iff_mul_le (positive p hp)).mpr
+      rw [Finset.sum_mul]
+      exact (Finset.sum_le_sum fun i _ => Nat.div_mul_le_self (used i p) (cost p)).trans
+        (budget p hp)
+
+/-- A Fermat contribution beginning at scale 2^(-4h) preserves the near-one gaps. -/
+theorem mixed_tail_gaps {y l s : ℚ} (hy : 0 < y) (hs : y ≤ 1/65536)
+    (hl : l+1/120 ≤ 1-s) :
+    (1+y)*(1+5*y^4) < 1+y+y^2/2 ∧ l*y+4*y^4 < (1-s)*y-3*y^2 := by
+  have hsq := mul_self_le_mul_self hy.le (show y ≤ 1/8 by linarith)
+  have hfour := mul_le_mul_of_nonneg_right hsq (sq_nonneg y)
+  have htwo := mul_le_mul_of_nonneg_left (show 1+y ≤ 2 by linarith)
+    (show 0 ≤ 5*y^4 by positivity)
+  constructor
+  · nlinarith [sq_pos_of_pos hy]
+  · nlinarith [mul_le_mul_of_nonneg_right hl hy.le,
+      mul_le_mul_of_nonneg_right hs hy.le]
+
+/-- A negative contribution at least eight times the first positive scale forces scale two. -/
+theorem mixed_first_negative {x : ℚ} (hx : 0 < x) : (1+x)*(1-8*x) < 1-4*x := by
+  nlinarith [sq_nonneg x]
+
 end Erdos1052.MersenneMass

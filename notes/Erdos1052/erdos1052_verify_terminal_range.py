@@ -37,7 +37,8 @@ def possible_prime(q):
     return all(pow(b,q-1,q)==1 for b in (2,7,11))
 
 
-def verify_interval(p, low, high, required, forbidden, copies=1):
+def verify_tokens(initial, low, high, required, forbidden):
+    """Use the supplied finite stock of odd factors at the start of the search."""
     nodes = 0
     def visit(previous, tokens, partial, missing):
         nonlocal nodes
@@ -60,16 +61,55 @@ def verify_interval(p, low, high, required, forbidden, copies=1):
             while shift <= ceiling+1:
                 q = shift-1
                 shift *= 2
-                if q==p or q in forbidden or (q not in (3,5) and q%3!=1) or not possible_prime(q):
+                if q in forbidden or (q not in (3,5) and q%3!=1) or not possible_prime(q):
                     continue
                 new_tokens = tuple(x for i,x in enumerate(tokens) if not mask & (1<<i))+(q,)
                 new_missing = missing[1:] if missing and missing[0]==q else missing
                 if not visit(q,new_tokens,partial*Fraction(q+1,q),new_missing):
                     return False
         return True
-    if not visit(1,(p,)*copies,Fraction(1),required):
-        raise ArithmeticError(f"Unresolved interval at {p}, {required}, {low}, {high}")
+    if not visit(1,initial,Fraction(1),required):
+        raise ArithmeticError(f"Unresolved interval at {initial}, {required}, {low}, {high}")
     return nodes
+
+
+def verify_interval(p, low, high, required, forbidden, copies=1):
+    return verify_tokens((p,)*copies,low,high,required,set(forbidden) | {p})
+
+
+def verify_cubefree_residuals(*, mixed=False):
+    """Independently enumerate the required windows with at most two copies per base."""
+    from itertools import product
+
+    primes = [2**k-1 for k in (13,17,19,31,61)]
+    if mixed:
+        primes.append(65537)
+    windows = tuple(block_intervals())
+    error = Fraction(1,2**(75 if mixed else 76))
+    checks = nodes = 0
+    for counts in product((0,1,2),repeat=len(primes)):
+        tokens = tuple(p for p,e in zip(primes,counts) for _ in range(e))
+        small = frozenset(tokens)
+        powers = tuple(p-1 if p == 65537 else p+1 for p in tokens)
+        mass = sum(Fraction(1,v) for v in powers)
+        center = Fraction(prod(tokens),prod(powers))
+        for h in (16,64):
+            y = Fraction(1,2**h)
+            if h == 16 and not mixed and mass+error < y:
+                continue
+            if h == 64 and mixed and not small:
+                continue
+            for scale in ((1,2) if mixed else (2,)):
+                low = scale*center*(1-error)**2
+                if h == 16:
+                    low *= (1+y)/(1+y**3)
+                high = scale*center*(1+y)/(1-error if mixed else 1)
+                for on,off,left,right in windows:
+                    lower,upper = max(left,low),min(right,high)
+                    if lower < upper and small.isdisjoint(on):
+                        nodes += verify_tokens(tokens,lower,upper,on,off | small)
+                        checks += 1
+    return checks,nodes
 
 
 def verify_mersenne_squares():
@@ -131,6 +171,10 @@ def verify_range():
 
 
 if __name__ == "__main__":
+    assert verify_cubefree_residuals() == (1080,198910)
+    print("Verified 1080 cubefree Mersenne intervals", flush=True)
+    print("Verified mixed residual intervals and nodes", *verify_cubefree_residuals(mixed=True),
+          flush=True)
     squares = [row for rows in verify_mersenne_squares().values() for row in rows]
     assert (len(squares),sum(x for x,_ in squares),sum(y for _,y in squares)) == (18,3347,832)
     print("Verified squared residual intervals", len(squares), flush=True)

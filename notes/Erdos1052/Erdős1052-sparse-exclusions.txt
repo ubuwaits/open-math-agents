@@ -91,6 +91,24 @@ divide c. In the latter case, if 8191 is absent, c cannot contain both
 are Mersenne or Fermat, for arbitrary core exponents. For instance
 there is no completion at c=65537^u·524287^v for any u,v≥2.
 
+Theorem 16. At a sparse core, no nonempty residual divisor made entirely
+of Mersenne primes to exponents one or two can support a completion.
+There is no restriction on the number or sizes of its prime factors.
+Each distinct odd prime dividing a requires its own non-Mersenne core
+factor or three copies of one Mersenne prime in the residual divisor.
+Section 26 proves the resulting counting inequality.
+
+Theorem 17. If the quotient (2^(hℓ)+1)/(2^h+1) for a sufficiently
+large prime ℓ|b has three prime factors, a descending shift splits
+at every permitted height h. For h≥256 a split occurs within 2h+40
+binary positions. Section 27 gives the finite uniform certificate.
+
+Theorem 18. Suppose a nonempty residual divisor is cubefree and all its
+prime factors are one unit from a power of two. A completion requires
+both a Fermat prime 2^(2^j)+1 with j≥33 and a Mersenne prime 2^k−1
+with k≥2^32−1. Also h≥2^32. Each first-layer group separately needs
+both types of prime. Section 28 gives the proof.
+
 1. Input from the order and small-prime arguments
 
 We use the following earlier sparse-core conclusions. All sparse
@@ -1929,3 +1947,257 @@ bound is automatic. The missing Mersenne exponents are at least 79,
 and the missing Fermat exponents at least 128, since 2^32+1 and
 2^64+1 have proper factors. The two reciprocal tails have total less
 than 2^−76 by the geometric bounds in section 17.
+
+26. Residual products of Mersenne primes with multiplicities at most two
+
+Consider the group of A=(2^a+1)/(2^h+1), or the first-layer group
+A=(2^(hℓ)+1)/(2^h+1) for an odd prime ℓ|b. Write a' for a or hℓ
+respectively, D' for the group's terminal divisor and B for its
+simple-prime abundancy. Suppose a'>h and every prime factor of D'
+is Mersenne and has multiplicity at most two. The first-layer charge
+excludes D'=1, also for the entire quotient with b>1.
+
+For p=2^k−1 dividing D' put x_p=2^(−k) and e_p=ν_p(D'). Set
+S=Σ e_p x_p, U=∏(1−x_p)^e_p, y=2^(−h) and z=2^(−a')≤y³.
+All k are odd primes at least 13. The group identity makes B the
+unique dyadic multiple of (1+y)U/(1+z) in [1,2). We have
+1−S≤U≤1/(1+S) and S≤2Σ_(odd k≥13)2^(−k)=1/3072.
+
+Suppose first S≥y. Then B=2U(1+y)/(1+z). By section 17 the only
+possible k below 79 are 13,17,19,31,61. Call the corresponding product
+of factors (1−x_p)^e_p V and their weighted sum S₀. For the remaining
+bases, both Σ e_p x_p and Σ e_p/p are strictly below ε=2^−76. Summing
+4·2^(−k) over all integers k≥79 already gives ε. Delete the vertices
+using these larger bases and their successors as in section 20. The
+reciprocal loss is at most Σ e_p/p, and all compulsory block members
+survive. The retained product is at least 2V(1−ε)² times (1+y)/(1+y³)
+at h=16, or times 1 for h≥64. It is strictly below 2V(1+2^−16) or
+2V(1+2^−64) respectively. At h=16 omit S₀+ε<2^−16.
+
+Enumerate the three possible multiplicities of each of the five
+small bases. Intersect these intervals with each compatible allocation
+of section 8, requiring its included primes and forbidding the others.
+Two verifiers close all 1080 nonempty tests. cubefree_certificate uses
+the smooth tail, with 43,302 search nodes. verify_cubefree_residuals
+independently uses individual factor tokens and the geometric tail,
+with 198,910 nodes. Both use exact integer and rational arithmetic.
+
+It remains to treat S<y. Every k exceeds h, since k and h have
+different parity. Put Y=2^h, r=2Y−1 and t=8Y−1. If r divides D', it
+occurs only once. The cases below give S≤37y/48, so 1<B<1+y and all
+ordinary primes in the group exceed Y. Indeed, with w=(1+y)U−1,
+one has y−S−y²≤w≤y and w>z. The reciprocal loss L=1−1/B satisfies
+
+    L ≥ w−w²−z ≥ y−S−3y².
+
+The first difference after multiplication by 1+w is w³+wz≥0.
+To upper-bound the loss use the increasing paths of section 20.
+For starts with odd shift part equal to p, the jump is odd since p
+and the starting vertex are 1 modulo 3. There are at most two such
+starts per p and their jumps are distinct. Their combined loss is
+therefore at most 1/p+1/(4p). When p=r occurs in D', it has a single
+copy. Jumps one and three are impossible by the divisibilities by
+11 and 13 in section 20, so its singleton start costs at most 1/(16p).
+The roots spending at least two core factors, counted with repetition,
+cost in total at most T/100 with T=Σ x_p, by section 20. Distribute
+this allowance as x_p/100 to each p. Since x_p≤1/65536, the resulting
+allowances per base are
+
+    (5/4)/p+x_p/100 ≤ (13/10)x_p,
+       1/(16p)+x_p/100 ≤ (3/40)x_p    when p=r is used once.
+
+A base in D' cannot be an ordinary start. For candidate starting
+exponents h+7,h+9,... its removed allowance 2x_p covers its whole
+charge. With unrestricted starts from h+3 onwards the same accounting
+applies there. When r is ordinary, or is a core base, h+1 is prime.
+Then h is a positive power of 16, h+5 is a multiple of 3, and the
+sharper path bounds in (13) apply. The sum of 2x_p over all odd
+candidate exponents starting at h+7 is y/48.
+
+The second column bounds S/y and the third bounds L/y from above.
+
+    least exponent k and presence of r,t         S/y             L/y
+    k≥h+5                                        1/12            2275/3072
+    k=h+3, r is not ordinary                     1/3             1/3
+    k=h+3, r is ordinary                         13/48           17/32+1/48+13/80
+    k=h+1, t does not divide D'                  25/48           1/3+3/80
+    k=h+1, t divides D'                          37/48           1/48+3/80+13/80
+
+For the first row sum the geometric series for e_p≤2. If r is
+ordinary, (13) covers all charges, and otherwise the neutral budget
+y/3 covers them. The second row uses all odd exponents at least
+h+3. In the third row t is a core base and its allowance is
+(13/10)y/8. The ordinary r path costs 17y/32. Only exponents at
+least h+7 remain, since h+5 is composite. In the last two rows r is
+a core base with one copy and costs (3/40)y/2. If t is another core
+base it costs at most (13/10)y/8. If it is not, reserve the full
+neutral budget from h+3 onwards. The same lists of exponents give
+the stated mass bounds. For each row with entries s,l one has
+ly<(1−s)y−3y² for 0<y≤1/65536. This contradicts the required loss.
+
+For the entire variable group, b=1 would give A=1 and D'=1 by
+descending cancellation. This proves the exclusion at nonempty D'.
+For a general residual D, the first-layer groups for distinct odd
+primes ℓ|b are disjoint and their terminal divisors have product
+dividing D. Each requires a non-Mersenne prime factor or at least
+three copies of a single Mersenne prime. Consequently
+
+    ω(b) ≤ Σ_(p|D, p non-Mersenne) ν_p(D)
+           + Σ_(p|D, p Mersenne) floor(ν_p(D)/3).
+
+The certificate functions are in erdos1052_mersenne_mass.py and
+erdos1052_verify_terminal_range.py. The Lean lemmas cubefree_start_costs,
+cubefree_required_loss and cubefree_loss_gaps in MersenneMass.lean
+check the arithmetic of the small-mass comparison. count_charged_layers
+proves the summation of the separate charges in Lean. The passage from
+unitary perfection to the path bounds uses the written arguments.
+
+27. An early split for three top prime factors at every permitted height
+
+Use B≥max(181,c) and C_B=c∏_(odd primes s≤B)s, as in section 18.
+Take H=85,154,267 for h=16,64,128, respectively, and H=2h+40 for
+h≥256. Suppose ℓ|b is prime with ℓ>max(2^h+1,2^H C_B), and
+(2^(hℓ)+1)/(2^h+1) has exactly three prime factors. They are
+distinct. On at least one descending path there is a prime Q with
+two distinct odd prime divisors of Q+1, at least one exceeding B.
+The shift valuations up to and including Q add to at most H. In
+particular Q≥(2hℓ+1)/2^H. Section 18 covers the three small heights.
+
+For h≥256 suppose no such split occurs. Section 18 gives p_i=1+2^m u_i
+at the three roots, m=h−2, with m initial zero bits on each word.
+At every completed edge the odd shift part is a single further large
+prime. The digit test of section 18 therefore applies. Use the primes
+5,7,11,13,19,29,37,61,181. Except at 7, two is a primitive root and
+s−1≤254≤m, so u_i is zero modulo that sieving prime. Modulo 7 it
+is in {0,1,2,4}. Since ℓ≡1 mod 3 under the no-split assumption
+and 2^h has order 3 modulo 7, ∏p_i≡1 modulo 7. Also 2^m mod 7 is
+1 or 4. There are seven unordered residue triples satisfying at
+least one of these two product tests. Allow all seven at every height.
+
+Write Z=2^m. The first two coefficients of
+
+    ((1+4Z)∏(1+Z u_i)−1)/Z
+
+are 4+Σu_i and Z(Σ_(i<j)u_i u_j+4Σu_i). The rest is divisible
+by Z². The displayed number must vanish modulo 2^(hℓ−m) by the
+root product identity. Read the first m binary columns of 4+Σu_i.
+The state carries the integer carry, three digit states, and the low
+56 bits of each u_i. Start the carry at 4. A row of bits x_i is
+eligible if carry+Σx_i is even and each word permits its bit. Divide
+that sum by two for the next carry. Sort entire word states together
+to remove permutations.
+
+After 56 positions the same transition acts at every step. The full
+sets of states at 3000 and 4260 are equal, so every subsequent set
+has period 1260. The actual positions start at m=254 and advance by
+m↦2m+2. Reduce positions at least 3000 into [3000,4259]. At each
+of the resulting phases start the next addition with the previous
+carry plus Σ_(i<j)a_i a_j+4Σa_i modulo 2^56, using the three retained
+low parts a_i. This is valid since m≥254. The following are the
+numbers of additional bits until the entire eligible set is empty.
+
+    phase  254  510 1022 2046 3030 3150 3306 3542
+    bits    21   17   40   44   20   25   44   40
+    phase 3782 3786 3794 3810 3842 3906 4034 4094
+    bits    25   22   25   27   30   28   30   29
+
+Thus 2m+44=2h+40 original positions suffice in every case.
+uniform_three_prime_check in erdos1052_pair_chains.py verifies the
+set equality and the complete phase cycle with exact integer
+operations. PairChains.three_additions checks the product expansion
+in Lean. Direct multiplication independently gives empty levels at
+529 and 1037 bits for h=256 and h=512. The split can still spend a
+factor at most B, and the result allows quotients with four or more
+prime factors.
+
+28. Cubefree residuals containing both Mersenne and Fermat primes
+
+Use the entire quotient or any first-layer group of section 26, with
+nonempty terminal divisor D'. Suppose its prime bases are all one unit
+from a power of two and each occurs at most twice. Sections 15 and 26
+exclude the cases of Fermat bases alone and Mersenne bases alone. Thus
+both occur. Write U for the normalized Mersenne product of section 26,
+G=∏_(q=2^t+1|D')(1+2^(−t))^ν_q(D') for the normalized Fermat product,
+and B for the group's abundancy. The possible normalizations of
+UG(1+y)/(1+z) have scale 1 or 2. Indeed the Mersenne mass is at most
+1/3072 and the Fermat mass Σν_q(D')2^(−t) is at most 2^−14.
+
+First either h≥64 and none of 8191,65537,131071,524287,2^31−1,2^61−1
+divides D', or the group is impossible. To prove this, retain exactly
+the bases in that list and enumerate their multiplicities in {0,1,2}.
+Call the product of their normalized factors V. Every other Mersenne
+exponent is at least 79. Since F₅ and F₆ are composite, every other
+Fermat exponent t is at least 128. The total of e/p over all omitted
+bases and their corresponding total dyadic mass are each below
+ε=2^−75. Thus the omitted normalized product lies between 1−ε and
+1/(1−ε). Deleting paths that spend these bases costs at most ε in
+reciprocal loss. All required primes in the small blocks survive.
+
+At each scale λ=1,2 use the lower bound λV(1−ε)², multiplied at h=16
+by (1+y)/(1+y³), and the strict upper bound λV(1+y₀)/(1−ε) with
+y₀=2^−16 or 2^−64 for the two height ranges. Intersect with all
+compatible block allocations. Include every subset at h=16 and every
+nonempty subset for h≥64. All 3534 nonempty tests close. The two
+independent verifiers take 92,507 and 451,985 nodes respectively.
+These counts are reproduced by cubefree_certificate(mixed=True)
+and verify_cubefree_residuals(mixed=True).
+
+In the surviving range every base is large, so scale 2 is impossible.
+It would give B>2(1−ε). Each of 3,5,7,19,223 would have to belong
+to this group, since otherwise its contribution in the complement
+would exceed the available factor 2/B. All five survive deleting
+every core-using path. The retained neutral product would exceed
+2(1−ε)²>2−2^−35, contrary to the neutral gap in section 3.
+
+Let t be the smallest exponent among the Fermat bases. We show t≤2h.
+Suppose t≥4h. Now the total Fermat mass and the sum of multiplicities
+divided by their bases are at most 4y⁴. Hence G≤1/(1−4y⁴)≤1+5y⁴.
+If the Mersenne mass S is at least y, then
+
+    1/U ≥ 1+S+S²/2 ≥ 1+y+y²/2 > (1+y)(1+5y⁴).
+
+For the first inequality expand each 1/(1−x) through x², with a
+separate factor for each copy. The quadratic terms have sum at least
+S²/2. This puts the unscaled product below one, forcing the excluded
+scale 2.
+
+If S<y, the five rows of section 26 still apply up to an additional
+4y⁴ of loss. In detail the normalized group has scale 1, and its
+lower loss bound y−S−3y² persists since G≥1. Its product is below
+(1+y)(1+5y⁴)<1+2y. Every ordinary prime in the group exceeds Y=1/y:
+otherwise the smallest one has no possible core factor in its shift,
+since all Mersenne exponents exceed h and t≥4h. It must be a Mersenne
+prime at most Y/2−1, since Y−1 is composite. That one prime would
+already exceed the upper bound for the product. The path estimates for
+Mersenne starts now apply unchanged, including their impure edges.
+Charge any additional path starting with a Fermat factor q at most
+1/q to one of its copies. This costs at most 4y⁴. The table entries
+s,l have l+1/120≤1−s in every row, hence
+
+    ly+4y⁴ < (1−s)y−3y²
+
+for 0<y≤1/65536. This contradicts the required loss. Since t,h are
+both powers of two, the exclusion t≥4h proves t≤2h.
+
+There is also a lower bound for every Mersenne exponent k in D'.
+Put H=min(h,t), x=2^(−H). The Fermat mass is at most 4x and G≤1/(1−4x).
+If k≤H−3 then U≤1−8x. Since (1+x)(1−8x)<1−4x, this again forces
+the excluded scale 2. As k is odd and H even, we have k≥H−1.
+
+The finite table excludes 65537. The published compositeness results
+for every Fermat number F₅ through F₃₂ now give t≥2^33. Together
+with t≤2h and k≥min(h,t)−1 this proves Theorem 18. The reported
+results for F₂₀ and F₂₄ use compositeness tests; the local interval
+checks do not rerun those tests.
+https://www.fermatsearch.org/factors/composite.php
+
+Because the first-layer divisors for distinct primes ℓ|b use disjoint
+supplies, for any such entire cubefree residual D one also has
+
+    D ≥ [(2^(2^33)+1)(2^(2^32−1)−1)]^ω(b).
+
+Thus below this size a nonempty cubefree residual of these prime
+types cannot occur in a sparse completion. The theorem permits arbitrary
+prime bases in the original core outside that residual. The Lean lemmas
+mixed_tail_gaps and mixed_first_negative check the two separation
+inequalities above. Exponents at general sparse cores remain unresolved.

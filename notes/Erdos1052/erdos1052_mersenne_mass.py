@@ -1,9 +1,10 @@
-"""Exact interval certificates for Mersenne residuals with dyadic weighted sum."""
+"""Exact interval certificates for the Mersenne residual divisor."""
 
 from collections import Counter
 from fractions import Fraction
 from functools import lru_cache
-from itertools import combinations
+from itertools import combinations, product
+from math import prod
 
 from erdos1052_chain_bounds import group_windows
 from erdos1052_spectrum import exclude_interval, passes_prime_test
@@ -16,6 +17,51 @@ def exp_minus(x, degree):
         term *= -x / j
         total += term
     return total
+
+
+def cubefree_certificate(*, mixed=False):
+    """Test cubefree Mersenne residuals near two, or both scales with Fermat bases."""
+    candidates = [(k,-1) for k in (13,17,19,31,61)]
+    if mixed:
+        candidates.insert(1,(16,1))
+    windows = group_windows()
+    tail = Fraction(1,1 << (75 if mixed else 76))
+    # Each k >= 79 contributes at most 2/(2^k-1) to the deletion loss.
+    # Bound 1/(2^k-1) by 2/(2^k), and sum even the composite indices.
+    assert 4*Fraction(2,1 << 79) == Fraction(1,1 << 76)
+    assert 4*Fraction(2,1 << 79)+4*Fraction(1,1 << 128) < Fraction(1,1 << 75)
+    checks = nodes = 0
+    for counts in product(range(3),repeat=len(candidates)):
+        supplies = {(1 << k)+s:e for (k,s),e in zip(candidates,counts) if e}
+        mass = sum(Fraction(e,1 << k) for (k,_),e in zip(candidates,counts))
+        retained = prod((Fraction((1 << k)+s,1 << k)**e
+                         for (k,s),e in zip(candidates,counts)),start=Fraction(1))
+        for h in (16,64):
+            y = Fraction(1,1 << h)
+            if not mixed and h == 16 and mass+tail < y:
+                continue
+            if mixed and h == 64 and not supplies:
+                continue
+            correction = (1+y)/(1+y**3) if h == 16 else Fraction(1)
+            for scale in ((1,2) if mixed else (2,)):
+                lower = scale*retained*(1-tail)**2*correction
+                upper = scale*retained*(1+y)
+                if mixed:
+                    upper /= 1-tail
+                for (on,off),(bottom,top) in windows.items():
+                    if not supplies.keys().isdisjoint(on):
+                        continue
+                    low,high = max(bottom,lower),min(top,upper)
+                    if low >= high:
+                        continue
+                    result = exclude_interval(low,high,supplies,on,forbidden=off,
+                                              multiplicities=supplies,sharpen_tail=True,
+                                              bit_cap=250,node_cap=16000)
+                    if result is None:
+                        raise ArithmeticError(f"Unresolved at {counts}, h={h}, required={on}")
+                    checks += 1
+                    nodes += result[0]
+    return checks,nodes
 
 
 def finite_mass_certificate():
@@ -224,6 +270,8 @@ def mixed_mass_certificate():
 
 
 if __name__ == "__main__":
+    print("Cubefree Mersenne intervals and nodes", cubefree_certificate(), flush=True)
+    print("Cubefree mixed intervals and nodes", cubefree_certificate(mixed=True), flush=True)
     print(finite_mass_certificate())
     print("Exact two-base intervals and nodes", exact_pair_certificate())
     print("Third-base intervals and nodes", exact_third_certificate())

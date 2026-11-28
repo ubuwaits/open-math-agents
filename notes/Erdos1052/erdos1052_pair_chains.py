@@ -160,6 +160,74 @@ def three_prime_check(h, horizon, primes):
     raise ArithmeticError(f"Surviving triple at h={h} after {horizon} bits")
 
 
+def uniform_three_prime_check():
+    """Verify the first two additions for every three-root height h >= 256."""
+    primes = (5,7,11,13,19,29,37,61,181)
+    for p in primes:
+        if p != 7:
+            assert p-1 <= 254 and len({pow(2,i,p) for i in range(p-1)}) == p-1
+    step = digit_rule(primes,tuple(p for p in primes if p % 3 == 2 or p in (7,13)))
+    modulus = prod(primes)
+    residues = [z for z in range(0,modulus,modulus//7) if z % 7 in (0,1,2,4)]
+    triples = [t for t in combinations_with_replacement(residues,3)
+               if any(prod(1+c*z for z in t) % 7 == 1 for c in (1,4))]
+    assert len(triples) == 7
+    choices = [tuple(r for r in product((0,1),repeat=3) if sum(r) % 2 == parity)
+               for parity in (0,1)]
+
+    def advance(states, place=0):
+        following = set()
+        for carry, words in states:
+            for bits in choices[carry % 2]:
+                read = []
+                for (low,run,z), bit in zip(words,bits):
+                    change = step(bit,run,z)
+                    if change is None:
+                        break
+                    read.append((low+bit*place,*change))
+                else:
+                    following.add(((carry+sum(bits))//2,tuple(sorted(read))))
+        return frozenset(following)
+
+    width, start, period = 56, 3000, 1260
+    phases = set()
+    m = 254
+    while True:
+        phase = m if m < start else start+(m-start) % period
+        if phase in phases:
+            break
+        phases.add(phase)
+        m = 2*m+2
+
+    states = frozenset((4,tuple((0,0,z) for z in t)) for t in triples)
+    depths = {}
+    reference = None
+    for i in range(start+period+1):
+        if i == start:
+            reference = states
+        if i == start+period:
+            assert reference == states
+            break
+        if i in phases:
+            # The correction is 2^m times the pairwise sum plus four times the sum.
+            corrected = set()
+            for carry, words in states:
+                a,b,c = (w[0] for w in words)
+                offset = a*b+a*c+b*c+4*(a+b+c)
+                rest = tuple(sorted((0,run,z) for _,run,z in words))
+                corrected.add(((carry+offset) % (1 << width),rest))
+            for depth in range(1,width+1):
+                corrected = advance(corrected)
+                if not corrected:
+                    depths[i] = depth
+                    break
+            else:
+                raise ArithmeticError(f"Three words survived the correction at phase {i}")
+        states = advance(states,1 << i if i < width else 0)
+    assert set(depths) == phases
+    return start,period,depths
+
+
 if __name__ == "__main__":
     small = direct_check(16,48,(11,))
     assert small == (48,8,145)
@@ -173,3 +241,4 @@ if __name__ == "__main__":
     for (h,horizon,primes),expected in zip(cases,((229,3727),(503,16648),(544,27139))):
         assert three_prime_check(h,horizon,primes) == (horizon,*expected)
         print("Three prime factors, h and bits", h,horizon)
+    print("Uniform three-factor phases and additional bits", uniform_three_prime_check())

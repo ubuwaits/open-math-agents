@@ -11,6 +11,12 @@ theorem two_additions (b u v : ℕ) :
     (1+2*b)*(1+b*u)*(1+b*v) =
       1+b*(2+u+v+b*(u*v+2*u+2*v)+2*b^2*u*v) := by ring
 
+/-- The first two coefficients read by the three-root digit check at scale b = 2^m. -/
+theorem three_additions (b u v w : ℕ) :
+    (1+4*b)*(1+b*u)*(1+b*v)*(1+b*w) =
+      1+b*(4+u+v+w+b*(u*v+u*w+v*w+4*(u+v+w))+
+        b^2*(u*v*w+4*(u*v+u*w+v*w))+4*b^3*u*v*w) := by ring
+
 theorem strip_odd_shift {q r j : ℕ} (hr : 0<r) (hj : 0<j) (hq : q+1=2^j*r) :
     q-1=2^j*(r-1)+(2^j-2) := by
   have hj' : 2≤2^j := by
