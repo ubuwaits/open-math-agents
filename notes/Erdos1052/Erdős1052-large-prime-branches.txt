@@ -896,3 +896,142 @@ Indeed the odd part at that split exceeds 2ℓ, whereas a power of just
 one repeated base in the odd-part balance is at most c and an ordinary
 prime can occur only once. A split is permissible in a completion,
 so the congruences alone give no bound on the size of ℓ.
+
+16. A polynomial bound on the length of an unsplit prime run
+
+Fix an odd positive denominator d and put L(d)=1+floor(log₂ d).
+Write R_d(E)=floor(2^E/d)+1. A consecutive run of primes at fixed d,
+descending by r↦oddpart(r+1), has binary length strictly less than
+
+    (d+2)(L(d)+1).                                                  (16.1)
+
+Here each prime at exponent E is R_d(E), as follows from the exact
+balance dr=2^E+u, 0<u≤d. The length is the difference of endpoint
+exponents. This replaces the factorial-size interval from section 1
+in the prime case. It gives a growing lower bound on the second-largest
+prime factor forced by an exponent, even allowing branching elsewhere.
+
+First, every interval [x,x+(d+2)(L(d)+1)] contains an exponent E
+for which R_d(E) is odd and composite. To construct it, find a small
+e with R_d(e)=q=2^k−1, k≤L(d)+1 and e≤2L(d). At d=1 take e=1,k=2.
+Otherwise let L=L(d) and w=2d−2^L. Since d>1 is odd, 0<w<d.
+Take the least t with 2^t w>d. Then 1≤t≤L and d<2^t w≤2d.
+The equality 2^(L+t)=2^(t+1)d−2^t w gives the desired witness
+with e=L+t and k=t+1.
+
+There is an m between 1 and d with 2^(km)≡1 modulo dq, even when d
+and q share prime factors. Indeed the map z↦2^k z+1 permutes the
+d residues modulo d. Starting at zero its m-th iterate returns to
+zero for some such m. That iterate is (2^(km)−1)/(2^k−1).
+Set P=km≤d(L+1). At every E=e+jP, j≥1, write 2^(jP)=1+dqz.
+Then R_d(E)=q+q 2^e z is an odd proper multiple of q. Choosing
+j=floor(x/P)+1 puts this exponent in the indicated interval.
+
+An odd composite at an intermediate exponent cannot be skipped.
+For a pure step r+1=2^j r' starting at E, every 1≤i≤min(j,E)
+satisfies R_d(E−i)=(r+1)/2^i. Indeed divide floor(2^E/d)=r−1
+by 2^i and take the floor again. The intermediate values for i<j
+are even. This proves (16.1). PrimeRuns.pure_span checks the full
+implication from the prime-shift chain in the pinned Lean kernel.
+
+For the application, write d₀A=2^N+1 and take the assigned forest
+of section 2, with terminal divisor dividing c. Choose B≥2 at least
+as large as every core prime. Write M(B) for the number of Mersenne
+primes at most B, Ω(c) for the number of prime factors with multiplicity,
+and define
+
+    D=d₀ B^(Ω(c)+M(B)),        H=L(D)+1.
+
+If N>8DH, either A has two distinct prime factors above B, or some
+shift r+1 in its forest has two such factors and
+
+    r+1 > 2^(N−8DH)/D.                                             (16.2)
+
+Start by removing all factors at most B from A. Follow the only prime
+above B until there are two, removing the smaller factors at each
+step. A prime above B occurs only once in the odd balance. Every
+removed factor either consumes a core token directly or is a simple
+prime at most B on a separate descending subtree. Each such subtree
+uses some core token or ends at a Mersenne prime at most B. All the
+subtrees are disjoint, since each ordinary prime is supplied exactly
+once. Their chosen tokens and Mersenne primes are therefore distinct
+as occurrences. At most Ω(c)+M(B) small factors, counted with
+multiplicity, can be removed before or at termination. The successive
+denominators d=d₀ times their cumulative product are bounded by D.
+
+At a prime with dr=2^E+u and 0<u≤d, let r+1=2^j t r', where t is
+the removed odd factor and r' is the next large prime, or 1. If
+E>L(d), then j≤L(d), because 0<u+d≤2d<2^(L(d)+1). The next balance
+has denominator dt, exponent E−j, and positive offset (u+d)/2^j≤dt.
+Stop also if E≤L(d). Consecutive steps with t=1 give a pure run.
+At a mixed edge t≥3 the denominator at least triples. The loss of
+binary positions over a run and its final mixed edge is bounded by
+(d+2)H+H≤4dH. The sum of the distinct successive denominators is
+at most 3D/2. If a step ends at r'=1 its remaining exponent is at
+most L(D), by its balance. A final edge to 1 costs at most L(D)
+more if it was a pure edge. Together these bounds give N≤8DH if
+there is no split. If the first split occurs at r, the preceding
+loss is at most 8DH and its balance gives (16.2). The case where
+all of A is small gives d=2^N+1≤D immediately. The bounds for a
+mixed decrement and the sum of run lengths are also checked by
+PrimeRuns.shift_decrement and PrimeRuns.trace_span. The assignment
+of small factors to terminal occurrences uses the forest proof above.
+
+For example, for fixed c,d₀ there is a constant γ>0 such that for
+all sufficiently large N one may take
+
+    B=floor(exp(γ sqrt(log N · log log N))).
+
+Indeed M(B)≤π(log₂(B+1)), since a Mersenne prime has prime exponent.
+The elementary upper estimate π(x)=O(x/log x) gives
+log D=O_(c,d₀)((log B)^2/log log B). Choose γ small enough for
+8DH≤sqrt(N). The first split is then in A or a shift of size greater
+than 2^(N−sqrt(N))/D. For a large prime multiplier ℓ at a fixed
+sparse core use the finitely many permitted h, with N=hℓ and
+d₀=2^h+1. Thus a bound by any fixed power of log N for the
+second-largest prime in the quotient and all its shifts already
+implies exponent finiteness at the core. Large prime factors on two
+branches remain compatible with the exact balance.
+
+17. A large prime in the cyclotomic quotient itself
+
+The same count of terminal occurrences gives a bound that applies to
+the seed alone. Let m>1 be the assigned seed, a divisor of that seed,
+or the odd part of a shift in its forest. Write X for its largest
+prime divisor. Then
+
+    m ≤ X^(Ω(c)+M(X)) ≤ X^[Ω(c)+π(floor(log₂(X+1)))].              (17.1)
+
+Count the prime factors of m with multiplicity. An occurrence at a
+repeated base uses a core token. Every other occurrence starts its
+own simple subtree. Either it uses a core token further down, or it
+has a Mersenne leaf. Choose one such token or leaf for each occurrence.
+The available tokens total at most Ω(c), and no two subtrees can use
+the same simple leaf. The leaf is no larger than the root, hence at
+most X. This bounds the count of factors, and multiplying gives
+(17.1). The same reasoning works for any selection of incomparable
+simple roots with their direct core factors.
+
+In particular, at each fixed c and h, a sufficiently large prime ℓ
+dividing a/h requires an actual prime factor of (2^(hℓ)+1)/(2^h+1)
+larger than exp(δ sqrt(ℓ log ℓ)), for some δ>0 depending on c,h.
+Indeed log m=hℓ log 2−O_h(1), and (17.1) gives
+log m=O_c((log X)^2/log log X). Inverting this increasing bound at
+large X gives log X ≫_c sqrt(log m · log log m). Equivalently, for a
+fixed sparse core, exponent finiteness holds for the subfamily in
+which every such quotient has largest prime factor at most
+exp(o(sqrt(ℓ log ℓ))) uniformly as ℓ grows. There is no assumption
+on the prime factors occurring farther down the shifts in this
+subfamily. The previously established bounds on h and Ω(a/h)
+turn the bound on ℓ into finiteness.
+
+Both size requirements can occur in the same factor. With B chosen
+as at the end of section 16, the first factor containing two primes
+above B is either A itself or a shift r+1. In the latter case its
+binary exponent j is at most L(D), since the current E≥N−sqrt(N)
+exceeds L(D). Thus its odd part m has log₂ m≥N−sqrt(N)−2L(D).
+Applying (17.1), one of its primes is at least
+exp(δ' sqrt(N log N)), while a different prime exceeds B.
+These are necessary lower bounds. No upper bound on that largest
+prime, or on the second-largest prime at the split, is available
+for general completions.

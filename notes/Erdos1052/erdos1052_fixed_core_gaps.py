@@ -287,8 +287,52 @@ def double_exponent_certificate():
     return pairs, results
 
 
+def core_139_certificate():
+    """Exclude 3^5*139^2 and coprime extra bases of reciprocal sum at most 2^-86."""
+    core = 3**5 * 139**2
+    limits = dict(PATH_LIMITS, path_depth=3, max_nodes=2_000_000)
+    gap = core_gap(core, 1, 80, **limits)
+    assert gap is not None and direct_small(core, 0, 60) == []
+
+    # Above 60 the divisors below suffice. At a=64 the required seed has
+    # factor 274177. At odd a we use the wider gap because a may equal 61.
+    seeds = (3, 5, 17, 257, 65537, 641, 274177)
+    precision = {m: 55 if m == 3 else 60 for m in seeds}
+    counts = {}
+    for m in seeds:
+        result = core_gap(core, m, precision[m], **limits)
+        assert result is not None
+        counts[m] = result[0]
+    retained = 1-Fraction(1, 2**82)
+    for a in range(61, 83):
+        seed = (1 << a)+1
+        target = Fraction(2*(seed-1), seed)
+        assert any(seed % m == 0 and target*retained > 2-Fraction(1, 2**precision[m])
+                   for m in seeds)
+
+    mass = Fraction(1, 2**86)
+    smooth = Fraction(3, 2)*Fraction(139, 138)
+    loss = mass*(1+2*smooth/(1-mass))
+    keep = (1-loss)*(1-mass**2)
+    assert keep > retained and 2*keep/(1+Fraction(1, 2**83)) > 2-Fraction(1, 2**80)
+    small = []
+    for a in range(1, 61):
+        seed = (1 << a)+1
+        state = core_state(core, seed)
+        target = Fraction(2*(seed-1), seed)
+        if state is None or state[2] >= target:
+            continue
+        fixed, stock, ratio = state
+        result = interval_gap(ratio, factor(stock), fixed | {3, 139},
+                              target*retained, target, **limits)
+        assert result is not None
+        small.append(result[0])
+    return gap[0], counts, len(small), sum(small)
+
+
 if __name__ == "__main__":
     for row in fixed_core_certificates():
         print(*row, flush=True)
     print("Synthetic seed", synthetic_seed_certificates(), flush=True)
     print("Double exponent", double_exponent_certificate(), flush=True)
+    print("The core 3^5*139^2", core_139_certificate(), flush=True)

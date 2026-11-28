@@ -954,3 +954,32 @@ separately. The exponent finiteness step now holds for 7,848 of the
 7,857 cores through 10^8. The remaining nine are 2187,177147,264627,
 1594323,4695003,7960923,42255027,60761421 and 71648307. In particular
 every core in this range not divisible by 3^5 satisfies exponent finiteness.
+
+14. Excluding 3^5·139² and nearby repeated cores
+
+There is no unitary perfect number with repeated odd core 4695003.
+Its forced simple primes before imposing a seed divisor are
+5,19,31,61,151,4831,9661. They leave the divisor 1565001 and odd
+abundancy 2097152/1565001. Using three levels of the path estimate
+from section 12, the interval [2−2^−80,2) is excluded in 1,730,706
+nodes. All sizes of simple primes are covered by the tail estimate.
+In particular any putative exponent is at most 80. Direct cancellation
+excludes every exponent through 60. For 61 through 80 use the seed
+divisors 3,5,17,257,65537,641,274177 at the respective binary heights
+v₂(a)=0,1,2,3,4,5,6. For the first seed use precision 55 and for the
+rest use 60. The seven checks take 31364,0,3590,1988,1,1,0 nodes.
+Here zero means the initial demands are inconsistent. The last divisor
+divides 2^64+1. The odd abundancy required at each remaining exponent
+exceeds the lower endpoint in its certificate.
+
+This exclusion also holds after adjoining coprime odd repeated powers
+whose distinct bases have reciprocal sum at most 2^−86. Section 11's
+deletion bound applies with H=(3/2)(139/138). It gives retained
+fraction greater than 1−2^−82 and puts the surviving abundancy above
+2−2^−80 for a≥83. The same seven seeds suffice for 61≤a≤82 with
+this retained fraction. Below 61, nine intervals need exploration
+after forcing the exact seed and checking its initial abundancy.
+They close in 17,330 nodes. The function core_139_certificate in
+erdos1052_fixed_core_gaps.py checks the endpoints and node counts.
+This raises the number of cores through 10^8 for which exponent
+finiteness has been proved to 7,849 of 7,857.
