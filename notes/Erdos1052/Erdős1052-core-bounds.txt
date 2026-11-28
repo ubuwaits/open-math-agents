@@ -244,3 +244,237 @@ commit on the fork. The problem desk records the results in notes
 
 https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/5438
 https://github.com/ubuwaits/open-math-agents/commit/66bc1cf0d7cb440b4cb4bb566409a99e7cd65d3f
+
+5. An additive height removes the entire simple support
+
+The following results hold for every fixed odd core c. No sparseness
+of its primes and no restriction on v₂(a) is needed. For the completely
+additive integer function W on the positive integers set W(2)=1 and
+W(p)=1+W((p+1)/2) for every odd prime p. These rules define W by
+induction, since (p+1)/2<p. In particular W(p)=W(p+1). This is
+Defant's function D associated with the modified Dedekind psi function.
+Colin Defant, “An arithmetic function arising from the Dedekind ψ
+function”, Mathematical Journal of Okayama University 59 (2017), 81–92.
+https://doi.org/10.18926/mjou/54715
+
+Define the integer K(c)=1+W(c)−W(σ*(c)) and f(t)=W(2^t+1)−t. Applying
+W to (1) cancels every W(q+1) against W(q). Therefore every positive
+exponent at the core satisfies the exact equation
+
+    f(a)=K(c).                                                       (6)
+
+For every positive n we have n≤2^W(n). At a composite n multiply the
+bounds for its proper factors. For an odd prime p apply the bound to
+(p+1)/2 to get p+1≤2^W(p); the cases 1 and 2 are immediate. Thus
+f(t)≥1, and K(c)≤0 already excludes the core.
+
+Write a=hb with b odd; here h can be any positive integer. If b has
+prime factorization ∏ p_i^e_i, set
+
+    E(b) = #{d|b : d>1 and ω(d) is even}
+         = (∏(1+e_i)+∏(1−e_i))/2−1.
+
+Then for every such pair, without any unitary-perfect hypothesis,
+
+    f(hb) ≥ f(h)+E(b).                                              (7)
+
+For a proof put Y=2^h, A_d=|Φ_d(−Y)|. Their product over d|b is
+2^(hb)+1, with A₁=Y+1. Fix d>1. Set m=rad(d), u=d/m, y=Y^(−u).
+The identity Φ_d(X)=Φ_m(X^u) follows by considering the orders of the
+roots, since every prime dividing u divides m. Since u is odd, Möbius
+inversion gives
+
+    A_d/Y^φ(d) = (1+y)^μ(m) ∏_(e|m, e>1)(1+y^e)^μ(m/e).
+
+Put t=Σ_(odd e≥3)y^e=y³/(1−y²)≤y/3 since y≤1/2. The product after
+the first factor lies between 1−t and 1/(1−t), by multiplying out
+∏(1−y^e)≥1−Σ y^e and using 1+y^e≤1/(1−y^e).
+We have (1+y)(1−t)>1, (1−t)/(1+y)>1/2 and (1+y)/(1−t)<2.
+Consequently A_d is strictly between Y^φ(d) and twice that number
+when ω(d) is even, and strictly between half that number and Y^φ(d)
+when ω(d) is odd. The size bound on W and its integrality give
+
+    W(A_d) ≥ hφ(d) + 1_(ω(d) even).
+
+Sum this over d>1 and use Σ_(d|b)φ(d)=b to obtain (7). The formula
+for E(b) follows by adding the total divisor count to its signed
+count by parity of the number of distinct prime factors.
+
+For a≥1 at a fixed core take h=2^v₂(a), so b is its odd part. When
+r=ω(b)≥1 the even-cardinality squarefree indices give
+
+    2^(r−1) ≤ K(c)−f(h)+1 ≤ K(c).                                 (8)
+
+If r≥2 the two-prime indices alone give Σ_(i<j)e_i e_j≤K(c)−f(h).
+The left side is at least Σe_i−1: use e₁e₂≥e₁+e₂−1, then for each
+additional i the terms involving e₁ already supply e_i. In particular
+
+    Ω(b) ≤ K(c)−f(h)+1 ≤ K(c)       whenever ω(b)≥2.                (9)
+
+This proves that admissible exponents have natural density zero at
+every fixed core (also for the union of all cores having K(c) bounded
+by a fixed constant). Here is an elementary density argument. For
+finitely many odd primes count their divisibilities in a uniform
+residue class modulo their product. The Chinese remainder theorem
+makes the indicators independent with mean sum M=Σ1/p and variance
+at most M. For any fixed R<M the fraction divisible by at most R of
+these primes is at most M/(M−R)² by Chebyshev's inequality. These
+are periodic conditions on the exponent, so their residue fractions
+bound its upper natural density. The sum of reciprocal odd primes
+diverges, and (8) supplies a fixed R.
+
+There is an effective finiteness statement for prime powers even
+without any restriction on the core. Fix h and an odd prime r.
+Choose a positive integer C with 2^C≥4(r−1). Put
+
+    L = lcm{φ(hr+i) : 1≤i≤C, r does not divide i},
+
+using 1 for an empty lcm. For every e≥2,
+
+    f(hr^e) ≥ f(h)+floor((e−2)/L).                                 (10)
+
+For j=1+nL with n≥1 set s=hr^j. All s+1,...,s+C are composite.
+If r|i then r properly divides s+i. Otherwise Euler's theorem gives
+hr^j+i≡0 modulo hr+i, and s+i>hr+i>1. For the corresponding layer
+A=(2^(sr)+1)/(2^s+1), (7)'s size estimate gives W(A)≥(r−1)s.
+Suppose equality holds. Expand each prime factor of A, counting its
+multiplicity, into a finite tree. At q write q+1=2^j_q∏children q'.
+Use every odd prime of the odd shift part with its multiplicity as a
+separate child. The children are smaller than q. The height recursion
+gives Σ j_q=W(A) over all vertices. Multiplying the local equalities
+also gives
+
+    ∏vertices(1+1/q)=2^W(A)/A=(1+2^(−s))/(1+2^(−sr)).
+
+Every vertex therefore exceeds 2^s. Each leaf is a Mersenne prime
+2^k−1 with k>s and contributes k units of W(A), so there are at
+most r−1 leaves. The composite-exponent interval implies k≥s+C+1.
+Partition all occurrences into paths by keeping one child at each
+non-leaf. Each path ends at a different leaf, even if the same prime
+has several occurrences. A path starting at 2^k−1 in increasing
+order contributes at most 1/(1−2^(1−k)), by the telescoping
+identity of section 3. Thus the full reciprocal loss is at most
+(r−1)2^(−s−C)≤2^(−s)/4. But with y=2^(−s) it equals
+(y−y^r)/(1+y)≥y(1−y)≥y/2. This contradiction forces at least one
+extra height unit at every selected j. All other r-power layers have
+nonnegative excess, and counting 1+nL<e proves (10).
+
+Thus for any fixed c,h and any specified finite set of allowed odd
+prime divisors, the possible b form an effectively bounded finite set.
+For example, if r^e|b then (7) gives f(hr^e)≤K(c), so (10) gives
+e≤L(K(c)−f(h)+1)+1. At a fixed sparse core the earlier v₂ restriction
+makes the list of h finite. An unbounded largest prime remains possible
+in these inequalities, in particular when b=ℓ itself.
+
+As checks, K(1)=1 and K(625)=3. For the 7857 odd powerful cores
+through 10^8 the budgets range from −4 to 6; 2229 are at most zero.
+The script erdos1052_additive_height.py computes these exact values.
+AdditiveHeight.lean constructs W and verifies complete additivity,
+cancellation in (6), the size bound, the two Möbius comparisons and
+the summation of the cyclotomic height costs. The cyclotomic
+identification, prime-tree argument of (10) and density argument
+are given in the written proof.
+
+6. A uniform bound on the total number of odd prime factors of a
+
+The bound here holds at every fixed core, including dense cores, with
+no restriction on v₂(a). Put P=max({1}∪{p:p|c, p prime}). Let J be
+the least nonnegative integer with 3^J≥32 and 2^(3^J)≥P. For every
+positive exponent a at c, write h=2^v₂(a), b=a/h. Then
+
+    K(c) ≥ f(h)+E(b)+Σ_(r^e||b) floor(max(e−J,0)/2),              (11)
+    Ω(b) ≤ J+2K(c)−1.                                             (12)
+
+Together with the earlier sparse-core restriction on h, (12) reduces
+exponent finiteness there to bounding the largest odd prime divisor.
+For dense cores it controls the odd part's multiplicity even if h is
+unbounded. Equation (9) is stronger whenever b has two distinct primes.
+
+To see the extra term in (11), fix r^e||b. For 0≤i<e put s=hr^i,
+Y=2^s and A=(Y^r+1)/(Y+1). This is the evaluated cyclotomic factor
+at r^(i+1). Its baseline height in (7) is (r−1)s. Descending-prime
+allocation, as in section 1 of Erdős1052-odd-part.txt, gives an
+assigned residual d|c, a squarefree subset T of simple primes, and
+
+    A·∏_(q∈T)(q+1) = d·2^B·∏_(q∈T)q,       B=Σ_(q∈T)v₂(q+1).
+
+Apply W to obtain W(A)=W(d)+B. Hence
+
+    2^W(A)/A = (2^W(d)/d) ∏_(q∈T)(1+1/q).
+
+Suppose W(A)=(r−1)s. The left side is (1+1/Y)/(1+1/Y^r), strictly
+below 1+1/Y. At a divisor p|d the ratio 2^W(d)/d is at least
+(p+1)/p: use complete additivity, 2^W(n)≥n and 2^W(p)≥p+1 for
+odd primes. Consequently if Y≥P we must have d=1. All primes in T
+exceed Y, and T breaks into paths starting at distinct Mersenne
+primes. Its required reciprocal loss is at least y(1−y) for y=1/Y.
+
+For s≥32 the baseline is impossible whenever s+1 is composite.
+Indeed every starting exponent k is an odd prime with k≥s+2, and
+the sum of all potential path losses 2^(1−k) is at most 2y/3.
+This already covers every odd s in the range.
+
+It is also impossible when s is even and s≡1 modulo 5. The potential
+start q₀=2Y−1 has successor at least 8q₀−1, if it has one. Indeed
+s≡6 mod 10, so 2q₀−1=2^(s+2)−3 is divisible by 11. The candidate
+4q₀−1 is divisible by 3. A successor 6q₀−1 would spend a factor
+3 in its shift, impossible with d=1 and every group prime above Y.
+By the telescoping path bound its loss is at most 5y/8, including
+the case where the start is absent. All other start exponents are
+odd and at least s+3, with total path loss at most y/3. But
+(23/24)y<y(1−y) for s≥32.
+
+For i≥J all required size inequalities hold. Every two successive
+such indices contain one of these obstructions:
+
+  • h=1 gives odd s at every index.
+  • If v₂(a) is odd and r≠3, then s≡−1 mod 3 at every even i.
+    At r=3 and h even the cubic argument below works at every i≥J.
+  • If v₂(a) is positive and even and r≠5, then h≡±1 mod 5 and
+    r^i≡±1 mod 5 at every even i. The negative residue makes s+1
+    composite; the positive residue uses the second path obstruction.
+    At r=5 each odd i gives s≡−1 mod 3.
+
+For the cubic argument, with s=h3^i even and i≥J, the smallest
+ordinary prime of the neutral group must be a Mersenne start at
+least 2Y−1. The integer A=Y²−Y+1 divides the squarefree product of
+the ordinary primes and is less than (2Y−1)², so it must itself be a
+group prime. Put Q_j=1+2^j(Y−1). Starting at Q_s=A, the odd part of
+Q_j+1 is Q_(j−1) for j≥2. This too divides the squarefree product
+and is below (2Y−1)², forcing each Q_j down to Q₁ to be prime.
+But 2^h+1 properly divides Q_(2h−1), since Y≡−1 modulo 2^h+1 and
+2h−1≤s. This contradiction handles r=3.
+
+Such a layer costs at least one extra integer unit of height. Its
+prime-power index is distinct from every index counted in E(b).
+Adding the charges proves (11). If b is a prime power r^e, then
+e≤J+2(K(c)−f(h))+1≤J+2K(c)−1. Otherwise (9), or b=1, gives (12).
+
+For every core through 10^8, J=4 and K(c)≤6. In particular every
+admissible a in this range has at most 15 odd prime factors counted
+with multiplicity, and at most six if two distinct odd primes occur.
+These statements allow arbitrarily large 2-adic parts and primes.
+The Lean lemmas divisor_cost, neutral_loss_gap and two_step_count
+verify the individual cost comparison and integer estimate. The
+allocation of the paths and the residue cases are the written proof.
+
+At a sparse core the previous prime-power result improves (12).
+Indeed 16 divides each permitted h. Section 13 of the large-prime
+note excludes a neutral group for every prime-power layer at such
+an h. Thus every index i≥J costs an extra height unit by the residual
+size test. This gives Ω(b)≤J+K(c)−1 via the prime-power case or (9).
+
+One can also test a fixed sparse core directly at a permitted h.
+If K(c)<f(h), (7) excludes that height. Suppose every prime of the
+remaining divisor D at h is at most 2^h. Every prime-power layer now
+passes the size test even at i=0. All Ω(b) layers cost an extra unit,
+giving
+
+    K(c) ≥ f(h)+E(b)+Ω(b).
+
+In particular, at equality K(c)=f(h) the only candidate is a=h.
+Checking these inequalities at the finitely many permitted heights
+proves exponent finiteness for each core passing the stated test.
+For example c=65537² has sole permitted height 16 by the order of
+2 modulo 65537. Here W(65537)=18 and W(65537²+1)=36, with
+65537²+1=2·5·8681·49477. Hence K(c)=1<f(16)=2, excluding the core.
