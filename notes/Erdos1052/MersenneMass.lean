@@ -60,4 +60,40 @@ theorem singleton_charges {x : ℚ} (hx : 0 ≤ x) (ht : x ≤ 1/65536) :
   · rw [← le_sub_iff_add_le, div_le_iff₀ (by linarith : 0 < 12*(1-x))]
     nlinarith
 
+/-- The symmetric tolerances y/9 rule out all residual factorizations. -/
+theorem ninth_gap {y : ℚ} (hy : 0<y) (h : y≤1/65536) :
+    2275/3072*y+(4/3)*(y/9)/(1-y/9)<(8/9)*y-3*y^2 := by
+  have hden : 65535/65536 ≤ 1-y/9 := by linarith
+  have hmag : (4/3)*(y/9)/(1-y/9) ≤ (4/27)*(65536/65535)*y := by
+    apply (div_le_iff₀ (by linarith : 0<1-y/9)).mpr
+    nlinarith [mul_le_mul_of_nonneg_left hden hy.le]
+  nlinarith [mul_le_mul_of_nonneg_right h hy.le]
+
+/-- Positive remaining mass after the two small bases forces at least 4096 copies. -/
+theorem remaining_count (s : Finset ℕ) (e : ℕ → ℕ) (hk : ∀ k∈s, 31≤k)
+    (hm : (1:ℚ)/2^19 ≤ ∑ k∈s, (e k : ℚ)/2^k) : 4096 ≤ ∑ k∈s, e k := by
+  have hsum : (∑ k∈s, (e k : ℚ)/2^k) ≤ (∑ k∈s, (e k : ℚ))/2^31 := by
+    rw [Finset.sum_div]
+    exact Finset.sum_le_sum fun k hh => div_le_div_of_nonneg_left (by positivity)
+      (by positivity) (pow_le_pow_right₀ (by norm_num) (hk k hh))
+  have hcount : (4096:ℚ) ≤ ∑ k∈s, (e k : ℚ) := by
+    have bound := hm.trans hsum
+    norm_num at bound
+    linarith
+  exact_mod_cast hcount
+
+/-- The resulting terminal divisor forces a very large binary exponent. -/
+theorem remaining_size (s : Finset ℕ) (e : ℕ → ℕ) (hk : ∀ k∈s, 31≤k)
+    (hm : (1:ℚ)/2^19 ≤ ∑ k∈s, (e k : ℚ)/2^k) :
+    2^122880 ≤ ∏ k∈s, ((2:ℕ)^k-1)^e k := by
+  have hcount := remaining_count s e hk hm
+  calc
+    2^122880 ≤ (2:ℕ)^(30*(∑ k∈s, e k)) := Nat.pow_le_pow_right (by decide) (by omega)
+    _ = ∏ k∈s, (2^30)^e k := by rw [Finset.prod_pow_eq_pow_sum, pow_mul]
+    _ ≤ _ := by
+      apply Finset.prod_le_prod'
+      intro k hh
+      have hpow := Nat.pow_le_pow_right (by decide : 0 < 2) (hk k hh)
+      exact Nat.pow_le_pow_left (by omega) _
+
 end Erdos1052.MersenneMass

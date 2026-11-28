@@ -2,10 +2,11 @@
 
 from collections import Counter
 from fractions import Fraction
+from functools import lru_cache
 from itertools import combinations
 
 from erdos1052_chain_bounds import group_windows
-from erdos1052_spectrum import exclude_interval
+from erdos1052_spectrum import exclude_interval, passes_prime_test
 
 
 def exp_minus(x, degree):
@@ -113,6 +114,117 @@ def exact_pair_certificate():
     return checks, nodes
 
 
+@lru_cache(maxsize=None)
+def third_factor_bounds(mass, k, tail):
+    """Enclose the residual product with all its remaining mass at k or above."""
+    x = Fraction(1, 1 << k)
+    # -log(1-x)/x has positive coefficients. Its degree-five remainder
+    # is at most x^6/(7*(1-x)). In a tail each x_p may be smaller than x.
+    lower_log = sum(x**i / (i+1) for i in range(6))
+    upper_log = lower_log+x**6/(7*(1-x))
+    low = exp_minus(mass*upper_log, 31)
+    high = exp_minus(mass*(1 if tail else lower_log), 32)
+    if tail:
+        # Remove all vertices using any base at exponent k or larger.
+        low *= 1-Fraction(16, 1 << k)
+    return low, high
+
+
+def round_outward(low, high, bits=320):
+    denominator = 1 << bits
+    return (Fraction((low.numerator*denominator)//low.denominator, denominator),
+            Fraction(-((-high.numerator*denominator)//high.denominator), denominator))
+
+
+def exact_third_certificate():
+    """Exclude a single third base of any size, or any mixture entirely beyond k=255."""
+    windows = group_windows()
+    cutoff = 256
+    exponents = [k for k in range(31, cutoff, 2) if passes_prime_test((1 << k)-1)]
+    assert exponents == [31, 61, 89, 107, 127]
+    p, r = (1 << 17)-1, (1 << 19)-1
+    checks = nodes = 0
+    for k in [cutoff]+exponents:
+        for m, heights in ((15, (16,)), (14, (64, 128, 256, 512))):
+            for e in range(1, 1 << (17-m)):
+                for f in range(1, (1 << (19-m))-4*e):
+                    mass = Fraction(1, 1 << m)-Fraction(e, 1 << 17)-Fraction(f, 1 << 19)
+                    known = 2*Fraction(p, p+1)**e*Fraction(r, r+1)**f
+                    supplies = {p: e, r: f}
+                    if k < cutoff:
+                        supplies[(1 << k)-1] = int(mass*(1 << k))
+                    low_u, high_u = third_factor_bounds(mass, k, k == cutoff)
+                    for h in heights:
+                        y = Fraction(1, 1 << h)
+                        # A positive remaining mass is at least 2^-19, so
+                        # log2 D > 122880 and the binary exponent exceeds 600.
+                        correction = (1+y)/(1+Fraction(1, 1 << 600)) if h < 512 else Fraction(1)
+                        low, high = round_outward(known*low_u*correction, known*high_u*(1+y))
+                        for (on, off), (bottom, top) in windows.items():
+                            lo, hi = max(bottom, low), min(top, high)
+                            if lo >= hi:
+                                continue
+                            result = exclude_interval(lo, hi, tuple(supplies), on, forbidden=off,
+                                                      multiplicities=supplies, sharpen_tail=True,
+                                                      bit_cap=450, node_cap=30000)
+                            if result is None:
+                                raise ArithmeticError(f"Unresolved third factor at {(m, h, k, e, f, on)}")
+                            checks += 1
+                            nodes += result[0]
+    return checks, nodes
+
+
+def mixed_mass_certificate():
+    """Exclude h=16, and at larger heights require a base with exponent 31 or 61."""
+    windows = group_windows()
+    p, r = (1 << 17)-1, (1 << 19)-1
+    counts = Counter()
+
+    def test(mass, known, e, f, h, allocation, present, cutoff, loss):
+        x = Fraction(1, 1 << (present[0] if present else cutoff))
+        supplies = {p: e, r: f}
+        supplies.update({(1 << k)-1: int(mass*(1 << k)) for k in present})
+        y = Fraction(1, 1 << h)
+        correction = (1+y)/(1+Fraction(1, 1 << 600)) if h < 512 else Fraction(1)
+        low, high = round_outward(known*exp_minus(mass/(1-x), 25)*correction*(1-loss),
+                                  known*exp_minus(mass, 26)*(1+y))
+        bottom, top = windows[allocation]
+        low, high = max(bottom, low), min(top, high)
+        if low >= high:
+            return True
+        on, off = allocation
+        result = exclude_interval(low, high, tuple(supplies), on, forbidden=off,
+                                  multiplicities=supplies, bit_cap=420, node_cap=30000,
+                                  sharpen_tail=True)
+        if result is None:
+            return False
+        counts["certificates"] += 1
+        counts["nodes"] += result[0]
+        return True
+
+    for m, heights in ((15, (16,)), (14, (64, 128, 256, 512))):
+        small_options = ((), (31,), (61,), (31, 61)) if m == 15 else ((),)
+        for e in range(1, 1 << (17-m)):
+            for f in range(1, (1 << (19-m))-4*e):
+                mass = Fraction(1, 1 << m)-Fraction(e, 1 << 17)-Fraction(f, 1 << 19)
+                known = 2*Fraction(p, p+1)**e*Fraction(r, r+1)**f
+                for small in small_options:
+                    for h in heights:
+                        for allocation in windows:
+                            args = mass, known, e, f, h, allocation
+                            if test(*args, small, 79, Fraction(1, 1 << 75)):
+                                continue
+                            counts["refinements"] += 1
+                            for size in range(4):
+                                for extra in combinations((89, 107, 127), size):
+                                    if not test(*args, small+extra, 256, Fraction(16, 1 << 256)):
+                                        raise ArithmeticError(
+                                            f"Unresolved mixture at {(m, h, e, f, small, extra, allocation)}")
+    return dict(sorted(counts.items()))
+
+
 if __name__ == "__main__":
     print(finite_mass_certificate())
     print("Exact two-base intervals and nodes", exact_pair_certificate())
+    print("Third-base intervals and nodes", exact_third_certificate())
+    print("Mixed-base exclusions", mixed_mass_certificate())

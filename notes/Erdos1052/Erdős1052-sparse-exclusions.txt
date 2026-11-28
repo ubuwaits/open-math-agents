@@ -33,11 +33,10 @@ modulo 32. Given such a bound, the proof in section 10 computes an
 upper bound for b. Whether sparsity alone bounds this count is open.
 
 Theorem 6. If the remaining divisor D at h is a prime one unit from
-a power of two, of any size, then a=h. A second sufficient condition on an arbitrary D is
-that |D/2^k−1|≤2^(−h−7) for some integer k and that the sum of 1/p
-over its distinct prime divisors is at most 2^(−h−7). Section 12
-proves the Mersenne case and the second criterion. Section 13 proves
-the Fermat case.
+a power of two, of any size, then a=h. A second sufficient condition
+for arbitrary D is that |D/2^k−1|≤2^(−h)/9 for some integer k and
+that the sum of 1/p over its distinct prime divisors is at most
+2^(−h)/9. Sections 12, 13 and 22 give the proofs.
 
 Theorem 7. For each fixed core, (7) bounds the whole odd multiplier in
 terms of the number of odd shift valuations outside two freely chosen
@@ -61,14 +60,17 @@ at all larger permitted h. Section 18 gives the size threshold.
 
 Theorem 11. For fixed h there are fourteen explicit intervals in one
 octave, of combined base-two logarithmic length less than 1/100.
-When the normalized value of (2^h+1)D misses them, every completion
-satisfies h(b−1)≤⌈log₂ D⌉. A test of logarithmic length less than
-1/97 works at every allowed h simultaneously using D alone.
+When the normalized value of (2^h+1)D misses them, that height admits
+no completion. A test of logarithmic length less than 1/97 works at
+every allowed h simultaneously using D alone. Section 22 proves
+the exclusion using the full unitary balance.
 
 Theorem 12. Suppose D consists of Mersenne primes and its weighted sum
-Σ e_p/(p+1) is 2^(−m), m≥0. A nontrivial odd multiplier requires at
-least three distinct bases, including 131071 and 524287, and one of the
-two parameter pairs in (11). Section 20 includes the interval certificates.
+Σ e_p/(p+1) is 2^(−m), m≥0. A nontrivial odd multiplier requires
+m=14, h≥64 and at least four distinct bases. These include 131071,
+524287 and at least one of 2^31−1 and 2^61−1. The remaining bases
+beyond 131071 and 524287 contribute at least 4096 factors counted with
+multiplicity. Sections 20 and 23 give the proof and interval certificates.
 
 Theorem 13. At any fixed odd powerful core, sparse or dense, exponent
 finiteness is equivalent to a bound on the number of simple primes
@@ -1652,3 +1654,127 @@ t₁ exceptional vertices with d(q) a single member of S. Other
 exceptions were already marked. The same argument then uses
 K=2Ω(c)+2t₀+t₁+14+2v₃(c)+v₅(c). The two counts concern disjoint
 vertices. No bound for them depending solely on c has been proved here.
+
+22. The fourteen intervals are necessary for every completion
+
+In section 19 the numerical bound can be sharpened to exclusion. At a
+fixed nonempty sparse core and permitted h, every completion has
+
+     l < R = (2^h+1)D/2^floor(log₂((2^h+1)D)) ≤ u c/σ*(c) < u      (15)
+
+for its actual allocation [l,u) in (5). Thus a residual outside the
+fourteen intervals excludes that height altogether. If its own dyadic
+normalization misses the enlarged intervals J, the same conclusion
+holds at every height with that residual. In particular for the
+sequences D=D₀d^e of section 19, the density estimates there now count
+exclusions. Each candidate core still requires its actual D_h at each h.
+
+Let B and C be the simple-prime products of the variable group and of
+its complement. Set ρ=σ*(c)/c>1 and z=2^(−a). The *full* unitary
+perfect equation gives B(1+z)Cρ=2. Consequently B(1+z) is in (1,2).
+By the group equation, B(1+z) is an integer power of two times
+(2^h+1)D; it is therefore exactly R, for every exponent. Since B≥l
+and C≥2/u by the compulsory blocks, (15) follows. The calculation
+also applies with the true product of any additional known factors
+in the complement in place of 2/u. The rational inequalities and the
+uniqueness of the dyadic normalization are corrected_allocation and
+unique_octave in WindowBounds.lean.
+
+Another consequence of the group equation is D≤A, where
+A=(2^a+1)/(2^h+1). Directly, A∏d(q)=D∏q, and every odd prime q has
+d(q)≤(q+1)/2≤q. Thus b>1 gives D≤A<2^(a−h), since 2^(a−h)>1.
+WindowBounds.terminal_le_seed proves the first inequality directly
+from the distinct prime support and the integer group balance.
+
+There is also a larger exclusion around a dyadic power that allows
+arbitrary prime divisors of D. If
+
+   |D/2^k−1| ≤ y/9  for some k,       Σ_(p|D)1/p ≤ y/9,     y=2^−h,
+
+then b>1 is impossible at this h. Indeed the normalized group product
+is B=(D/2^k)(1+y)/(1+z) in (1,1+2y) with z≤y³. Its least ordinary
+prime exceeds Y=1/y: a smaller least prime cannot use any p|D, since
+each p≥9Y. It would be Mersenne, and its shift cannot be Y since h
+is even. A smaller Mersenne prime is at most Y/2−1, contradicting the
+upper bound on B.
+
+Partition into paths by choosing an ordinary predecessor whenever
+available. By (13) the neutral-start paths contribute at most
+(2275/3072)y, including their mixed successors. If r=2Y−1 is absent
+the simpler y/3 bound suffices. All other starts have q+1=2^j d with
+d>1 supported on D. Since q is 1 modulo 3, d fixes the parity of j,
+and the sum of the budgets 2/(2^j d) is at most 4/(3d) for each d.
+Writing s=Σ_(p|D)1/p, summing all nonempty ordered products gives
+at most 4s/[3(1−s)]. On the other hand (6) gives loss at least
+(8/9)y−3y². For 0<y≤1/65536 one has strictly
+
+    (2275/3072)y + (4/3)(y/9)/(1−y/9) < (8/9)y−3y².
+
+The two y/9 tolerances improve the y/128 tolerances of section 12.
+
+23. Four distinct Mersenne bases and a unique weighted sum
+
+Retain the assumptions of section 20, with b>1. Write e and f for
+the multiplicities of p=2^17−1 and r=2^19−1. Section 20 rules out
+the case in which they exhaust D. The remaining weighted mass
+
+    t = 2^(−m)−e/2^17−f/2^19
+
+is a positive multiple of 2^−19 in both cases (11). Each remaining
+base 2^k−1 has k≥31. Each copy contributes at most 2^−31 to t, so
+there are at least 4096 remaining copies. Their product exceeds
+2^(30·4096). By D≤A<2^(a−h) from section 22, a>122880+h.
+The lemmas remaining_count and remaining_size in MersenneMass.lean
+check the count and the corresponding lower bound for the product.
+
+In particular z=2^−a<2^−600 in every subsequent check. Write
+V=2(1−2^−17)^e(1−2^−19)^f. Since 1−2^−14≤U≤1/(1+2^−m)
+and y<2^−m in (11), the scale factor for B is 2. Enumerate
+e,f≥1 with 4e+f<2^(19−m). For m=14 take h=64,128,256 separately and
+h≥512 together. For m=15 take h=16. In a single height the correction
+(1+y)/(1+z) lies strictly between (1+y)/(1+2^−600) and 1+y.
+In the joint range it lies between 1 and 1+2^−512.
+
+Among 31≤k<256 the primes 2^k−1 can occur only at k=31,61,89,107,127.
+For k even, 2^k−1 is composite. For the remaining odd k, the routine
+passes_prime_test uses small trial divisors and Fermat witnesses.
+Acceptance merely retains a candidate for the ensuing check. For all
+k≥K≥79 together, the sum of 1/(2^k−1) is at most 4·2^−K, by comparison
+with the geometric series over every integer k≥K. Deleting shifts using
+these bases and their successors costs at most 16·2^−K by section 17.
+At K=79 the sharper bound from section 20 gives loss at most 2^−75.
+
+First suppose all of t belongs to one base with k<256, and set
+x=2^−k. Its contribution to U is exp(−t L(x)), where
+L(x)=−log(1−x)/x. Use the first six terms of ∑ x^i/(i+1) for
+a lower bound on L, and add x^6/(7(1−x)) for an upper bound.
+If every remaining base has k≥256, the same upper bound at x=2^−256
+applies to their weighted average of L, with lower bound 1.
+In this latter case allow the full loss 16·2^−256. The signed Taylor
+bounds of orders 31 and 32 enclose the needed exponentials. Multiply
+by V and the appropriate height correction. Rounding each endpoint
+outwards to a multiple of 2^−320 preserves the enclosure. Intersect
+with each block allocation and run the section 2 verifier. The input
+includes at most e,f copies of p,r and, in the one-base case, at most
+2^k t copies of the third base. All 7938 nonempty intervals close in
+1,388,904 nodes. This rules out every exactly-three-base residual and
+all mixtures whose remaining exponents are at least 256.
+
+It remains possible here for several other bases to split t. For m=15
+allow every subset of {31,61} in addition to p,r. For m=14 first test
+the possibility that both 31 and 61 are absent. Retain every indicated
+small base with its upper multiplicity floor(2^k t) and discard the
+larger bases at K=79. If x is the largest remaining allowable 2^−k,
+their joint contribution to U relative to the known p,r terms lies
+between exp(−t/(1−x)) and exp(−t). Use Taylor orders 25 and 26.
+When a test is inconclusive, refine it by retaining each of the eight
+subsets of {89,107,127} separately and dropping only k≥256. The same
+enclosures apply with the refined x and loss bound. All 30 required
+refinements close. These mixed-base tests give 1722 certificates in
+558,180 nodes. The two checks are exact_third_certificate and
+mixed_mass_certificate in erdos1052_mersenne_mass.py.
+
+This eliminates m=15 altogether and requires at least one of 31 and
+61 when m=14. The certificates have no size cutoff on h, the bases,
+their multiplicities or the multiplier b. Mixtures with four or more
+bases meeting all the conditions of Theorem 12 remain unresolved.
