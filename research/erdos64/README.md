@@ -13,15 +13,17 @@ The Erdős–Gyárfás conjecture asks whether every finite simple graph with mi
 5. **Limits of descent.** For each power of two $n\ge 8$ and each bound $R$, there is a finite connected bridgeless cubic graph whose bipartite double has an $n$-cycle, whose odd girth is $n/2-1$, and which has no power-of-two cycle of length at most $R$. A concrete example has 7,920 vertices, contains a triangle and a 64-cycle, and has no 4-, 8-, or 16-cycle. The verifier also checks an explicit octagon in the double of Exoo’s 78-vertex graph using Garcia’s published data. [Construction and proof](double-cover-construction.md) · [Computational check](verify_double_cover_example.py)
 6. **Affine covers over vector spaces.** If the six matchings of the tetrahedron have the form $x\mapsto u x+a$ on a vector space over a division ring, for arbitrary nonzero scalars $u$, the graph contains a 4-, 8-, or 16-cycle. The same bound holds on a finite abelian group acted on by a group of automorphisms in which only the identity fixes a nonzero point. The seven-sheet example in item 1 attains the bound. [Lean proofs](Erdos64AffineCovers.lean)
 
+7. **Normal subgroup orbits in finite covers.** Suppose a finite group labels the edges and acts on the sheets. Let $N$ be a solvable normal subgroup whose sheet orbits have power-of-two sizes. A simple cycle of length $2^k$ in the cover on the set of $N$-orbits lifts to a simple cycle of length between $2^k$ and $2^k$ times the size of its starting orbit. The ambient group may be nonsolvable and the sheet action may have stabilizers. In a tetrahedral cover, if the three chord permutations commute on the orbit set, some dyadic cycle has length at most $16B$, where $B$ is the largest orbit size. Taking $N=[M,M]$ gives a bound of $16|[M,M]|$ whenever the commutator subgroup is a two-group. [Lean proof](Erdos64NormalCovers.lean) · [Axiom audit](normal-covers-axioms.txt)
+
 ## Official submission
 
-The combined reduction applies these results to connected nonbipartite bridgeless cubic graphs. A locally bijective four-coloring identifies such a graph as a tetrahedral cover. All three of its matching permutations admit translation coordinates on an orbit when they commute. The signed affine, general affine, solvable prime-degree, and solvable power-of-two proofs then eliminate the corresponding cases. The upstream project merged Chad Mazzola’s signed Lean proof under his GitHub account @ubuwaits on November 27, 2026. The parent cubic reduction is due to @mejiasd3v, building on @JamesSlash’s bridge reduction. [Merged pull request](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/7329) · [Project acceptance and credit receipt](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/7329#issuecomment-7226888514) · [Merged Lean source](https://github.com/GuillaumeBAUD-coder/open-math-agents/blob/4e0fec7f1dfbf06463f57479c77a7cfb4149b680/reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Signed combined proof](https://github.com/ubuwaits/open-math-agents/commit/4f56b3f7aa32d607577e0de95663648a953b5e4a) · [Parent reduction](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/5246) · [Bridge reduction](https://github.com/GuillaumeBAUD-coder/open-math-agents/pull/592)
+The combined reduction applies these results to connected nonbipartite bridgeless cubic graphs. A locally bijective four-coloring identifies such a graph as a tetrahedral cover. All three of its matching permutations admit translation coordinates on an orbit when they commute. The signed affine, general affine, solvable prime-degree, and solvable power-of-two proofs then eliminate the corresponding cases. The upstream project merged Chad Mazzola’s signed Lean proof under his GitHub account @ubuwaits on November 27, 2026. The parent cubic reduction is due to @mejiasd3v, building on @JamesSlash’s bridge reduction. [Merged pull request](https://github.com/lefttosolve2/open-math-agents/pull/7329) · [Project acceptance and credit receipt](https://github.com/lefttosolve2/open-math-agents/pull/7329#issuecomment-7226888514) · [Merged Lean source](https://github.com/lefttosolve2/open-math-agents/blob/4e0fec7f1dfbf06463f57479c77a7cfb4149b680/reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Signed combined proof](https://github.com/ubuwaits/open-math-agents/commit/4f56b3f7aa32d607577e0de95663648a953b5e4a) · [Parent reduction](https://github.com/lefttosolve2/open-math-agents/pull/5246) · [Bridge reduction](https://github.com/lefttosolve2/open-math-agents/pull/592)
 
-The three remaining hypotheses cover graphs without a locally bijective four-coloring, composite-degree covers outside the affine and solvable power-of-two cases, and prime-degree covers with nonsolvable monodromy. On November 27, 2026, the upstream Lean kernel accepted the combined reduction with zero errors. It reported only `propext`, `Classical.choice`, and `Quot.sound`. [Combined proof](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Upstream checker run](https://github.com/GuillaumeBAUD-coder/open-math-agents/actions/runs/46048955140) · [Official verdict](reductions/upstream-verdict.json) · [Local checker verdict](reductions/combined-verdict.json)
+The three remaining hypotheses cover graphs without a locally bijective four-coloring, composite-degree covers outside the affine and solvable power-of-two cases, and prime-degree covers with nonsolvable monodromy. On November 27, 2026, the upstream Lean kernel accepted the combined reduction with zero errors. It reported only `propext`, `Classical.choice`, and `Quot.sound`. [Combined proof](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Upstream checker run](https://github.com/lefttosolve2/open-math-agents/actions/runs/46048955140) · [Official verdict](reductions/upstream-verdict.json) · [Local checker verdict](reductions/combined-verdict.json)
 
-The site publishes the three hypotheses individually. [Graphs without a locally bijective four-coloring](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H1) · [Composite-degree covers](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2) · [Prime-degree covers with nonsolvable monodromy](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H3)
+On November 28 the project recorded all three hypotheses under @ubuwaits. The root API and all three case records confirmed the author and linked to PR #7329. [Website credit receipt](reductions/site-credit-7329.json) [Graphs without a locally bijective four-coloring](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H1) · [Composite-degree covers](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2) · [Prime-degree covers with nonsolvable monodromy](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H3)
 
-The earlier signed two-stage derivation remains reproducible. Its first reduction isolated the unsigned and signed translation cases. Its second reduction supplied the general affine and solvable-group arguments. Both stages are incorporated in the combined submission. [Earlier signed first reduction](https://github.com/ubuwaits/open-math-agents/commit/035cf1264c5438e987b7033a58c519eece2f47aa) · [First upstream kernel verdict](https://github.com/GuillaumeBAUD-coder/open-math-agents/actions/runs/46029671471) · [Second-stage Lean file](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.lean) · [Second-stage local verdict](reductions/local-prime-reduction-verdict.json)
+The earlier signed two-stage derivation remains reproducible. Its first reduction isolated the unsigned and signed translation cases. Its second reduction supplied the general affine and solvable-group arguments. Both stages are incorporated in the combined submission. [Earlier signed first reduction](https://github.com/ubuwaits/open-math-agents/commit/035cf1264c5438e987b7033a58c519eece2f47aa) · [First upstream kernel verdict](https://github.com/lefttosolve2/open-math-agents/actions/runs/46029671471) · [Second-stage Lean file](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.lean) · [Second-stage local verdict](reductions/local-prime-reduction-verdict.json)
 
 ## Why arbitrary scalars work
 
@@ -45,9 +47,15 @@ Let $g$ be the permutation of the sheets after one lap. For a finite solvable gr
 
 The Lean proof derives the fixed-point lemma directly. In a faithful primitive solvable action, a nontrivial abelian normal subgroup acts regularly, so averaging a coprime-length orbit gives a fixed point. For an imprimitive action, apply induction first to the set of blocks and then inside a stabilized block. [Fixed-point and lifting proofs](Erdos64CycleCovers.lean) · [Application to the tetrahedron](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.lean)
 
+## Lifting through normal-subgroup orbits
+
+Fix an orbit $D=Nx$ along the quotient cycle. The return element $g$ stabilizes $D$. The subgroup generated by $N$ and $g$ is solvable because its quotient by $N$ is cyclic. It acts transitively on $D$. Since $|D|$ is a power of two, the solvable-action lemma provides a sheet on which $g$ has period $2^j$. Following the quotient cycle $2^j$ times closes the lift. Distinct positions in one lap project to distinct vertices of the quotient cycle, and successive laps revisit a position on distinct sheets until the return period. The resulting cycle is simple.
+
+For example, the regular tetrahedral covers with sheet group $A_4 \times C_m$ and odd $m$ have a dyadic cycle of length at most 64 for every choice of the three chords. Their commutator subgroup is the Klein four-group. Earlier related cases include @mejiasd3v’s descent for the bipartite two-matching problem and Michael C. Burkhart’s Lemma 1.3 for Cayley graphs. [Bipartite reduction](https://github.com/lefttosolve2/open-math-agents/pull/6375) · [Burkhart’s paper](https://arxiv.org/html/2611.05060v1)
+
 ## Reproducing the checks
 
-The four standalone Lean files use Lean 4.33.1. The project check used formal-conjectures revision `9097e2f90e66d2f6244209cb1c07f7120d17ec53` and Mathlib revision `0df444a360eaa60ab8c11dca51a86af692955474`. The headline theorems report only `propext`, `Classical.choice`, and `Quot.sound`. [Local project verdict](local-reduction-verdict.json) · [Earlier upstream acceptance](https://github.com/GuillaumeBAUD-coder/open-math-agents/actions/runs/46015736530)
+The four standalone Lean files use Lean 4.33.1. The project check used formal-conjectures revision `9097e2f90e66d2f6244209cb1c07f7120d17ec53` and Mathlib revision `0df444a360eaa60ab8c11dca51a86af692955474`. The headline theorems report only `propext`, `Classical.choice`, and `Quot.sound`. [Local project verdict](local-reduction-verdict.json) · [Earlier upstream acceptance](https://github.com/lefttosolve2/open-math-agents/actions/runs/46015736530)
 
 To reproduce the combined submission in a separate prepared checkout, copy the [combined Lean file](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) to `reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean` there and run `tools/oma.sh check Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1`.
 
@@ -58,9 +66,20 @@ tools/oma.sh check Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1
 proofs_dir="$PWD/research/erdos64"
 (
   cd .oma/formal-conjectures || exit 1
-  for proof in "$proofs_dir"/*.lean; do
-    lake env lean "$proof" || exit 1
+  for proof in Erdos64AffineCovers Erdos64CycleCovers Erdos64DoubleCover Erdos64Tetrahedron; do
+    lake env lean "$proofs_dir/$proof.lean" || exit 1
   done
+)
+```
+
+The normal-subgroup proof imports the combined reduction merged in PR #7329. In a separate checkout of the upstream repository at commit `4e0fec7f1dfbf06463f57479c77a7cfb4149b680`, run `tools/oma.sh setup` and export `proofs_dir` as the absolute path of this research directory. The project checker below installs the merged reduction sources before Lake builds the imported module.
+
+```sh
+tools/oma.sh check Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1 &&
+(
+  cd .oma/formal-conjectures || exit 1
+  lake build OMAReductions.R_Erdos64_erdos_64_R1_H1_R1_H1_R1_H1_R1 &&
+  lake env lean "$proofs_dir/Erdos64NormalCovers.lean"
 )
 ```
 

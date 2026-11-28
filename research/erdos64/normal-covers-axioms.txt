@@ -1,0 +1,8 @@
+'Erdos64NormalCovers.period_on_normal_orbit' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.lift_cycle' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.lift_normal_orbits' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.lift_normal_two_group' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.tetra_solvable_blocks' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.tetra_commutator_orbits' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.tetra_abelian_quotient' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64NormalCovers.tetra_commutator_two' depends on axioms: [propext, Classical.choice, Quot.sound]

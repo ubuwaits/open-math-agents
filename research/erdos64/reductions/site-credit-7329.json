@@ -1,0 +1,21 @@
+{
+  "pr": 7329,
+  "checked_utc": "2026-11-28",
+  "steps": [
+    {
+      "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H1",
+      "reduction_by": "ubuwaits",
+      "reduction_pr": "https://github.com/lefttosolve2/open-math-agents/pull/7329"
+    },
+    {
+      "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2",
+      "reduction_by": "ubuwaits",
+      "reduction_pr": "https://github.com/lefttosolve2/open-math-agents/pull/7329"
+    },
+    {
+      "id": "Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H3",
+      "reduction_by": "ubuwaits",
+      "reduction_pr": "https://github.com/lefttosolve2/open-math-agents/pull/7329"
+    }
+  ]
+}
