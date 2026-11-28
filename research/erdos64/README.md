@@ -15,6 +15,8 @@ The Erdős–Gyárfás conjecture asks whether every finite simple graph with mi
 
 7. **Normal subgroup orbits in finite covers.** Suppose a finite group labels the edges and acts on the sheets. Let $N$ be a solvable normal subgroup whose sheet orbits have power-of-two sizes. A simple cycle of length $2^k$ in the cover on the set of $N$-orbits lifts to a simple cycle of length between $2^k$ and $2^k$ times the size of its starting orbit. The ambient group may be nonsolvable and the sheet action may have stabilizers. In a tetrahedral cover, if the three chord permutations commute on the orbit set, some dyadic cycle has length at most $16B$, where $B$ is the largest orbit size. Taking $N=[M,M]$ gives a bound of $16|[M,M]|$ whenever the commutator subgroup is a two-group. [Lean proof](Erdos64NormalCovers.lean) · [Axiom audit](normal-covers-axioms.txt)
 
+8. **Regular covers with triangles.** A tetrahedral cover with a triangle and a finite regular sheet group of nilpotence class at most two has a simple cycle of length 4, 8, 16 or 32. In the Heisenberg covers over $\mathbb Z/n\mathbb Z$ with the two standard generators and one identity chord, the shortest such length is 4 at $n=1$, 8 at $n=2$, 16 for $3\le n\le5$, and 32 for every $n\ge6$. Thus the bound 32 is sharp. [Proof and examples](odd-group-covers.md) · [Triangle theorem](Erdos64TriangleCovers.lean) · [Integer path verifier](verify_heisenberg.py)
+
 ## Official submission
 
 The combined reduction applies these results to connected nonbipartite bridgeless cubic graphs. A locally bijective four-coloring identifies such a graph as a tetrahedral cover. All three of its matching permutations admit translation coordinates on an orbit when they commute. The signed affine, general affine, solvable prime-degree, and solvable power-of-two proofs then eliminate the corresponding cases. The upstream project merged Chad Mazzola’s signed Lean proof under his GitHub account @ubuwaits on November 27, 2026. The parent cubic reduction is due to @mejiasd3v, building on @JamesSlash’s bridge reduction. [Merged pull request](https://github.com/lefttosolve2/open-math-agents/pull/7329) · [Project acceptance and credit receipt](https://github.com/lefttosolve2/open-math-agents/pull/7329#issuecomment-7226888514) · [Merged Lean source](https://github.com/lefttosolve2/open-math-agents/blob/4e0fec7f1dfbf06463f57479c77a7cfb4149b680/reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Signed combined proof](https://github.com/ubuwaits/open-math-agents/commit/4f56b3f7aa32d607577e0de95663648a953b5e4a) · [Parent reduction](https://github.com/lefttosolve2/open-math-agents/pull/5246) · [Bridge reduction](https://github.com/lefttosolve2/open-math-agents/pull/592)
@@ -22,6 +24,8 @@ The combined reduction applies these results to connected nonbipartite bridgeles
 The three remaining hypotheses cover graphs without a locally bijective four-coloring, composite-degree covers outside the affine and solvable power-of-two cases, and prime-degree covers with nonsolvable monodromy. On November 27, 2026, the upstream Lean kernel accepted the combined reduction with zero errors. It reported only `propext`, `Classical.choice`, and `Quot.sound`. [Combined proof](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.lean) · [Upstream checker run](https://github.com/lefttosolve2/open-math-agents/actions/runs/46048955140) · [Official verdict](reductions/upstream-verdict.json) · [Local checker verdict](reductions/combined-verdict.json)
 
 On November 28 the project recorded all three hypotheses under @ubuwaits. The root API and all three case records confirmed the author and linked to PR #7329. [Website credit receipt](reductions/site-credit-7329.json) [Graphs without a locally bijective four-coloring](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H1) · [Composite-degree covers](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2) · [Prime-degree covers with nonsolvable monodromy](https://lefttosolve.com/p/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H3)
+
+A second signed submission reduces the composite-degree case to two hypotheses. The first concerns regular actions after all normal two-subgroups have been removed. The second concerns actions with a nonidentity point stabilizer. The proof also settles covers where a Hamiltonian return has a dyadic orbit, or the solvable commutator subgroup has dyadic sheet orbits. The upstream checker accepted the exact parent hypothesis with zero errors on November 28. [Pull request #24228](https://github.com/lefttosolve2/open-math-agents/pull/24228) · [Lean submission](reductions/composite/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.lean) · [Upstream verdict](reductions/composite/upstream-verdict.json) · [Local verdict](reductions/composite/local-verdict.json)
 
 The earlier signed two-stage derivation remains reproducible. Its first reduction isolated the unsigned and signed translation cases. Its second reduction supplied the general affine and solvable-group arguments. Both stages are incorporated in the combined submission. [Earlier signed first reduction](https://github.com/ubuwaits/open-math-agents/commit/035cf1264c5438e987b7033a58c519eece2f47aa) · [First upstream kernel verdict](https://github.com/lefttosolve2/open-math-agents/actions/runs/46029671471) · [Second-stage Lean file](reductions/Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1.H2.R1.lean) · [Second-stage local verdict](reductions/local-prime-reduction-verdict.json)
 
@@ -97,3 +101,23 @@ done
 ```
 
 The sign-mask search recovers the color words and the integer relations for every case. Mask 0 has 26 cases, mask 7 has 38, and each of the six mixed masks has two. The Lean proofs independently check every word and every implication between relations. [Search certificates](affine-certificates.json)
+
+## Checking the triangle bound
+
+Use a disposable upstream checkout at commit `43083c9c80c50450b1959afd6865c0bca49d76b4` with `tools/oma.sh setup` completed. Export `proofs_dir` as the absolute path to this research directory. The commands stage and compile the research modules inside the disposable checkout. [Axiom audit](regular-upper-axioms.txt)
+
+```sh
+tools/oma.sh check Erdos64.erdos_64.R1.H1.R1.H1.R1.H1.R1 &&
+(
+  cd .oma/formal-conjectures || exit 1
+  lake build OMAReductions.R_Erdos64_erdos_64_R1_H1_R1_H1_R1_H1_R1 OMAReductions.R_Erdos64_erdos_64_R1_H1_R1_H1_R1_H2_R1 || exit 1
+  for proof in Erdos64NormalCovers Erdos64Heisenberg Erdos64ClassTwo Erdos64TriangleCovers; do
+    cp "$proofs_dir/$proof.lean" . || exit 1
+    lake env lean -o ".lake/build/lib/lean/$proof.olean" "$proof.lean" || exit 1
+  done
+  lake env lean "$proofs_dir/RegularCoverUpperAudit.lean"
+)
+python3 "$proofs_dir/verify_heisenberg.py"
+python3 "$proofs_dir/matching_windows.py"
+python3 "$proofs_dir/check_a4_covers.py"
+```
