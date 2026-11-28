@@ -20,7 +20,7 @@ def verify():
     assert all(forced(25, 2**h + 1) is None for h in (4, 8, 16, 32))
     check_valuations()
     assert EXCLUDED_SINGLE_PRIME_VALUATIONS == frozenset(range(6, 20))
-    print('Core 25 checks passed. The only remaining exponents are powers of two with index at least 20 and squarefree composite Fermat number.')
+    print('Odd-part checks passed. The fixed-core gap certificate excludes the remaining powers of two.')
 
 
 if __name__ == '__main__':

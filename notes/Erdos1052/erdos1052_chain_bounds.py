@@ -387,6 +387,41 @@ def six_base_gap_certificate():
     return checks, nodes
 
 
+def large_fermat_mersenne_pairs():
+    """Force two members of P0 at arbitrary core multiplicities, with a smaller tail."""
+    m = (1 << 61)-1
+    t = Fraction(3, 4*(1 << 88))
+    # The only prime indices between 79 and 88 are 79 and 83.
+    assert [k for k in range(79, 89) if is_prime(k)] == [79, 83]
+    for k, divisor in ((79, 2687), (83, 167)):
+        assert 1 < divisor < (1 << k)-1 and pow(2, k, divisor) == 1
+    mersenne_tail = Fraction(4, 3*((1 << 89)-1))
+    fermat_tail = Fraction(1, 1 << 127)
+    assert mersenne_tail+fermat_tail < t
+    width = Fraction(1, 1 << 85)
+    assert 2*(1-4*t)*(1-Fraction(1, 1 << 100))/(1+Fraction(1, 1 << 256)) > 2-width
+    required = tuple(q for block in SEED_BLOCKS[0] for q in block)
+    results = []
+    for bases in ((8191,), (8191, m)):
+        result = exclude_interval(2-width, Fraction(2), bases, required,
+                                  bit_cap=320, node_cap=16000, sharpen_tail=True)
+        assert result is not None, bases
+        results.append(result)
+    # These Fermat-base shifts force other repeated primes at the indicated valuations.
+    witnesses = {4:4365089, 5:1409, 6:641, 9:70657, 10:341114881,
+                 11:730882049, 12:4513793, 15:3604481, 17:786433,
+                 18:2967994369, 20:211812353, 23:3238002689}
+    for v, q in witnesses.items():
+        assert certified_prime(q) and pow(65537, 1 << v, q) == q-1
+        assert all(x & (x-1) for x in (q-1,q+1))
+        assert (q % 3 == 2 or (q+1) % 49 == 0 or (q+1) % 11 == 0
+                or (q == 341114881 and q+1 == 2*170557441))
+    r = 170557441
+    assert certified_prime(r) and (r+1) % 11 == 0
+    assert all(x & (x-1) for x in (r-1,r+1))
+    return results
+
+
 if __name__ == "__main__":
     assert modular_chain_certificate((3,7), (7,11,13,17,19)) == [4,18,112,221,0]
     assert modular_chain_certificate((1,9), (7,11,13,17,19,23,29,31,37)) == [
@@ -398,6 +433,7 @@ if __name__ == "__main__":
     assert dyadic_root_bound(16,((2147639671,1),)) == 47
     assert three_base_gap_certificate() == (36,12438)
     print("Six-base support intervals and nodes", six_base_gap_certificate(), flush=True)
+    print("Sparse Fermat and Mersenne support intervals", large_fermat_mersenne_pairs(), flush=True)
     mersenne_terminal_certificates()
     for p in (5003, 65537, 13709, 114689, 167772161):
         print(p, capped_shift_exponent_bound(16, ((p,1),), None, node_cap=10000,

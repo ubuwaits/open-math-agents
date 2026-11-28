@@ -847,3 +847,47 @@ q(q−1)<2(2^N+1). If t≥N/2+1, the left side is at least
 (2·2^(N/2)−1)(2·2^(N/2)−2), greater than the right side since
 2^(N/2)>3. This proves t≤N/2. The estimate bounds each such prime
 in terms of ℓ; a bound independent of ℓ is still needed for finiteness.
+
+15. A split close to the prime factors of a cyclotomic seed
+
+Fix a sparse core and a permitted height h=2^v. Let s be an odd prime
+for which 2 is a primitive root, with s−2≤v+1. Let ℓ|a/h be an odd
+prime exceeding s and every repeated base, with ℓ not dividing 2^h+1.
+If the odd part of s−1 fails to divide ℓ−1, the descending shifts from
+some prime of A=(2^(hℓ)+1)/(2^h+1) split within the first s−2 steps.
+A split means that the odd part of a shift has at least two prime
+factors counted with multiplicity. The number of prime factors of A
+is unrestricted.
+
+For any prime r|A, the order of 2 modulo r is 2hℓ. Indeed it divides
+2hℓ and cannot divide hℓ, since 2^(hℓ)≡−1 modulo r. The only other
+possibility is 2h, in which case 2^h≡−1 modulo r. Reducing the
+alternating sum A modulo r gives ℓ, so r=ℓ would divide 2^h+1.
+Since 8|2h, the field modulo r has a primitive eighth root u. Then
+(u+u^−1)²=2, so the order of 2 divides (r−1)/2. In particular
+4hℓ divides r−1.
+
+Put L=s−2. If the first L shifts below r have no split, they force
+precisely the primes r_i=1+(r−1)/2^i for 0≤i≤L. In fact r_i is 1
+modulo 4 for i<L, so the odd part of r_i+1 is r_(i+1). These numbers
+all exceed the largest repeated base and s because 2^L≤2h and
+r−1≥4hℓ. Thus a composite r_(i+1) would have furnished a split, and
+a prime one must be a simple prime in the same descending group.
+
+If r differs from 1 modulo s, then (r−1)/2^L is nonzero modulo s.
+As 2 generates the multiplicative group modulo s, one of the s−1
+integers 1+2^j(r−1)/2^L, 0≤j≤L, is divisible by s. This contradicts
+the primality and size of the forced r_i. Consequently, if every
+root avoids such a split, each r≡1 mod s and A≡1 mod s. Write Y=2^h.
+Its order modulo s is the odd part of s−1, since s−1≤v+2 and h=2^v.
+It has odd order, so Y+1 is invertible modulo s. The congruence
+A≡1 gives Y^ℓ=Y modulo s, and the asserted divisibility follows.
+
+For example, at v≥8 every sufficiently large ℓ not equal to 1
+modulo 5 forces a split within nine steps by taking s=11. At v≥10
+the choices 11 and 13 require ℓ≡1 modulo 15 or a split within
+eleven steps. At v≥16 the three choices 11,13,19 require ℓ≡1
+modulo 45 or a split within seventeen steps. The short residue
+cycles are kernel-checked in FixedCoreGaps.short_shift_moduli.
+A split is permissible in a completion, so the congruences alone
+give no bound on the size of ℓ.

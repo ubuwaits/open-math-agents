@@ -485,8 +485,8 @@ Suppose n is unitary perfect and 5² is its only repeated odd prime
 power. Then a=v₂(n) is a power of two, a=2^v with v≥20. Moreover
 2^a+1 must be squarefree and composite. Core 25 was the smallest
 core remaining in the finite interval classification of section 2.
-The assertion bounds its odd multiplier at every height. The possible
-indices v in the last assertion have no known upper bound here.
+The assertion bounds its odd multiplier at every height. Section 10
+excludes the remaining powers of two and hence every completion at 25.
 
 The factors 25+1=2·13, 13+1=2·7 and 7+1=8 force the simple primes
 13 and 7. Together with 25 they contribute 32/25 to the abundancy.
@@ -696,3 +696,261 @@ distinct leaves. This characterizes all positive exponents with that
 property independently of the core. AdditiveHeight.marker_core checks
 the marked identity; the classification uses Graham's theorem.
 https://www.fq.math.ca/Scanned/27-5/graham.pdf
+
+10. Excluding fifteen more fixed cores
+
+No unitary perfect number has any of the fifteen cores in this section.
+At twelve of them a gap holds even when the divisors of 2^a+1 are left
+unspecified. The table gives the individual precisions k and the number
+of nodes in the interval certificate.
+
+     c           k      nodes              c           k      nodes
+     25         44      11709            7612947      60      71038
+     3025       53      17712           14250625      44       4060
+     180625     53      31302           21855625      53      29508
+     600625     44       4219           24750625      60      99291
+     845883     53       2535           29597643      53      46785
+     2101707    60      53715           72675625      53      34040
+
+For each row let A be the odd abundancy after forcing the core shifts
+as in section 1. The remaining primes R satisfy (3). In every one of
+the 405,914 certificate nodes, the allowed completions avoid the
+half-open interval [2−2^−k,2) for the total odd abundancy. In a solution
+with a≥1 the odd abundancy equals 2−2/(2^a+1), which belongs to this
+interval for a≥k+1. Descending cancellation at 0≤a≤k excludes every
+remaining exponent. In particular, at c=25 the initial A is 32/25,
+the unused divisor is 25, and the excluded primes are 5,7,13.
+Precision 44 suffices for the entire core.
+
+Here are the details of the interval calculation. At any increasing
+prefix write x for its last prime and D for the remaining product of
+supplies. The next q is necessarily of the form 2^j d−1 for d|D,
+j≥1. Its new supply is (D/d)q. For any suffix select one predecessor
+in the suffix at every vertex that has one. Each ordinary prime can
+be selected at most once by (3). This partitions the suffix into
+increasing paths. A path starting at r has abundancy at most
+w(r)=(r+1)/(r−1), as follows by telescoping w(r)=(1+1/r)w(2r−1).
+Its reciprocal loss, defined as one minus the reciprocal abundancy,
+is therefore at most 2/(r+1). Losses of several paths sum to an
+upper bound for their combined loss.
+
+If all suffix primes exceed y, each non-Mersenne start consumes at
+least one frozen token. These starts together cost at most
+2Ω(D)/(y+1). For all Mersenne starts combined, sum 2^(1−j) over
+2^j>y+1. This costs at most 4/(y+1). For an interval [L,H),
+discard a node at A≥H. At A<L pick
+
+    y = max(x, 1+floor((2Ω(D)+4)/(1−A/L))).
+
+Every extension with next prime above y stays below L. Enumerate
+d|D and the powers of two to find all other possible starts. Fermat
+tests can discard proved composites. Keeping a pseudoprime introduces
+an extra branch, which must also be excluded. The basic search with
+this cutoff alone checks the c=25 gap in 46,099 nodes. Independently,
+the original uniform_gap verifier of section 1 checks the same gap
+in 36,507 nodes using trial division, a multiplicative tail estimate
+and binary search for its cutoffs. Its largest cutoff is
+335,504,147,264,025. Setting max_prime=2^52 suffices for this run.
+
+The shorter certificates further bound each suffix by its possible
+starts down to the proposed q. Above Y=8(y+1), reserve 2/(Y+1) per
+token and the full geometric tail for Mersenne starts. In [q,Y],
+add 2/(r+1) for each potential Mersenne start. Charge every other
+potential start to its first frozen prime type, reserving for each
+copy the maximum cost charged to that type. Actual distinct starts
+use distinct copies. If the resulting loss bound is below 1−A/L
+no continuation beginning with q can reach L. The program rounds
+charges upwards to an integer multiple of a negative power of two.
+A resource limit leaves that run inconclusive.
+
+There is also a general height bound for any fixed core admitting
+an interval [2−2^−k,2) exclusion at the synthetic seed m=3. For
+even a write h=2^v with v=v₂(a)≥1. Choose a prime r≡2 mod 3
+dividing F_v=2^h+1. Such an r exists since F_v≡2 mod 3. The order
+of 2 modulo r is exactly 2h, so 2h divides r−1. If r|c, this bounds
+h by the largest base of c. Otherwise r is simple. Cancel it against
+F_v and remove it from S. Since 3|r+1, (2) holds at m=3 on the
+remaining simple primes. Their odd abundancy, including the core, is
+
+    B=2/[(1+2^−a)(1+1/r)].
+
+For a≥k+2 and r≥2^(k+2) this belongs to [2−2^−k,2). Indeed for
+0<y≤1 one has (2−y)(1+y/4)²<2. Thus either a<k+2 or r<2^(k+2).
+This bounds the 2-adic height without a sparsity assumption on c.
+
+Apply this argument to c=819025,11826721,76125625 at k=28,3,5,
+respectively. For v=0,...,5 use the divisors 3,5,17,257,65537,641
+respectively of 2^a+1. The certificate excludes [2−2^−60,2) for
+each of these eighteen choices. Descending cancellation rules out
+0≤a≤60 in all three cores. For v≥6 none of their core primes equal
+to 2 modulo 3 are 1 modulo 128. Thus r is simple. At k=3,5 there
+is no r≥129 below the cutoff. At k=28 enumerate r=1+2^(v+1)j up
+to 2^30, retain r≡2 mod 3 and test 2^(2^v)≡−1 mod r. This test
+includes composite candidates. The complete list is
+
+    (v,r) = (9,2424833), (10,45592577), (11,974849),
+            (12,114689), (12,26017793), (12,63766529),
+            (18,13631489), (23,167772161).
+
+In every case forcing the divisor r at c=819025 gives excess demand.
+For v≥29 the step alone puts r above the cutoff. This completes the
+three exclusions. Together with the classification of 625, fifteen
+of the original 31 survive this stage. Section 12 treats more of them.
+
+11. Adding arbitrarily many repeated primes to the twelve unseeded cores
+
+For each pair (c,k) in the table in section 10 the same impossibility
+holds at every core c·d, with d odd powerful, gcd(c,d)=1, and
+
+    t = Σ_(p|d, p prime) 1/p ≤ 2^(−k−6).
+
+In particular 25 allows arbitrarily many further repeated prime
+powers of total reciprocal base mass at most 2^−50. There is no
+restriction on their exponents. The proof controls their effect on
+the simple primes as well as on the unitary abundancy of the core.
+
+For d>1 all its bases are at least 2^(k+6). Remove each simple q
+whose shift q+1 uses such a base and every successor of q. Successors
+follow the edges q→r with q|r+1. An ordinary vertex has at most one
+successor. The cost of removing each path is at most 2/(q+1).
+For a start with no ordinary predecessor, write q+1=2^j p u with
+p|d and u supported on the bases of c·d. Summing its cost over all
+representations costs at most 2tH/(1−t), where H=∏_(p|c)p/(p−1).
+Indeed the sum of reciprocals of all allowed u is at most H/(1−t).
+For any remaining start choose an ordinary predecessor r and a base
+p|d in its shift. The charge is at most 1/(pr)≤t/r, and the chosen
+r are distinct. Their reciprocal sum is less than one since the
+simple-prime abundancy is less than two. Overlapping deleted paths
+cause no difficulty in this upper bound. Thus the deleted simple
+factors have reciprocal loss at most L=t(1+2H/(1−t)). Also
+1−d/σ*(d)≤Σ_(p^e||d)p^−e≤t².
+
+Write T_a=2/(1+2^−a) for a≥1. The remaining odd abundancy B,
+including c, satisfies T_a(1−L)(1−t²)≤B<T_a. Each retained shift
+avoids both the new bases and all deleted simple primes. For m=1,
+or m=2^a+1 with a≤k+2, all prime factors of m and σ*(c) are smaller
+than any new base or deleted simple prime, so the retained support
+satisfies (2) for c at m. For each row H<2. Rational arithmetic gives
+
+    (1−L)(1−t²)>1−2^(−k−2),
+    2(1−L)(1−t²)/(1+2^(−k−3))>2−2^−k.
+
+For a≥k+3 the gap of section 10 now excludes the retained support.
+For the remaining positive a, force the exact seed m=2^a+1 and
+exclude [T_a(1−2^(−k−2)),T_a). Only 39 intervals survive the initial
+forced-state tests. They close in 8,171 nodes in total. Odd unitary
+perfect numbers are already excluded. This proves the enlarged
+families. fixed_core_certificates and synthetic_seed_certificates in
+erdos1052_fixed_core_gaps.py reproduce the calculations. The Lean
+module FixedCoreGaps proves the product and perturbation inequalities
+and a decaying Mersenne tail bound. The finite searches use Python
+integer and rational arithmetic.
+
+12. A sharper path estimate and the fixed core 243
+
+For a finite increasing path starting at q write B for its abundancy
+and λ=(q+1)(1−1/B). The telescoping bound gives λ≤2. If the path has
+a successor mq−1, its multiplier m is even. Write λ′ for the same
+coefficient on the suffix starting at this successor. Then
+
+    λ = 1+λ′/m.
+
+On a one-vertex path λ=1. For m≥6 we have λ′/m≤1/3. For m=2,4
+discard a proved composite mq−1 and bound any remaining suffix by
+the same rule. Two applications give a rational upper bound for λ
+in units of 1/144. The identity is checked in FixedCoreGaps.lean.
+
+One can also use the fact that a start with given value occurs at
+most once. Charge its cost to the first frozen prime p in its odd
+demand, splitting the cost equally among the i copies of p that it
+uses. Among the resulting individual charges keep only the e largest
+for a supply p^e. Include e upper bounds for starts beyond the explicit
+cutoff before taking the largest e. Any actual collection selects at
+most e of these copies. Rounding each allocated charge upwards keeps
+the resulting upper bound valid.
+
+With both improvements, the unseeded interval [2−2^−60,2) is
+excluded at c=243,58446025,99102025 in respectively 378,971, 82,095
+and 285,160 nodes. The check of 0≤a≤60 leaves no solution in any
+of the three. The argument of section 11 applies with k=60 to the
+same three cores. The 15,4,4 remaining small-exponent intervals
+close in 45,706, 531 and 319 nodes, respectively. Thus all fifteen
+unseeded core exclusions allow extra prime powers within the
+reciprocal-sum bounds of section 11.
+
+Two further cores are excluded using the synthetic seed of section 10.
+At 12075625 the six low heights have an interval of precision 64.
+The m=3 gap has precision 4. Thus the mandatory r≡2 mod 3 at a higher
+height would have to be below 64, whereas 128|r−1. The only repeated
+base equal to 2 modulo 3 is 5 and has order four. Direct cancellation
+excludes all exponents through 64.
+
+At 75625=5^4·11² the six low heights have precision 60 and the m=3
+gap has precision 43. The exponents through 60 are excluded directly.
+At v≥6 neither 5 nor 11 divides F_v, so any prime factor r≡2 mod 3
+of F_v is simple. There is at most one simple prime equal to 2
+modulo 3, as each consumes the sole copy of 3. For 6≤v≤19, apply the
+divisors and chains of section 5 of the sparse-core note. Each split
+gives two coprime divisors equal to 2 modulo 3, both coprime to 55.
+Each chain has intermediate primes outside the core and gives a
+divisor equal to 2 modulo 3 coprime to 55F_v. Thus all these cases
+require two different such simple primes. For v≥20 the m=3 gap
+requires r<2^45. Exhaustive modular exponentiation in the progression
+1 modulo 2^(v+1) gives just four possibilities
+
+    (21,4485296422913), (23,167772161),
+    (25,25991531462657), (36,2748779069441).
+
+Forcing the seed divisor r fails in every case at 75625.
+
+13. The two factors at 5^4·181²
+
+The factorization used to classify 625 also excludes the whole core
+c=20475625. The forced simple primes are 79,157,313,8191,16381.
+Write R for their abundancy including c, and D for the unused supply.
+Here R=4194304/4095125 and D=4095125=5³·181². The low heights
+other than h=2 are excluded at precision 60 using 3,17,257,65537,641.
+The synthetic m=3 precision is 7. At v≥6 the requisite r≡2 mod 3
+would be simple and below 512, whereas there is no such divisor of
+F_v in that range. The bases 5 and 181 cannot supply it. The
+exponents through 60 are excluded directly. It remains to consider
+a=2b for odd b.
+
+Put X=2^((b−1)/2), L=2^b and A₊=L+2X+1, A₋=L−2X+1. These are coprime
+integers of product L²+1. Descending cancellation as in the proof
+for 625 partitions the remaining ordinary primes into two groups
+with abundancies B₊,B₋ and terminal divisors d₊d₋=D. For each sign
+B is a power of two times d/A, with 1≤B<2. Their product is
+(2/R)L²/(L²+1).
+
+For b≥95 put ε=2^−45. Both L/A lie strictly between 1−ε and 1+ε.
+Indeed A/L=1±1/X+1/(2X²) and X≥2^47. If d₊=1 then B₊=2L/A₊
+exceeds 2/R. If d₋=1 then B₋=L/A₋, and the kernel-checked
+neutral_group_impossible from the 625 proof excludes this group.
+For d>1 put x(d)=d/2^floor(log₂ d). For every such d|D the interval
+[x(d)(1−ε),x(d)(1+ε)] lies strictly within (1,2). Uniqueness of a
+dyadic normalization in that range gives B=x(d)L/A, and multiplication
+gives x(d₊)x(d₋)=2/R exactly. The possible unordered pairs are
+
+    {5,819025}, {25,163805}, {181,22625}, {905,4525}.
+
+At d=5,25,181,4525 the indicated interval for a group is excluded
+with 33,786,60,528 nodes, respectively. Each group search permits
+every supply from d and forbids the already fixed primes and core
+bases. Every pair meets one exclusion. This proves b<95.
+
+For any odd prime t≤31 dividing b, the seed 2^(2t)+1 gives a
+precision-60 exclusion. The only remaining b between 31 and 94
+are the primes in the first line below. In each column the second
+entry is a divisor of 2^(2b)+1 giving the same interval exclusion.
+
+    b   37   41     43   47    53        59    61    67   71    73   79   83    89
+    m   593  10169  173  3761  15358129  1181  1709  269  2845  293  317  4985  1069
+
+This closes c=20475625 at every exponent. double_exponent_certificate
+verifies the arithmetic in this section. Altogether twenty-one of the
+31 cores left by section 2 are excluded, and 625 was classified
+separately. The exponent finiteness step now holds for 7,848 of the
+7,857 cores through 10^8. The remaining nine are 2187,177147,264627,
+1594323,4695003,7960923,42255027,60761421 and 71648307. In particular
+every core in this range not divisible by 3^5 satisfies exponent finiteness.

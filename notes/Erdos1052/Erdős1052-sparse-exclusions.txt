@@ -109,6 +109,11 @@ both a Fermat prime 2^(2^j)+1 with j≥33 and a Mersenne prime 2^k−1
 with k≥2^32−1. Also h≥2^32. Each first-layer group separately needs
 both types of prime. Section 28 gives the proof.
 
+Theorem 19. If every repeated base at a sparse core is a Mersenne
+or Fermat prime, at least two of its bases belong to P₀ of Theorem 15.
+If there are exactly two repeated bases, their set is {8191,65537}
+or {65537,131071}, and v₂(a)=4. Section 29 treats all multiplicities.
+
 1. Input from the order and small-prime arguments
 
 We use the following earlier sparse-core conclusions. All sparse
@@ -2201,3 +2206,67 @@ types cannot occur in a sparse completion. The theorem permits arbitrary
 prime bases in the original core outside that residual. The Lean lemmas
 mixed_tail_gaps and mixed_first_negative check the two separation
 inequalities above. Exponents at general sparse cores remain unresolved.
+
+29. Two small repeated primes for Mersenne and Fermat supports
+
+More generally assume t=Σ_(p|c,p∉P₀)1/p ≤ (3/4)·2^−88. Then the
+intersection of the repeated support with P₀ is neither {8191} nor
+{8191,2^61−1}. By Theorem 15 either 8191 is repeated or both
+65537 and 131071 are repeated. If 8191 is repeated, at least one
+of 65537,131071,524287,2^31−1 must now be repeated as well.
+
+In the two cases to exclude, Theorem 15 requires the simple prime
+607. Section 8 then gives either 3967 or 8191 as a simple prime,
+since the alternative with 991 is incompatible with 607. Here
+8191 is repeated. Thus the required simple primes are
+3,5,7,19,31,223,607,3967. As in section 25 all survive deleting the
+vertices that use bases outside P₀ and their successors. Section 25
+also gives a≥256 and reciprocal loss below 2^−100 from the core
+abundancy. The retained simple product lies in [2−2^−85,2), since
+
+    2(1−4t)(1−2^−100)/(1+2^−256)>2−2^−85.
+
+Allow unlimited powers of 8191 for its shifted factors in the first
+case, and unlimited powers of 8191 and 2^61−1 in the second.
+The exact interval checks exclude all such products in 5,757 and
+5,117 nodes, respectively. The function large_fermat_mersenne_pairs
+in erdos1052_chain_bounds.py verifies both calculations.
+
+For a core made only of Mersenne and Fermat primes the stronger
+bound on t is automatic. Section 17 gives the five Mersenne
+indices below 79 that can occur. The only prime indices from 79
+through 88 are 79,83. The corresponding numbers have proper
+divisors 2687 and 167. Thus every other Mersenne prime has odd
+index at least 89. All possible additional Fermat indices in the
+expression 2^j+1 have j≥128. Summing the two geometric series gives
+
+    t ≤ 4/[3(2^89−1)] + 2^−127 < (3/4)·2^−88.
+
+If exactly two repeated primes occur, both now belong to P₀.
+The prime divisor of 2^h+1 equal to 2 modulo 3 must be repeated.
+The only member of P₀ in this residue class is 65537, whose order
+for the base 2 is 32. Hence h=16. Theorem 15 leaves precisely
+the two asserted possibilities for its partner. Existence at either
+pair remains open.
+
+There is a further restriction on f, the exponent of 65537, throughout
+the sparse case. In the following table the prime q divides
+65537^(2^v)+1, so q must occur whenever v₂(f)=v.
+
+    v   4        5     6    9      10         11         12
+    q   4365089  1409  641  70657  341114881  730882049  4513793
+
+    v   15       17      18          20         23
+    q   3604481  786433  2967994369  211812353  3238002689
+
+Each q equal to 2 modulo 3 must be repeated, since it differs from
+the only allowed simple prime in that residue, 5. In particular v=5,6
+are impossible even at an arbitrary sparse core as 1409,641 are below
+4096. For v=9 we have 7²|q+1. For v=17,18 we have 11|q+1 and 11
+cannot occur. In these cases q must again be repeated. For v=10,
+q+1=2·170557441 and 11|170557442, so either q or 170557441 must be
+repeated. All these forced bases are neither Mersenne nor Fermat.
+Thus each listed valuation is excluded throughout the Mersenne and
+Fermat family. Combined with section 25 this gives 128|f, in
+particular at either of the two remaining pairs. Trial division
+and modular exponentiation verify every witness in the table.
