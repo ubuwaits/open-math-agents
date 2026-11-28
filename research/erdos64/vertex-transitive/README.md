@@ -2,7 +2,7 @@
 
 Chad Mazzola (GitHub `@ubuwaits`), using Codex. [Signed proof](https://github.com/ubuwaits/open-math-agents/commit/2d21643a6441d14c9345185d3958b256e81e4fcc) · [Root reduction #28718](https://github.com/lefttosolve2/open-math-agents/pull/28718) · [Official checker run](https://github.com/lefttosolve2/open-math-agents/actions/runs/46142355729)
 
-**Theorem.** Let G be a finite simple vertex-transitive graph of minimum degree at least three. If the number N of vertices is a power of two and N ≥ 8, then G contains a simple cycle of power-of-two length between 4 and N/2 inclusive. For N = 4, the graph is complete and contains a square. Vertex-transitive means that an automorphism can carry any vertex to any other. [Lean theorem and reduction](reductions/Erdos64.erdos_64.R4.lean)
+**Theorem.** Let G be a finite simple vertex-transitive graph of minimum degree at least three. If the number N of vertices is a power of two and N ≥ 8, then G contains a simple cycle of power-of-two length between 4 and N/2 inclusive. For N = 4, the graph is complete and contains a square. Vertex-transitive means that an automorphism can carry any vertex to any other. [Power-of-two proof](reductions/Erdos64.erdos_64.R4.lean) · [Strengthened submitted reduction](twice-prime/reductions/Erdos64.erdos_64.R4.lean)
 
 **Rooted consequence.** Suppose G has more than four vertices and contains at least one power-of-two cycle. For each vertex r, some power-of-two cycle avoids r, regardless of the order of G. This excludes every vertex-transitive graph from the rooted obstruction in the triangle-contraction reduction. At order four, every vertex lies on a triangle. [Rooted triangle branch](https://github.com/lefttosolve2/open-math-agents/pull/27543) · [Axiom audit](axioms.txt)
 
@@ -15,6 +15,10 @@ Chad Mazzola (GitHub `@ubuwaits`), using Codex. [Signed proof](https://github.co
 
 For the rooted consequence, if every cycle of a given length passes through r, every automorphic image of r lies on each such cycle. In a vertex-transitive graph such a cycle is Hamiltonian. Its dyadic length forces the graph order to be a power of two, and the theorem gives a shorter dyadic cycle when the order exceeds four.
 
+## Twice a prime
+
+For every prime $p$, a vertex-transitive graph of minimum degree three on $2p$ vertices has a cycle of length 4, 8, or 16. A cubic graph on 38 vertices attains the upper bound. The strengthened root submission excludes these orders from its remaining transitive case. [Proof, sharp example and axiom audit](twice-prime/README.md)
+
 ## An obstruction without transitivity
 
 In a smallest counterexample to the full conjecture, every fixed-point-free involutory automorphism must send some vertices to neighbors and others to nonneighbors. Its pairs that lose a degree form an independent set in the quotient. [Proof and exact degree formula](free-involutions.md)
@@ -26,7 +30,7 @@ The cube on eight vertices has six unoriented squares. The Möbius–Kantor grap
 ## What remains in the root reduction
 
 1. Connected graphs with at least two vertex orbits, after imposing the degree-three conditions on edges and neighborhoods.
-2. Connected vertex-transitive cubic graphs whose order has an odd prime factor.
+2. Connected vertex-transitive cubic graphs whose order has an odd prime factor and differs from twice every prime.
 
 Both branches exclude squares and octagons. The first degree reduction is due to @JamesSlash. Related results include Michael C. Burkhart’s proof for Cayley graphs of finite odd-order and nilpotent groups. Morris, Spiga and Verret study normal quotients of cubic vertex-transitive graphs. [Degree reduction #466](https://github.com/lefttosolve2/open-math-agents/pull/466) · [Burkhart](https://arxiv.org/abs/2611.05060) · [Morris, Spiga and Verret](https://doi.org/10.37236/4842)
 

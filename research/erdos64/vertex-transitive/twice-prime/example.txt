@@ -1,0 +1,3 @@
+38 vertices, cubic and vertex-transitive, shifts (0, 1, 8)
+Number of undirected simple cycles by length: {4: 0, 8: 0, 16: 1995}
+One 16-cycle: (0, 19, 11, 30, 3, 22, 2, 21, 1, 28, 8, 35, 15, 34, 7, 27)

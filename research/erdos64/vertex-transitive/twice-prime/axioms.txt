@@ -1,0 +1,8 @@
+'Erdos64TwoOrbits.matched_steps' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwoOrbits.internal_square' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwoOrbits.three_cross' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwoOrbits.two_regular_orbits' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwicePrime.one_moving_orbit' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwicePrime.prime_orbit' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwicePrime.prime_action' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Erdos64TwicePrime.vertex_transitive_twice_prime' depends on axioms: [propext, Classical.choice, Quot.sound]
